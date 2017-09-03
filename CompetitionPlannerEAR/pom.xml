@@ -1,0 +1,64 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>ear</artifactId>
+	<name>Competition-Planner EAR</name>
+	<description>Competition-Planner EAR</description>
+	<packaging>ear</packaging>
+	<parent>
+		<relativePath>../CompetitionPlannerParent/pom.xml</relativePath>
+		<groupId>org.competition.planner</groupId>
+		<artifactId>parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.competition.planner</groupId>
+			<artifactId>model</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>org.competition.planner</groupId>
+			<artifactId>ejb</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<type>ejb</type>
+		</dependency>
+		<dependency>
+			<groupId>org.competition.planner</groupId>
+			<artifactId>ui</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<type>war</type>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-ear-plugin</artifactId>
+				<version>2.10.1</version>
+				<configuration>
+
+ 					<modules>
+ 						<jarModule>
+ 							<groupId>org.competition.planner</groupId>
+							<artifactId>model</artifactId>
+ 						</jarModule>
+						<ejbModule>
+							<groupId>org.competition.planner</groupId>
+							<artifactId>ejb</artifactId>
+						</ejbModule>
+						<webModule>						  
+							<groupId>org.competition.planner</groupId>
+							<artifactId>ui</artifactId>
+							<contextRoot>/planner</contextRoot>
+						</webModule>
+					</modules>
+
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
