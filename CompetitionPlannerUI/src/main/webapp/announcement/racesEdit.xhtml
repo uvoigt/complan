@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:composition template="/templates/title.xhtml">
+
+		<ui:param name="bundle" value="#{messages.bundle('announcements')}"/>
+		<ui:param name="title" value="#{bundle.races}"/>
+		<ui:define name="content">
+
+			<h:form>
+				<h:inputHidden value="#{racesEditBean.announcementId}"/>
+
+				<h:panelGrid columns="2">
+					<h:outputText value="#{bundle.boatClass}"/>
+					<p:selectManyButton value="#{racesEditBean.selectedBoatClasses}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.boatClass)}">
+						<f:selectItems value="#{racesEditBean.boatClasses}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
+					</p:selectManyButton>
+
+					<h:outputText value="#{bundle.gender}"/>
+					<p:selectManyButton value="#{racesEditBean.selectedGenders}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.gender)}">
+						<f:selectItems value="#{racesEditBean.genders}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
+					</p:selectManyButton>
+
+					<h:outputText value="#{bundle.ageType}"/>
+					<p:selectManyButton value="#{racesEditBean.selectedAgeTypes}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.ageType)}">
+						<f:selectItems value="#{racesEditBean.ageTypes}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
+					</p:selectManyButton>
+
+					<h:outputText value="#{bundle.distance}"/>
+					<p:selectManyButton value="#{racesEditBean.selectedDistances}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.distance)}">
+						<f:selectItem itemValue="200" itemLabel="200"/>
+						<f:selectItem itemValue="500" itemLabel="500"/>
+						<f:selectItem itemValue="1000" itemLabel="1000"/>
+						<f:selectItem itemValue="2000" itemLabel="2000"/>
+						<f:selectItem itemValue="5000" itemLabel="5000"/>
+						<f:selectItem itemValue="todo" itemLabel="TODO add"/>
+					</p:selectManyButton>
+
+					<h:outputText value="#{bundle.day}"/>
+					<p:calendar value="#{racesEditBean.selectedDay}" mindate="#{racesEditBean.announcement.startDate}" maxdate="#{racesEditBean.announcement.endDate}"/>
+				</h:panelGrid>
+				<p:panelGrid columns="2">
+					<p:commandButton value="#{bundle.raceAdd}" action="#{racesEditBean.createRaces()}"
+							process="@form" update="@form"/>
+					<p:commandButton value="#{bundle.raceDelete}" widgetVar="btnRaceDelete"
+							action="#{racesEditBean.delete()}"
+							process="@this" update="racesTable"
+							onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('raceComfirmMsg', 'xxx')}'.replace(/xxx/, PF('racesTable').getSelectedRowsCount()))"
+							oncomplete="enableButtons()">
+						<p:confirm icon=""/>
+					</p:commandButton>
+				</p:panelGrid>
+
+				<h:outputScript>
+					function enableButtons() {
+						var racesTable = PF("racesTable");
+						if (!racesTable || racesTable.getSelectedRowsCount() == 0)
+							PF("btnRaceDelete").disable();
+						else
+							PF("btnRaceDelete").enable();
+					}
+				</h:outputScript>
+
+				<p:dataTable id="racesTable" widgetVar="racesTable"
+						var="race" rowKey="#{race.id}"
+						value="#{racesEditBean.races}"
+						paginator="true" paginatorAlwaysVisible="false"
+						emptyMessage="#{bundle.noRaces}"
+						rowSelectMode="checkbox"
+						selection="#{racesEditBean.selectedRaces}"
+						sortMode="multiple"
+						editable="true" editMode="cell"
+						draggableRows="false" rows="1000">
+
+					<f:facet name="header">
+						<h:panelGroup>
+							<p:outputLabel value="#{bundle.format('racesCount', racesEditBean.races.size())}"/>
+						</h:panelGroup>
+					</f:facet>
+
+					<p:ajax event="toggleSelect" oncomplete="enableButtons()"/>
+					<p:ajax event="rowSelect" oncomplete="enableButtons()"/>
+					<p:ajax event="rowUnselect" oncomplete="enableButtons()"/>
+					<p:ajax event="rowSelectCheckbox" oncomplete="enableButtons()"/>
+					<p:ajax event="rowUnselectCheckbox" oncomplete="enableButtons()"/>
+					<p:ajax event="cellEdit" listener="#{racesEditBean.onCellEdit}"/>
+	
+					<p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+					<p:column headerText="#{bundle.day}" sortBy="#{racesEditBean.getRaceDay(race.day)}">
+						<h:outputText value="#{racesEditBean.getRaceDay(race.day)}"/>
+					</p:column>
+					<p:column id="time" headerText="#{bundle.time}" sortBy="#{race.startTime}">
+						<p:cellEditor>
+							<f:facet name="output"><h:outputText value="#{racesEditBean.formatTime(race.startTime)}"/></f:facet>
+							<f:facet name="input"><p:calendar value="#{race.startTime}" timeOnly="true" pattern="HH:mm"/></f:facet>
+						</p:cellEditor>
+					</p:column>
+					<p:column id="number" headerText="#{bundle.number}" sortBy="#{race.number}">
+						<p:cellEditor>
+							<f:facet name="output"><h:outputText value="#{race.number}"/></f:facet>
+							<f:facet name="input"><p:inputText value="#{race.number}"/></f:facet>
+						</p:cellEditor>
+					</p:column>
+					<p:column headerText="#{bundle.boatClass}" sortBy="#{race.boatClass.text}">
+						<h:outputText value="#{race.boatClass.text}"/>
+					</p:column>
+					<p:column headerText="#{bundle.gender}" sortBy="#{race.gender.text}">
+						<h:outputText value="#{race.gender.text}"/>
+					</p:column>
+					<p:column headerText="#{bundle.ageType}" sortBy="#{race.ageType.text}">
+						<h:outputText value="#{race.ageType.text}"/>
+					</p:column>
+					<p:column headerText="#{bundle.distance}" sortBy="#{race.distance}">
+						<h:outputText value="#{race.distance}"/>
+					</p:column>
+				</p:dataTable>
+
+				<h:outputScript>
+					enableButtons();
+				</h:outputScript>
+			</h:form>
+		</ui:define>
+	</ui:composition>
+</html>

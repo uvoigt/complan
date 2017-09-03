@@ -1,0 +1,37 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+<head />
+<body>
+	<ui:composition>
+		<p:ajaxExceptionHandler update="exceptionDialog" onexception="PF('exceptionDialog').show();" />
+		<ui:param name="viewExpired" value="#{pfExceptionHandler.type == 'javax.faces.application.ViewExpiredException'}"/>
+		<ui:param name="businessException" value="#{pfExceptionHandler.type == 'org.planner.util.LogUtil$FachlicheException'}"/>
+		<ui:param name="bundle" value="#{messages.bundle('exception')}"/>
+		<p:dialog id="exceptionDialog" header="#{bundle.header}"
+				draggable="false" appendTo="body" modal="true" closeOnEscape="true"
+				widgetVar="exceptionDialog" height="#{viewExpired or businessException ? '70px' : '500px'}">
+			<h:outputText value="#{bundle.msg}: " style="font-weight: bold"/>
+			<h:outputText value="#{pfExceptionHandler.message}"/>
+			<p:fieldset legend="#{bundle.details}" style="margin: 20px 0 20px 0" rendered="#{not viewExpired and not businessException}">
+				<h:outputText value="#{pfExceptionHandler.formattedStackTrace}"
+						escape="false"/>
+			</p:fieldset>
+			<h:panelGroup layout="block" rendered="#{viewExpired}" style="text-align: center; margin-top: 17px">
+				<h:form>
+					<p:commandButton onclick="window.location.reload()" value="#{bundle.reload}" />
+				</h:form>
+			</h:panelGroup>
+			<h:panelGroup layout="block" rendered="#{businessException}" style="text-align: center; margin-top: 17px">
+				<h:form>
+					<p:commandButton onclick="PF('exceptionDialog').hide()" value="#{messages.cancel}" />
+				</h:form>
+			</h:panelGroup>
+		</p:dialog>
+	</ui:composition>
+</body>
+</html>

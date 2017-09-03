@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+<head />
+<body>
+	<ui:composition>
+		<p:ajaxStatus onstart="showStatusDialog()" onsuccess="hideStatusDialog()" onerror="hideStatusDialog(); PF('statusErrorDialog').show()"/>
+		<h:outputScript>
+		function showStatusDialog() {
+			statusTimeout = setTimeout(function() {
+				statusTimeout = null;
+				PF('statusDialog').show();
+			}, 300);
+		}
+		function hideStatusDialog() {
+			if (statusTimeout)
+				clearTimeout(statusTimeout);
+			else
+				PF('statusDialog').hide();
+		}
+		</h:outputScript>
+		<p:dialog id="status" widgetVar="statusDialog" modal="true" draggable="false" closable="false"
+				resizable="false" showHeader="false" style="border-radius: 15px" appendTo="body">
+			<p:graphicImage value="/resources/images/ajaxloadingbar.gif"/>
+		</p:dialog>
+		<p:dialog id="statusErrorDialog" widgetVar="statusErrorDialog" modal="true" closable="false"
+				resizable="false" header="#{messages.statusErrorHeader}" appendTo="body">
+			<h:panelGroup layout="block" style="text-align: center; margin-bottom: 17px">
+				<h:outputText value="#{messages.statusErrorText}"/>
+			</h:panelGroup>
+			<h:panelGroup layout="block" style="text-align: center">
+				<h:form>
+					<p:commandButton value="#{messages.labelClose}" onclick="PF('statusErrorDialog').hide()"/>
+				</h:form>
+			</h:panelGroup>
+		</p:dialog>
+	</ui:composition>
+</body>
+</html>

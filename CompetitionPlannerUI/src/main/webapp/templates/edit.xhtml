@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:composition template="/templates/title.xhtml">
+		<ui:define name="content">
+
+			<ui:param name="canSave" value="#{true}"/>
+
+			<h:form>
+				<p:hotkey bind="esc" action="#{startseiteBean.setMainContent(searchLink)}" process="@this" update=":mainContent"/>
+				<ui:insert name="editArea"/>
+				<h:outputScript>
+				/*	$(":input[type=text]").keydown(function(event) {
+					}); */
+				</h:outputScript>
+				<h:panelGroup layout="block" style="padding-top: 20px">
+					<p:commandButton value="#{messages.save}" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" style="margin-right: 2em;"
+						action="#{bean.save(searchLink)}"
+						process="@form"
+						update=":messages :mainContent"
+						rendered="#{canSave}"/>
+					<p:commandButton value="#{messages.cancel}" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
+						action="#{startseiteBean.setMainContent(searchLink)}"
+						process="@this"
+						update=":messages :mainContent"/>
+				</h:panelGroup>
+			</h:form>
+		</ui:define>
+	</ui:composition>
+</html>

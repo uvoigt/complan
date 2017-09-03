@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+<head/>
+<body>
+	<ui:composition>
+		<ui:param name="bundle" value="#{messages.bundle('header')}"/>
+		<div id="heading">
+			<div id="logo">
+				<h:form>
+					<p:commandLink action="#{startseiteBean.setMainContent('/sections/start.xhtml')}"
+							update=":mainContent :messages :leftMenu" process="@this" style="outline: none"
+							oncomplete="hideHelp()">
+						<p:graphicImage value="/resources/images/logo.png" style="border: none; height: 100px;"/>
+					</p:commandLink>
+				</h:form>
+			</div>
+			<h:panelGroup id="title">
+				<p:outputLabel value="#{bundle.title}"/>
+			</h:panelGroup>
+			<div id="logout">
+				<h:form id="theme">
+					<h:outputScript>
+						PrimeFaces.changeTheme('#{startseiteBean.theme}');
+					</h:outputScript>
+					<h:selectOneMenu value="#{startseiteBean.theme}" onchange="PrimeFaces.changeTheme(this.options[this.selectedIndex].value);" styleClass="ui-widget-content">
+						<f:selectItems value="#{'afterdark,afternoon,afterwork,aristo,black-tie,blitzer,bluesky,bootstrap,casablanca,cupertino,cruze,dark-hive,delta,dot-luv,eggplant,excite-bike,flick,glass-x,home,hot-sneaks,humanity,le-frog,midnight,mint-choc,overcast,pepper-grinder,redmond,rocket,sam,smoothness,south-street,start,sunny,swanky-purse,trontastic,ui-darkness,ui-lightness,vader'.split(',')}"/>
+						<f:ajax partialSubmit="true"/>
+					</h:selectOneMenu>
+				</h:form>
+				<h:form id="currentUser">
+					#{startseiteBean.saveLastLogonTime()}
+					#{bundle.format('loggedin', startseiteBean.leseBenutzerNamen(request.remoteUser))}
+					-
+					<p:commandLink value="#{bundle.logout}" action="#{startseiteBean.logout()}" immediate="true"
+						onsuccess="location.reload()" process="@this" update="@none"/>
+				</h:form>
+			</div>
+		</div>
+	</ui:composition>
+</body>
+</html>

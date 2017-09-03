@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>#{messages['header.title']}</title>
+	<link rel="icon" type="image/x-icon" href="favicon.ico" />
+	<h:outputStylesheet library="css" name="styles.css" />
+	<h:outputScript library="js" name="application.js" />
+</h:head>
+
+<h:body id="body">
+	<p:layout fullPage="true" widgetVar="layout" closeTitle="#{messages.labelClose}">
+		<p:layoutUnit position="north">
+			<ui:insert name="heading">
+				<ui:include src="/sections/header.xhtml" />
+			</ui:insert>
+		</p:layoutUnit>
+		<p:layoutUnit position="west">
+			<ui:insert name="menu">
+				<ui:include src="/sections/menu.xhtml" />
+			</ui:insert>
+		</p:layoutUnit>
+		<p:layoutUnit position="center">
+			<p:growl id="messagesPopup" showDetail="true" showSummary="false"/>
+			<p:messages id="messages" showDetail="true" autoUpdate="true" closable="true" showSummary="false"/>
+			<h:form id="pollForm">
+				<p:poll interval="60" listener="#{startseiteBean.poll}" global="false" update=":messages" process="@this" rendered="false"/>
+			</h:form>
+			<ui:insert name="loginDialog">
+				<ui:include src="/sections/loginDialog.xhtml"/>
+			</ui:insert>
+			<ui:insert name="confirmDialog">
+				<ui:include src="/sections/confirmDialog.xhtml"/>
+			</ui:insert>
+			<ui:insert name="errorDialog">
+				<ui:include src="/sections/errorDialog.xhtml"/>
+			</ui:insert>
+			<ui:insert name="ajaxStatus">
+				<ui:include src="/sections/status.xhtml"/>
+			</ui:insert>
+			<ui:insert name="main">
+				<h:panelGroup id="mainContent">
+					<ui:include src="#{startseiteBean.mainContent}" />
+				</h:panelGroup>
+			</ui:insert>
+		</p:layoutUnit>
+		<p:layoutUnit position="east" visible="false" closable="true" header="#{messages.help}" resizable="true" size="30%">
+			<p:fieldset id="help">
+				<h:outputText value="#{startseiteBean.help}" escape="false"/>
+			</p:fieldset>
+		</p:layoutUnit>
+		<ui:debug />
+	</p:layout>
+</h:body>
+</html>

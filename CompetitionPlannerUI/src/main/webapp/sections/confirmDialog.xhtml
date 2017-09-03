@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+<head />
+<body>
+	<ui:composition>
+		<script>
+		function updateConfirmDlg(title, msg) {
+			var dlg = PF('confirmDlg');
+			dlg.title.text(title);
+			dlg.message.text(msg);
+			dlg.icon.remove();
+		}
+		</script>
+		<h:form>
+			<p:confirmDialog global="true" widgetVar="confirmDlg" id="confirmDialog" header="title" message="message" closeOnEscape="true" >
+				<p:commandButton value="#{messages.yes}" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" update=":messagesPopup"/>
+				<p:commandButton value="#{messages.cancel}" type="button" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close" />
+			</p:confirmDialog>
+		</h:form>
+	</ui:composition>
+</body>
+</html>

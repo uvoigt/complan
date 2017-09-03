@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+<head />
+<body>
+	<ui:composition>
+		<h:form id="leftMenu">
+			<h:outputScript>
+			function selectSidebarLink(link) {
+				$("#leftMenu").find(".ui-state-active").removeClass("ui-state-active");
+				if (link) {
+					$(link).addClass("ui-state-active");
+				}
+				hideHelp();
+			}
+			function hideHelp() {
+				PF("layout").hide("east");
+			}
+			function toggleHelp() {
+				var layout = PF("layout");
+				if (layout.layout.east.state.isVisible)
+					layout.hide("east");
+				else
+					layout.show("east");
+			}
+			</h:outputScript>
+			<ui:param name="bundle" value="#{messages.bundle('menu')}"/>
+			<p:menu my="left top" toggleable="true">
+				<p:menuitem value="#{bundle.myprofile}"
+						action="#{startseiteBean.setMainContent('/masterdata/myprofile.xhtml')}"
+						process="@this"
+						update=":mainContent :messages"
+						rendered="#{roleBean.inOneOf('User')}"
+						onclick="selectSidebarLink(this)"/>
+				<p:menuitem value="#{bundle.myclub}"
+						action="#{startseiteBean.setMainContent('/masterdata/myclub.xhtml')}"
+						process="@this"
+						update=":mainContent :messages"
+						rendered="#{roleBean.inOneOf('User')}"
+						onclick="selectSidebarLink(this)"/>
+				<p:menuitem value="#{bundle.announcement}"
+						action="#{startseiteBean.setMainContent('/announcement/announcements.xhtml')}"
+						process="@this"
+						update=":mainContent :messages"
+						rendered="#{roleBean.inOneOf('Applicant', 'Announcer')}"
+						onclick="selectSidebarLink(this)"/>
+				<p:menuitem value="#{bundle.registration}"
+						action="#{startseiteBean.setMainContent('/registration/registrations.xhtml')}"
+						process="@this"
+						update=":mainContent :messages"
+						rendered="#{facesContext.externalContext.isUserInRole('Applicant')}"
+						onclick="selectSidebarLink(this)"/>
+				<p:menuitem value="#{bundle.users}"
+						action="#{startseiteBean.setMainContent('/masterdata/users.xhtml')}"
+						process="@this"
+						update=":mainContent :messages"
+						rendered="#{facesContext.externalContext.isUserInRole('Admin')}"
+						onclick="selectSidebarLink(this)"/>
+				<p:menuitem value="#{bundle.clubs}"
+						action="#{startseiteBean.setMainContent('/masterdata/clubs.xhtml')}"
+						process="@this"
+						update=":mainContent :messages"
+						rendered="#{facesContext.externalContext.isUserInRole('Admin')}"
+						onclick="selectSidebarLink(this)"/>
+				<p:menuitem value="#{bundle.roles}"
+						action="#{startseiteBean.setMainContent('/masterdata/roles.xhtml')}"
+						process="@this"
+						update=":mainContent :messages"
+						rendered="#{facesContext.externalContext.isUserInRole('Admin')}"
+						onclick="selectSidebarLink(this)"/>
+				<p:menuitem value="#{bundle.help}"
+						process="@this"
+						update="mainContent help"
+						oncomplete="toggleHelp()"/>
+			</p:menu>
+			<p:panelMenu model="#{startseiteBean.menu}" style="min-width: 200px"/>
+		</h:form>
+	</ui:composition>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:decorate template="/templates/edit.xhtml">
+		<ui:param name="bundle" value="#{messages.bundle('clubs')}"/>
+		<ui:param name="bean" value="#{clubBean}"/>
+		<ui:param name="searchLink" value="/masterdata/clubs.xhtml"/>
+		<ui:param name="club" value="#{clubBean.club}"/>
+
+		<ui:define name="editArea">
+			<h:panelGroup layout="block">
+				<h:panelGrid columns="2" cellspacing="5">
+					<h:outputText value="#{bundle.name}"/>
+					<p:inputText value="#{club.name}" autocomplete="off" maxlength="255" size="100" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.name)}"/>
+
+					<h:outputText value="#{bundle.address}"/>
+					<h:panelGroup layout="block">
+						<ui:param name="address" value="#{club.address}"/>
+						<ui:include src="addressArea.xhtml"/>
+					</h:panelGroup>
+				</h:panelGrid>
+			</h:panelGroup>
+		</ui:define>
+	</ui:decorate>
+</html>

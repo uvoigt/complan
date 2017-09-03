@@ -1,0 +1,15 @@
+1.  add security domain "Planner"
+                 <security-domain name="Planner" cache-type="default">
+                    <authentication>
+                        <login-module name="Default" code="Database" flag="sufficient">
+                            <module-option name="dsJndiName" value="java:/datasources/PlannerDS"/>
+                            <module-option name="principalsQuery" value="select password from benutzer where userId=?"/>
+                            <module-option name="rolesQuery" value="select r.role, 'Roles' from role r inner join benutzer b on r.role = b.role where b.userId=?"/>
+                            <module-option name="hashAlgorithm" value="SHA-512"/>
+							<module-option name="hashCharset" value="UTF-8"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>             
+2. e-mail session
+                
+3. security domain for EJB -> comment out

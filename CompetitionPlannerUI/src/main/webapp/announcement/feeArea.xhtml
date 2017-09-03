@@ -1,0 +1,25 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:composition>
+		<ui:param name="bundle" value="#{messages.bundle('addresses')}"/>
+
+		<h:panelGroup layout="block" styleClass="ui-widget-content">
+
+		<p:dataTable var="value" value="#{announcementBean.feeRows}">
+			<p:columns var="column" value="#{announcementBean.feeColumns}">
+				<f:facet name="header">
+					<h:outputText value="#{column.header}" />
+				</f:facet>
+				<h:outputText value="#{announcementBean.announcement.fees[value + column.property]}" />
+			</p:columns>
+		</p:dataTable>
+
+		</h:panelGroup>
+	</ui:composition>
+</html>
