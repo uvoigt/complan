@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="CompetitionPlannerEJB">
+        <wb-resource deploy-path="/" source-path="/src/main/resources" tag="defaultRootSource"/>
+        <dependent-module archiveName="CompetitionPlannerEJBClient.jar" deploy-path="/" handle="module:/resource/CompetitionPlannerEJBClient/CompetitionPlannerEJBClient">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <property name="java-output-path" value="/CompetitionPlannerEJB/build/classes"/>
+        <property name="ClientProject" value="CompetitionPlannerEJBClient"/>
+        <property name="ClientJARURI" value="CompetitionPlannerEJBClient.jar"/>
+    </wb-module>
+</project-modules>
