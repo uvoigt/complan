@@ -14,7 +14,7 @@
 			statusTimeout = setTimeout(function() {
 				statusTimeout = null;
 				PF('statusDialog').show();
-			}, 300);
+			}, 500);
 		}
 		function hideStatusDialog() {
 			if (statusTimeout)
@@ -24,7 +24,8 @@
 		}
 		</h:outputScript>
 		<p:dialog id="status" widgetVar="statusDialog" modal="true" draggable="false" closable="false"
-				resizable="false" showHeader="false" style="border-radius: 15px" appendTo="body">
+				resizable="false" showHeader="false" style="border-radius: 15px" appendTo="body"
+				onShow="PF('statusDialog').initPosition()">
 			<p:graphicImage value="/resources/images/ajaxloadingbar.gif"/>
 		</p:dialog>
 		<p:dialog id="statusErrorDialog" widgetVar="statusErrorDialog" modal="true" closable="false"
