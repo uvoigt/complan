@@ -35,7 +35,9 @@
 			</h:panelGroup>
 			<h:panelGroup layout="block" style="text-align: center">
 				<h:form>
-					<p:commandButton value="#{messages.labelClose}" onclick="PF('statusErrorDialog').hide()"/>
+					<p:commandButton value="#{messages.labelClose}"
+						process="@this"
+						onclick="PF('statusErrorDialog').hide()"/>
 				</h:form>
 			</h:panelGroup>
 		</p:dialog>
