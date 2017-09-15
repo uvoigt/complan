@@ -23,12 +23,12 @@
 			</p:fieldset>
 			<h:panelGroup layout="block" rendered="#{viewExpired}" style="text-align: center; margin-top: 17px">
 				<h:form>
-					<p:commandButton onclick="window.location.reload()" value="#{bundle.reload}" />
+					<p:commandButton onclick="window.location.reload()" value="#{bundle.reload}" type="button"/>
 				</h:form>
 			</h:panelGroup>
 			<h:panelGroup layout="block" rendered="#{businessException}" style="text-align: center; margin-top: 17px">
 				<h:form>
-					<p:commandButton onclick="PF('exceptionDialog').hide()" value="#{messages.cancel}" />
+					<p:commandButton onclick="PF('exceptionDialog').hide()" value="#{messages.cancel}" type="button"/>
 				</h:form>
 			</h:panelGroup>
 		</p:dialog>
