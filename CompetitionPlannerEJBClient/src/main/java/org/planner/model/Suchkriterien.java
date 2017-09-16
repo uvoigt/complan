@@ -2,9 +2,7 @@ package org.planner.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
@@ -62,11 +60,66 @@ public class Suchkriterien implements Serializable {
 		}
 	}
 
+	public static class Filter implements Serializable {
+
+		public enum Comparison {
+			eq, ne
+		}
+
+		public enum Conditional {
+			or, and
+		}
+
+		private static final long serialVersionUID = 1L;
+
+		private Conditional conditionalOp = Conditional.and;
+		private Comparison comparisonOp = Comparison.eq;
+		private String name;
+		private Object value;
+
+		public Filter(String name, Object value) {
+			this.name = name;
+			this.value = value;
+		}
+
+		public Filter(Conditional conditional, Comparison comparison, String name, Object value) {
+			this.conditionalOp = conditional;
+			this.comparisonOp = comparison;
+			this.name = name;
+			this.value = value;
+		}
+
+		public Comparison getComparisonOperator() {
+			return comparisonOp;
+		}
+
+		public Conditional getConditionalOperator() {
+			return conditionalOp;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public Object getValue() {
+			return value;
+		}
+
+		public void setValue(Object value) {
+			this.value = value;
+		}
+
+		@Override
+		public String toString() {
+			return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+		}
+	}
+
 	private static final long serialVersionUID = 1L;
 
 	private int zeilenOffset;
 	private int zeilenAnzahl;
-	private Map<String, Object> filter;
+	private List<Filter> filter;
 	private boolean ignoreCase = true;
 	private boolean exact;
 	private List<SortField> sortierung;
@@ -88,18 +141,18 @@ public class Suchkriterien implements Serializable {
 		this.zeilenAnzahl = zeilenAnzahl;
 	}
 
-	public Map<String, Object> getFilter() {
+	public List<Filter> getFilter() {
 		return filter;
 	}
 
-	public void addFilter(String name, Object value) {
-		if (filter == null)
-			filter = new HashMap<>();
-		filter.put(name, value);
+	public void addFilter(Filter filter) {
+		if (this.filter == null)
+			this.filter = new ArrayList<>();
+		this.filter.add(filter);
 	}
 
-	public void setFilter(Map<String, Object> filter) {
-		this.filter = filter;
+	public void addFilter(String name, Object value) {
+		addFilter(new Filter(name, value));
 	}
 
 	public boolean isIgnoreCase() {
