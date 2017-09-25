@@ -4,37 +4,72 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
 
 	<ui:decorate template="/templates/edit.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('users')}"/>
-		<ui:param name="bean" value="#{userBean}"/>
+		<ui:param name="title" value="#{messages.bundle('menu').myprofile}"/>
+		<ui:param name="bean" value="#{myProfileBean}"/>
 		<ui:param name="searchLink" value="/sections/start.xhtml"/>
-		<ui:param name="user" value="#{userBean.myUser}"/>
 
 		<ui:define name="editArea">
 
-			<h:panelGroup layout="block">
-				<h:panelGrid columns="2" cellspacing="5">
-					<h:outputText value="#{bundle.userId}"/>
-					<p:inputText value="#{user.userId}" size="30" readonly="#{true}"/>
+			<ui:param name="user" value="#{myProfileBean.user}"/>
+			<ui:param name="addToUpdate" value="currentUser currentUserMenu"/>
 
-					<h:outputText value="#{bundle.firstName}"/>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 10em"><h:outputText value="#{bundle.userId}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:inputText value="#{user.userId}" size="30" readonly="#{true}"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 10em"><h:outputText value="#{bundle.firstName}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.firstName}" autocomplete="off" maxlength="255" size="30" required="true"
 						requiredMessage="#{bundle.format('fieldValidation', bundle.firstName)}"/>
-
-					<h:outputText value="#{bundle.lastName}"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 10em"><h:outputText value="#{bundle.lastName}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.lastName}" autocomplete="off" maxlength="255" size="30" required="true"
 						requiredMessage="#{bundle.format('fieldValidation', bundle.lastName)}"/>
-
-					<h:outputText value="#{bundle.email}"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 10em"><h:outputText value="#{bundle.email}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.email}" autocomplete="off" maxlength="255" size="30" required="true"
 						requiredMessage="#{bundle.format('fieldValidation', bundle.email)}"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 10em"><h:outputText value="#{bundle.club}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+				<c:choose>
+					<c:when test="${user.club.id != null}">
+						<p:inputText value="#{user.club.name}" size="30" readonly="true"/>
+					</c:when>
+					<c:otherwise>
+						<p:inplace label="#{bundle.editClub}">
+							<ui:param name="club" value="#{myProfileBean.newClub}"/>
+							<ui:include src="/masterdata/clubArea.xhtml"/>
+						</p:inplace>
+					</c:otherwise>
+				</c:choose>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 10em"><h:outputText value="#{bundle.roles}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:selectManyMenu value="#{user.roles}" disabled="true" showCheckbox="true" style="width: 94%" styleClass="planner-listbox">
+						<f:selectItems value="#{user.roles}" var="role" itemValue="#{role}" itemLabel="#{role.description}"/>
+					</p:selectManyMenu>
+				</div>
+			</div>
 
-					<h:outputText value="#{bundle.club}"/>
-					<p:inputText value="#{user.club.name}" size="30" readonly="true"/>
-				</h:panelGrid>
-			</h:panelGroup>
 		</ui:define>
 	</ui:decorate>
 </html>
