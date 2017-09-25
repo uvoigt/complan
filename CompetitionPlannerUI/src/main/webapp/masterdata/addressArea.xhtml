@@ -10,43 +10,65 @@
 		<ui:param name="bundle" value="#{messages.bundle('addresses')}"/>
 		<ui:param name="safeAddress" value="#{address != null ? address : addressBean.newAddress()}"/>
 
-		<h:panelGroup layout="block" styleClass="ui-widget-content">
-			<h:panelGrid columns="2" cellspacing="5">
-				<h:outputText value="#{bundle.country}"/>
+		<div class="ui-g" style="clear: both;">
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.country}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<p:autoComplete value="#{safeAddress.country}" converter="#{countryConverter}"
 					completeMethod="#{addressBean.getCountries}" var="country" itemValue="#{country.name}" itemLabel="#{country.name}"
 					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.country)}"
 					readonly="#{not canSave}"/>
-
-				<h:outputText value="#{bundle.city}"/>
+			</div>
+		</div>
+		<div class="ui-g">
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.city}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<p:autoComplete value="#{safeAddress.city}" converter="#{cityConverter}"
 					completeMethod="#{addressBean.getCities}" var="city" itemValue="#{city.name}" itemLabel="#{city.name}"
 					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.city)}"
 					readonly="#{not canSave}"/>
-
-				<h:outputText value="#{bundle.postCode}"/>
+			</div>
+		</div>
+		<div class="ui-g">
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.postCode}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<p:inputText value="#{safeAddress.postCode}" autocomplete="off" maxlength="10" size="10"
 					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.postCode)}"
 					readonly="#{not canSave}"/>
-
-				<h:outputText value="#{bundle.street}"/>
-				<p:inputText value="#{safeAddress.street}" autocomplete="off" maxlength="255" size="92"
+			</div>
+		</div>
+		<div class="ui-g">
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.street}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-8">
+				<p:inputText value="#{safeAddress.street}" autocomplete="off" maxlength="255"
 					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.street)}"
-					readonly="#{not canSave}"/>
-
-				<h:outputText value="#{bundle.number}"/>
+					readonly="#{not canSave}"
+					style="width: 98%"/>
+			</div>
+		</div>
+		<div class="ui-g">
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.number}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<p:inputText value="#{safeAddress.number}" autocomplete="off" maxlength="10" size="10"
 					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.number)}"
 					readonly="#{not canSave}"/>
+			</div>
+		</div>
+		<div class="ui-g">
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.addition}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-8">
+				<p:inputText value="#{safeAddress.addition}" autocomplete="off" maxlength="255"
+					readonly="#{not canSave}"
+					style="width: 98%"/>
+			</div>
+		</div>
+		<div class="ui-g">
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.homepage}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-8">
+				<p:inputText value="#{safeAddress.homepage}" autocomplete="off" maxlength="255"
+					readonly="#{not canSave}"
+					style="width: 98%"/>
+			</div>
+		</div>
 
-				<h:outputText value="#{bundle.addition}"/>
-				<p:inputText value="#{safeAddress.addition}" autocomplete="off" maxlength="255" size="92"
-					readonly="#{not canSave}"/>
-
-				<h:outputText value="#{bundle.homepage}"/>
-				<p:inputText value="#{safeAddress.homepage}" autocomplete="off" maxlength="255" size="92"
-					readonly="#{not canSave}"/>
-			</h:panelGrid>
-		</h:panelGroup>
 	</ui:composition>
 </html>
