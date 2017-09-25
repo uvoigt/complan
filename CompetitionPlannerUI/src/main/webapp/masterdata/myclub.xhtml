@@ -8,27 +8,32 @@
 
 	<ui:decorate template="/templates/edit.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('clubs')}"/>
-		<ui:param name="bean" value="#{clubBean}"/>
+		<ui:param name="title" value="#{messages.bundle('menu').myclub}"/>
+		<ui:param name="bean" value="#{myClubBean}"/>
 		<ui:param name="searchLink" value="/sections/start.xhtml"/>
-		<ui:param name="club" value="#{clubBean.myClub}"/>
+		<ui:param name="club" value="#{myClubBean.club}"/>
 
 		<ui:define name="editArea">
-			<ui:param name="canSave" value="#{roleBean.inOneOf('Admin', 'Applicant-Admin')}"/>
+			<ui:param name="canSave" value="#{roleBean.inRole('Admin', 'Sportwart')}"/>
 
-			<h:panelGroup layout="block">
-				<h:panelGrid columns="2" cellspacing="5">
-					<h:outputText value="#{bundle.name}"/>
-					<p:inputText value="#{club.name}" autocomplete="off" maxlength="255" size="100" required="true"
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.name}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:inputText value="#{club.name}" autocomplete="off" maxlength="255" required="true"
 						requiredMessage="#{bundle.format('fieldValidation', bundle.name)}"
-						readonly="#{not canSave}"/>
+						readonly="#{not canSave}"
+						style="width: 98%"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em; font-weight: bold;"><h:outputText value="#{bundle.address}"/></div>
+				<h:panelGroup layout="block" style="width: 100%;">
+					<ui:param name="address" value="#{club.address}"/>
+					<ui:param name="addressReqired" value="true"/>
+					<ui:include src="addressArea.xhtml"/>
+				</h:panelGroup>
+			</div>
 
-					<h:outputText value="#{bundle.address}"/>
-					<h:panelGroup layout="block">
-						<ui:param name="address" value="#{club.address}"/>
-						<ui:include src="addressArea.xhtml"/>
-					</h:panelGroup>
-				</h:panelGrid>
-			</h:panelGroup>
 		</ui:define>
 	</ui:decorate>
 </html>
