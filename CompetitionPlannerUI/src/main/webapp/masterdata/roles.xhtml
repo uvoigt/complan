@@ -12,19 +12,6 @@
 		<ui:param name="typ" value="org.planner.eo.Role"/>
 		<ui:param name="bearbeitenLink" value="/masterdata/roleEdit.xhtml"/>
 		<ui:param name="editBean" value="#{roleBean}"/>
-		<ui:param name="renderNewButton" value="true"/>
 		<ui:param name="renderImportPanel" value="false"/>
-
-		<ui:define name="buttonExt">
-			<p:commandButton value="#{bundle.massDeleteButton}"
-					actionListener="#{searchBean.alleLoeschen('/admin/schema_verwalten.xhtml', typ, roleBean)}"
-					process="@this"
-					update=":mainContent :messagesPopup :leftMenu"
-					style="margin-right: 5px"
-					onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('massComfirmMsg', 'xxx')}'.replace(/xxx/, $('#jResultCount').text()))">
-				<p:confirm icon=""/>
-			</p:commandButton>
-		</ui:define>
-
 	</ui:decorate>
 </html>
