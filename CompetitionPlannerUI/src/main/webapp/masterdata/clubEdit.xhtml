@@ -13,19 +13,12 @@
 		<ui:param name="club" value="#{clubBean.club}"/>
 
 		<ui:define name="editArea">
-			<h:panelGroup layout="block">
-				<h:panelGrid columns="2" cellspacing="5">
-					<h:outputText value="#{bundle.name}"/>
-					<p:inputText value="#{club.name}" autocomplete="off" maxlength="255" size="100" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.name)}"/>
 
-					<h:outputText value="#{bundle.address}"/>
-					<h:panelGroup layout="block">
-						<ui:param name="address" value="#{club.address}"/>
-						<ui:include src="addressArea.xhtml"/>
-					</h:panelGroup>
-				</h:panelGrid>
-			</h:panelGroup>
+			<h:inputHidden value="#{club.id}"/>
+			<h:inputHidden value="#{club.version}"/>
+
+			<ui:include src="clubArea.xhtml"/>
+
 		</ui:define>
 	</ui:decorate>
 </html>
