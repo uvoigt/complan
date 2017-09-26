@@ -8,78 +8,16 @@
 <body>
 	<ui:composition>
 		<h:outputScript>
-			$.ajaxSetup({
-				dataFilter: function(data) {
-					$(document).off("keydown");
-					if (data.indexOf('#{messages.loginTitle}') != -1) {
-						PrimeFaces.debug("Detected unauthenticated request");
-						var dlg = PF("loginDlg");
-						dlg.jq.find("input[type=text]").val("");
-						dlg.jq.find('input[type=password]').val("");
-						dlg.show();
-						data = emptyResponse();
-					}
-					return data;
-				}
-			});
-		/*	$(document).on('pfAjaxSuccess', function(pf, xhr, cfg) {
-					if (xhr.responseText.indexOf('#{messages.loginTitle}') != -1) {
-						var dlg = PF("loginDlg");
-		//				dlg.show();
-		//				dlg.xhr = xhr;
-						dlg.cfg = cfg;
-					}
-			});*/
-			function sendRecovery() {
-				var dlg = PF("loginDlg");
-				var user = dlg.jq.find("input[type=text]").val();
-				if (user == "") {
-					message('#{messages.loginUserMsg}');
-				} else {
-					var req = new XMLHttpRequest();
-					req.open("GET", "passwordreset?user=" + user);
-					req.onreadystatechange = function() {
-						if (req.readyState == 4) {
-							if (req.status == 200)
-								message(req.responseXML.firstChild.textContent);
-							else
-								message("messages.loginUserError}");
-						}
-					}
-					req.send();
-				}
-			}
 			function login() {
-				var dlg = PF("loginDlg");
-				dlg.jq.find(".ui-button").attr("disabled", true);
-				var req = new XMLHttpRequest();
-				req.open("POST", "j_security_check");
-				req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-				req.onreadystatechange = function() {
-					if (req.readyState == 4) {
-						dlg.jq.find(".ui-button").attr("disabled", false);
-						if (req.status != 200 || req.responseText.indexOf("<title>" + dlg.jq.find("#loginDialog_title").text() + "</title>") != -1) {
-							message('#{messages.loginError}');
-						} else {
-							message("");
-							dlg.hide();
-						//	var ext;
-						//	PrimeFaces.ajax.AjaxRequest(dlg.cfg, ext);
-							refresh();							
-						}
-					}
-				}
-				req.send("j_username=" + dlg.jq.find("input[type=text]").val() + String.fromCharCode(38) + "j_password=" + dlg.jq.find('input[type=password]').val());
+				sendLogin("#{messages.loginError}");
 			}
-			function message(msg) {
-				$(".loginMessage").text(msg);
-			}
+			setupAjax("#{messages.loginTitle}");
 		</h:outputScript>
 		<p:dialog widgetVar="loginDlg" id="loginDialog" header="#{messages.loginTitle}" showEffect="clip" hideEffect="clip"
 				responsive="true" draggable="false" modal="true" closable="false" resizable="false" appendTo="body"
-				onShow="message()">
+				onShow="PF('loginDlg').initPosition(); message()">
 			<h:form>
-				<p:remoteCommand name="refresh" process="@this" update=":mainContent :leftMenu :theme :currentUser"/>
+				<p:remoteCommand name="refresh" process="@this" update=":mainContent :leftMenu :theme :currentUser currentUserMenu"/>
 				<h:panelGroup layout="block" styleClass="loginError loginNoUser loginMessage">
 				</h:panelGroup>
 				<p:panelGrid cellpadding="5" cellspacing="10" styleClass="loginTable">
@@ -101,7 +39,7 @@
 					</p:row>
 					<p:row>
 						<p:column colspan="2" style="text-align: right">
-							<a href="passwordreset" class="passwordRecovery" onclick="sendRecovery(); return false;"><h:outputText value="#{messages.loginRecovery}"/></a>
+							<a href="passwordreset" class="passwordRecovery" onclick="sendRecovery('#{messages.loginUserMsg}', '#{messages.loginUserError}'); return false;"><h:outputText value="#{messages.loginRecovery}"/></a>
 						</p:column>
 					</p:row>
 				</p:panelGrid>
