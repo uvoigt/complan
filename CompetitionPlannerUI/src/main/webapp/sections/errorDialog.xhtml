@@ -14,7 +14,7 @@
 		<ui:param name="bundle" value="#{messages.bundle('exception')}"/>
 		<p:dialog id="exceptionDialog" header="#{bundle.header}"
 				draggable="false" appendTo="body" modal="true" closeOnEscape="true"
-				widgetVar="exceptionDialog" height="#{viewExpired or businessException ? '70px' : '500px'}">
+				widgetVar="exceptionDialog" height="#{viewExpired or businessException ? 'auto' : '25em'}">
 			<h:outputText value="#{bundle.msg}: " style="font-weight: bold"/>
 			<h:outputText value="#{pfExceptionHandler.message}"/>
 			<p:fieldset legend="#{bundle.details}" style="margin: 20px 0 20px 0" rendered="#{not viewExpired and not businessException}">
