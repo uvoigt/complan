@@ -1,4 +1,0 @@
-Username: user8VK
-Password: 8LKt0nHTpI6VGBOm
-Database Name: plannerdb
-Connection URL: mysql://mysql:3306/
