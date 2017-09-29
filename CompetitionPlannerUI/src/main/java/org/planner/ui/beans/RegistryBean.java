@@ -2,6 +2,7 @@ package org.planner.ui.beans;
 
 import java.io.Serializable;
 
+import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
@@ -10,12 +11,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
-import org.planner.util.Logged;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Named
-@Logged
+@RequestScoped
 public class RegistryBean implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -34,7 +34,7 @@ public class RegistryBean implements Serializable {
 			request.logout();
 			request.login(logonName, password);
 		} catch (Exception e) {
-			LOG.error("Fehler beum Passwort-Reset", e);
+			LOG.error("Fehler beim Passwort-Reset", e);
 		}
 	}
 
