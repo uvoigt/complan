@@ -387,7 +387,7 @@
                         <login-module name="Default" code="Database" flag="sufficient">
                             <module-option name="dsJndiName" value="java:jboss/datasources/MySQLDS"/>
                             <module-option name="principalsQuery" value="select password from User where userId=? and (locked=0 or locked is null)"/>
-                            <module-option name="rolesQuery" value="select r.role, 'Roles' from Role r left join User_Role ur on ur.role_id=r.id left join User u on ur.user_id=u.id where u.userId=?1 union all select 'User', 'Roles' from User u where u.userId=?1"/>
+                            <module-option name="rolesQuery" value="select r.role, 'Roles' from Role r left join User_Role ur on ur.role_id=r.id left join User u on ur.user_id=u.id where u.userId=? union select 'User', 'Roles' from Dual"/>
                             <module-option name="hashAlgorithm" value="SHA-512"/>
                             <module-option name="hashCharset" value="UTF-8"/>
                         </login-module>
