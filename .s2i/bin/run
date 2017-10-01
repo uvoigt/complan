@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo "Setting timezone to Leipzig and language to de .... done by Uwe"
+export JAVA_OPTS_EXT=" -Duser.timezone=Europe/Berlin -Duser.language=de"
