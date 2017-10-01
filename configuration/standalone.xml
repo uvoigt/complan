@@ -430,7 +430,7 @@
                 <response-header name="server-header" header-name="Server" header-value="WildFly/10"/>
                 <response-header name="x-powered-by-header" header-name="X-Powered-By" header-value="Undertow/1"/>
                 <filter name="dump-request" class-name="io.undertow.server.handlers.RequestDumpingHandler" module="io.undertow.core"/>
-				<expression-filter name="rewrite" expression="equals('https', %{i,X-Forwarded-Proto}) -> redirect(https://%{i,X-Forwarded-Host}/%U)" />
+				<expression-filter name="rewrite" expression="equals(302, %s) and regex(pattern='http:',value=%{o,Location}) -> redirect(https://%{i,X-Forwarded-Host}%U)" />
             </filters>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:webservices:2.0">
