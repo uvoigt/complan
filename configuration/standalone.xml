@@ -427,6 +427,8 @@
             <filters>
                 <response-header name="server-header" header-name="Server" header-value="WildFly/10"/>
                 <response-header name="x-powered-by-header" header-name="X-Powered-By" header-value="Undertow/1"/>
+                <filter name="dump-request" class-name="io.undertow.server.handlers.RequestDumpingHandler" module="io.undertow.core"/>
+                <!--expression-filter name="rewrite" expression="" /-->
             </filters>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:webservices:2.0">
