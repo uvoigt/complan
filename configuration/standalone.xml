@@ -415,6 +415,7 @@
                     <location name="/" handler="welcome-content"/>
                     <filter-ref name="server-header"/>
                     <filter-ref name="x-powered-by-header"/>
+                    <filter-ref name="dump-request"/>
                 </host>
             </server>
             <servlet-container name="default">
