@@ -13,8 +13,7 @@ import org.planner.ui.beans.Messages;
 public class JsfUtil {
 
 	/**
-	 * @return Liefert das unter dem Key "bundle" in den Context-Attributen
-	 *         gespeicherte {@link Messages}.
+	 * @return Liefert das unter dem Key "bundle" in den Context-Attributen gespeicherte {@link Messages}.
 	 */
 	public static Messages getScopedBundle() {
 		return (Messages) getContextVariable("bundle");
@@ -28,7 +27,8 @@ public class JsfUtil {
 	 * @return das Objekt
 	 */
 	public static Object getContextVariable(String name) {
-		FaceletContext ctx = (FaceletContext) FacesContext.getCurrentInstance().getAttributes().get(FaceletContext.FACELET_CONTEXT_KEY);
+		FaceletContext ctx = (FaceletContext) FacesContext.getCurrentInstance().getAttributes()
+				.get(FaceletContext.FACELET_CONTEXT_KEY);
 		return ctx.getAttribute(name);
 	}
 
@@ -41,8 +41,20 @@ public class JsfUtil {
 	 *            der Wert der Variable
 	 */
 	public static void setContextVariable(String name, Object value) {
-		FaceletContext ctx = (FaceletContext) FacesContext.getCurrentInstance().getAttributes().get(FaceletContext.FACELET_CONTEXT_KEY);
+		FaceletContext ctx = (FaceletContext) FacesContext.getCurrentInstance().getAttributes()
+				.get(FaceletContext.FACELET_CONTEXT_KEY);
 		ctx.setAttribute(name, value);
+	}
+
+	public static Object getViewVariable(String name) {
+		return FacesContext.getCurrentInstance().getViewRoot().getViewMap().get(name);
+	}
+
+	public static void setViewVariable(String name, Object value) {
+		if (value != null)
+			FacesContext.getCurrentInstance().getViewRoot().getViewMap().put(name, value);
+		else
+			FacesContext.getCurrentInstance().getViewRoot().getViewMap().remove(name);
 	}
 
 	private JsfUtil() {
