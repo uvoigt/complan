@@ -1,10 +1,10 @@
 package org.planner.model;
 
-import org.planner.eo.AbstractEntity;
+import java.io.Serializable;
 
 public interface IResultProvider {
 
-	<T extends AbstractEntity> Suchergebnis<T> search(Class<T> entityType, Suchkriterien criteria);
+	<T extends Serializable> Suchergebnis<T> search(Class<T> entityType, Suchkriterien criteria);
 
-	<T extends AbstractEntity> T getObject(Class<T> type, long id);
+	<T extends Serializable> T getObject(Class<T> type, long id, int fetchDepth);
 }
