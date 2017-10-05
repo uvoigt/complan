@@ -54,7 +54,6 @@ import org.planner.model.LocalizedEnum;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.model.Suchkriterien.Filter;
-import org.planner.model.Suchkriterien.Filter.Conditional;
 import org.planner.model.Suchkriterien.SortField;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
@@ -228,8 +227,7 @@ public class PlannerDao {
 	}
 
 	/**
-	 * Liefert das Ergebnis einer Suche auf einer Entitäten-Tabelle (eine Zeile
-	 * pro Entität).
+	 * Liefert das Ergebnis einer Suche auf einer Entitäten-Tabelle (eine Zeile pro Entität).
 	 * 
 	 * @param em
 	 *            der Entity-Manager
@@ -256,14 +254,12 @@ public class PlannerDao {
 		countQuery.select(builder.count(countRoot));
 
 		List<Filter> filters = kriterien.getFilter();
-		if (authorizer != null)
-			filters = authorizer.addFilters(filters != null ? filters : new ArrayList<Filter>());
 		Map<String, Object> modifiedFilterValues = filters != null ? new HashMap<String, Object>() : null;
 
 		buildWhereClause(filters, modifiedFilterValues, kriterien.isExact(), kriterien.isIgnoreCase(), builder,
-				countQuery, countRoot, null);
+				countQuery, countRoot, null, authorizer);
 		TypedQuery<Long> cQuery = em.createQuery(countQuery);
-		setParameters(cQuery, filters, modifiedFilterValues, kriterien.isIgnoreCase());
+		setParameters(cQuery, filters, modifiedFilterValues, kriterien.isIgnoreCase(), authorizer);
 		// wir gehen mal davon aus, dass keine Treffer mit count >
 		// Integer.MAX_VALUE vorkommen werden :-/
 		int totalSize = cQuery.getSingleResult().intValue();
@@ -301,11 +297,11 @@ public class PlannerDao {
 		}
 		//
 		buildWhereClause(filters, modifiedFilterValues, kriterien.isExact(), kriterien.isIgnoreCase(), builder,
-				dataQuery, dataRoot, joined);
+				dataQuery, dataRoot, joined, authorizer);
 		buildOrderByClause(kriterien.getSortierung(), builder, dataQuery, dataRoot);
 
 		TypedQuery<T> query = em.createQuery(dataQuery);
-		setParameters(query, filters, modifiedFilterValues, kriterien.isIgnoreCase());
+		setParameters(query, filters, modifiedFilterValues, kriterien.isIgnoreCase(), authorizer);
 		query.setMaxResults(kriterien.getZeilenAnzahl());
 		query.setFirstResult(kriterien.getZeilenOffset());
 
@@ -341,10 +337,16 @@ public class PlannerDao {
 	}
 
 	private void buildWhereClause(List<Filter> filters, Map<String, Object> modifiedFilterValues, boolean exact,
-			boolean ignoreCase, CriteriaBuilder builder, CriteriaQuery<?> query, From<?, ?> root, Set<String> joined) {
+			boolean ignoreCase, CriteriaBuilder builder, CriteriaQuery<?> query, Root<?> root, Set<String> joined,
+			Authorizer authorizer) {
 
 		List<Predicate> wherePredicates = null;
-		List<Conditional> ops = null;
+		if (authorizer != null) {
+			Predicate predicate = authorizer.createPredicate(root, builder);
+			if (wherePredicates == null)
+				wherePredicates = new ArrayList<>();
+			wherePredicates.add(predicate);
+		}
 		if (filters != null) {
 			if (joined == null)
 				joined = new HashSet<>();
@@ -360,37 +362,21 @@ public class PlannerDao {
 				Expression<String> columnExp = from.get(property);
 
 				Predicate predicate = handleColumnTypes(modifiedFilterValues, exact, ignoreCase, builder, filter,
-						property, columnExp);
+						columnExp);
 
-				if (wherePredicates == null) {
+				if (wherePredicates == null)
 					wherePredicates = new ArrayList<>();
-					ops = new ArrayList<>();
-				}
 				wherePredicates.add(predicate);
-				ops.add(filter.getConditionalOperator());
 			}
 		}
-		if (wherePredicates != null) {
-			Expression<Boolean> restriction = null;
-			for (int i = 0; i < wherePredicates.size(); i++) {
-				Predicate predicate = wherePredicates.get(i);
-				Conditional op = ops.get(i);
-				if (restriction == null) {
-					restriction = predicate;
-				} else {
-					if (op == Conditional.and)
-						restriction = builder.and(restriction, predicate);
-					else
-						restriction = builder.or(restriction, predicate);
-				}
-			}
-			query.where(restriction);
-		}
+		if (wherePredicates != null)
+			query.where(builder.and(wherePredicates.toArray(new Predicate[wherePredicates.size()])));
 	}
 
 	private Predicate handleColumnTypes(Map<String, Object> modifiedFilterValues, boolean exact, boolean ignoreCase,
-			CriteriaBuilder builder, Filter filter, String property, Expression<String> columnExp) {
+			CriteriaBuilder builder, Filter filter, Expression<String> columnExp) {
 		Predicate predicate = null;
+		String property = filter.getName().replace('.', '_');
 		if (String.class.equals(columnExp.getJavaType())) {
 			if (exact) {
 				if (ignoreCase)
@@ -541,17 +527,19 @@ public class PlannerDao {
 	 *            die Argumentliste
 	 * @param modifiedFilterValues
 	 *            ggf. modifizierte Filter
+	 * @param authorizer
+	 *            optionaler Authorizer
 	 */
 	private void setParameters(Query query, List<Filter> args, Map<String, Object> modifiedFilterValues,
-			boolean ignoreCase) {
+			boolean ignoreCase, Authorizer authorizer) {
+		if (authorizer != null)
+			authorizer.setParameters(query);
 		if (args != null) {
 			for (Filter filter : args) {
 				String property = filter.getName();
 				Object arg = modifiedFilterValues.containsKey(property) ? modifiedFilterValues.get(property)
 						: filter.getValue();
-				if (hasDottedNotation(property)) {
-					property = followDots(property, null, null).getValue();
-				}
+				property = property.replace('.', '_');
 				if (arg instanceof Date) {
 					query.setParameter(property, (Date) arg, TemporalType.DATE);
 				} else {
