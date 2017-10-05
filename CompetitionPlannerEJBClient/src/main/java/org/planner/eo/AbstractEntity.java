@@ -45,6 +45,14 @@ public abstract class AbstractEntity implements Serializable {
 		this.id = id;
 	}
 
+	public int getVersion() {
+		return version;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
+	}
+
 	public String getCreateUser() {
 		return createUser;
 	}
