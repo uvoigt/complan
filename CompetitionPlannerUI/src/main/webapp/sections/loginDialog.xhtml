@@ -17,7 +17,7 @@
 				responsive="true" draggable="false" modal="true" closable="false" resizable="false" appendTo="body"
 				onShow="PF('loginDlg').initPosition(); message()">
 			<h:form>
-				<p:remoteCommand name="refresh" process="@this" update=":mainContent :leftMenu :theme :currentUser currentUserMenu"/>
+				<p:remoteCommand name="refresh" process="@this" update="leftMenu theme currentUser currentUserMenu"/>
 				<h:panelGroup layout="block" styleClass="loginError loginNoUser loginMessage">
 				</h:panelGroup>
 				<p:panelGrid cellpadding="5" cellspacing="10" styleClass="loginTable">

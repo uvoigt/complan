@@ -8,77 +8,73 @@
 <head />
 <body>
 	<ui:composition>
-		<h:form id="leftMenu">
-			<h:outputScript>
-			function selectSidebarLink(link) {
-				$("#leftMenu").find(".ui-state-active").removeClass("ui-state-active");
-				if (link) {
-					$(link).addClass("ui-state-active");
-				}
-				hideHelp();
-			}
-			function hideHelp() {
-				PF("layout").hide("east");
-			}
-			function toggleHelp() {
-				var layout = PF("layout");
-				if (layout.layout.east.state.isVisible)
-					layout.hide("east");
-				else
-					layout.show("east");
-			}
-			</h:outputScript>
-			<ui:param name="bundle" value="#{messages.bundle('menu')}"/>
-			<p:menu my="left top" toggleable="true">
-				<p:menuitem value="#{bundle.myprofile}"
-						action="#{startseiteBean.setMainContent('/masterdata/myprofile.xhtml')}"
-						process="@this"
-						update=":mainContent :messages"
-						rendered="#{roleBean.inOneOf('User')}"
-						onclick="selectSidebarLink(this)"/>
-				<p:menuitem value="#{bundle.myclub}"
-						action="#{startseiteBean.setMainContent('/masterdata/myclub.xhtml')}"
-						process="@this"
-						update=":mainContent :messages"
-						rendered="#{roleBean.inOneOf('User')}"
-						onclick="selectSidebarLink(this)"/>
-				<p:menuitem value="#{bundle.announcement}"
-						action="#{startseiteBean.setMainContent('/announcement/announcements.xhtml')}"
-						process="@this"
-						update=":mainContent :messages"
-						rendered="#{roleBean.inOneOf('Applicant', 'Announcer')}"
-						onclick="selectSidebarLink(this)"/>
-				<p:menuitem value="#{bundle.registration}"
-						action="#{startseiteBean.setMainContent('/registration/registrations.xhtml')}"
-						process="@this"
-						update=":mainContent :messages"
-						rendered="#{facesContext.externalContext.isUserInRole('Applicant')}"
-						onclick="selectSidebarLink(this)"/>
-				<p:menuitem value="#{bundle.users}"
-						action="#{startseiteBean.setMainContent('/masterdata/users.xhtml')}"
-						process="@this"
-						update=":mainContent :messages"
-						rendered="#{facesContext.externalContext.isUserInRole('Admin')}"
-						onclick="selectSidebarLink(this)"/>
-				<p:menuitem value="#{bundle.clubs}"
-						action="#{startseiteBean.setMainContent('/masterdata/clubs.xhtml')}"
-						process="@this"
-						update=":mainContent :messages"
-						rendered="#{facesContext.externalContext.isUserInRole('Admin')}"
-						onclick="selectSidebarLink(this)"/>
-				<p:menuitem value="#{bundle.roles}"
-						action="#{startseiteBean.setMainContent('/masterdata/roles.xhtml')}"
-						process="@this"
-						update=":mainContent :messages"
-						rendered="#{facesContext.externalContext.isUserInRole('Admin')}"
-						onclick="selectSidebarLink(this)"/>
-				<p:menuitem value="#{bundle.help}"
-						process="@this"
-						update="mainContent help"
-						oncomplete="toggleHelp()"/>
-			</p:menu>
-			<p:panelMenu model="#{startseiteBean.menu}" style="min-width: 200px"/>
-		</h:form>
+		<h:panelGroup id="leftMenuContainer" layout="block">
+			<h:form id="leftMenu">
+				<ui:param name="bundle" value="#{messages.bundle('menu')}"/>
+				<p:menu my="left top" toggleable="true">
+					<p:menuitem value="#{bundle.myprofile}"
+							action="#{startseiteBean.setMainContentAndReset('/masterdata/myprofile.xhtml')}"
+							process="@this"
+							update=":mainContent"
+							rendered="#{roleBean.inRole('User')}"
+							onclick="selectSidebarLink(this)"
+							oncomplete="navItemSelected()"/>
+					<p:menuitem value="#{bundle.myclub}"
+							action="#{startseiteBean.setMainContentAndReset('/masterdata/myclub.xhtml')}"
+							process="@this"
+							update=":mainContent"
+							rendered="#{roleBean.inRole('User')}"
+							onclick="selectSidebarLink(this)"
+							oncomplete="navItemSelected()"/>
+					<p:menuitem value="#{bundle.announcement}"
+							action="#{startseiteBean.setMainContentAndReset('/announcement/announcements.xhtml')}"
+							process="@this"
+							update=":mainContent"
+							rendered="#{roleBean.inRole('User')}"
+							onclick="selectSidebarLink(this)"
+								oncomplete="navItemSelected()"/>
+					<p:menuitem value="#{bundle.registration}"
+							action="#{startseiteBean.setMainContentAndReset('/announcement/registrations.xhtml')}"
+							process="@this"
+							update=":mainContent"
+							rendered="#{roleBean.inRole('User')}"
+							onclick="selectSidebarLink(this)"
+							oncomplete="navItemSelected()"/>
+					<p:menuitem value="#{bundle.program}"
+							action="#{startseiteBean.setMainContentAndReset('/announcement/programs.xhtml')}"
+							process="@this"
+							update=":mainContent"
+							rendered="#{roleBean.inRole('User')}"
+							onclick="selectSidebarLink(this)"
+							oncomplete="navItemSelected()"/>
+					<p:menuitem value="#{bundle.users}"
+							action="#{startseiteBean.setMainContentAndReset('/masterdata/users.xhtml')}"
+							process="@this"
+							update=":mainContent"
+							rendered="#{roleBean.inRole('Admin', 'Sportwart')}"
+							onclick="selectSidebarLink(this)"
+							oncomplete="navItemSelected()"/>
+					<p:menuitem value="#{bundle.clubs}"
+							action="#{startseiteBean.setMainContentAndReset('/masterdata/clubs.xhtml')}"
+							process="@this"
+							update=":mainContent"
+							rendered="#{roleBean.inRole('Admin')}"
+							onclick="selectSidebarLink(this)"
+							oncomplete="navItemSelected()"/>
+					<p:menuitem value="#{bundle.roles}"
+							action="#{startseiteBean.setMainContentAndReset('/masterdata/roles.xhtml')}"
+							process="@this"
+							update=":mainContent"
+							rendered="#{roleBean.inRole('Admin')}"
+							onclick="selectSidebarLink(this)"
+							oncomplete="navItemSelected()"/>
+					<p:menuitem value="#{bundle.help}"
+							process="@this"
+							update="help"
+							oncomplete="toggleHelp()"/>
+				</p:menu>
+			</h:form>
+		</h:panelGroup>
 	</ui:composition>
 </body>
 </html>

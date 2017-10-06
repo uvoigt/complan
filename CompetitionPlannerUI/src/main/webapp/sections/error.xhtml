@@ -5,16 +5,14 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:p="http://primefaces.org/ui">
-<h:head />
+<h:head/>
 <h:body>
-	<h:form style="text-align: center">
-		<p:commandButton
+	<form action="" style="text-align: center">
+		<p:button type="button" href=""
 			value="#{messages['header.logout']}"
-			action="#{startseiteBean.logout()}"
 			style="border: none; border-radius: 5px; background-color: black; color: white; cursor: pointer;"
-			immediate="true"
-			onsuccess="location.replace('#{facesContext.externalContext.request.contextPath}/index.xhtml')"/>
-	</h:form>
+			onclick="$.post('#{facesContext.externalContext.request.contextPath}/logout').done(function() { location.replace('#{facesContext.externalContext.request.contextPath}/index.xhtml') })"/>
+	</form>
 	<h:outputText value="Message:#{pfExceptionHandler.message}" rendered="#{pfExceptionHandler.message != null}"/>
 	<h:outputText value="#{pfExceptionHandler.formattedStackTrace}" escape="false"/>
 </h:body>

@@ -1,37 +1,27 @@
 @CHARSET "UTF-8";
-/* --  HEADER -- */
-body {
-	font-family: verdana;
-	font-size: 12px;
-}
-
 #heading {
 	padding: 0px;
-	height: 101px;
-	margin-bottom: 10px;
-	border-bottom: 1px solid #ccc
-}
-
-#heading #logo {
-	float: left;
-	height: 100px;
-	width: 200px;
-	margin: 0;
+	overflow: hidden;
 }
 
 #heading #title {
-	display: table-cell;
 	font-size: large;
-	vertical-align: middle;
-	height: inherit;
-	text-indent: 30px;
+	padding-left: 1em;
+}
+
+#heading #title a {
+	text-decoration: none;
+}
+
+#userimg {
+	cursor: pointer;
+	margin-right: 65%;
 }
 
 #heading #logout {
-	display: table-cell;
 	position: fixed;
 	right: 0;
-	top: 0;
+	top: 0.2em;
 }
 
 #heading #logout select {
@@ -49,76 +39,80 @@ body {
 	text-decoration: underline;
 }
 
-#content #main {
-	min-width: 750px;
+.profileMenu {
+	width: 12.5em;
+	font-size: smaller;
+	text-align: center;
 }
 
-.ui-panel .ui-panel-titlebar {
-    padding: 0.3em 1em 0.3em !important;
+#leftMenuContainer {
+	float: left;
+	display: inherit;
 }
 
-.ui-corner-all {
-    border-radius: 2px;
+#contentGroup {
+	height: 100%;	
 }
-.ui-inputfield {
-	border-bottom: 1px solid #A8A8A8 !important;
+
+#mainContent {
+	position: relative;
+	min-height: 100%;
+	margin-left: 13.3em;
 }
-.ui-panel {
-	margin-top: 10px !important;
-	margin-bottom: 10px !important;
+
+#menuButton {
+	margin: 0 10px 0 10px;
+	padding: 1px 4px 3px 2px;
+	float: left;
 	border: none;
-}
-.ui-widget {
-	font-size: 11px;
-}
-
-.panelLeft { 
-	float:left; 
-	font-size:11px;
-	width: 50%; 
+	cursor: pointer;
+	display: none;
 }
 
-.panelLeftSmall { 
-	float:left; 
-	width: 155px; 
-	font-size:11px; 
-	padding: 5px;
+#menuButton > div {
+	position: relative;
+	height: 5px;
+	top: -8px;
 }
 
-.panelRight { 
-	float:left; 
-	font-size:11px; 
-	text-align:left;
-}
-
-.panelRightSmall { 
-	float:right; 
-	width: 155px; 
-	font-size:11px; 
-	padding: 5px; 
-}
-
-.ui-datatable .ui-row-editor {
-	float: right;
-	padding-top: 4px;
-}
-
-.ui-picklist-list {
-	width: 270px !important;
-}
-
-.ui-picklist .ui-icon {
-	right: 10px !important;
-}
-
-.clearWhite { 
-	clear: both; 
-	border-bottom: 1px solid #FFFFFF; 
-}
-
-.inputLabel {
+#start {
+	text-align: center;
 	font-weight: bold;
-	margin-right: 30px; 
+	position: absolute;
+	top: 50%;
+	height: 50%;
+	width: 100%;
+}
+
+@media only screen and (max-width: 700px) {
+	#mainContent {
+		margin-left: 0;
+	}
+	#leftMenuContainer {
+		position: fixed;
+		z-index: 1;
+		display: none;
+	}
+	.menuHidden {
+		display: none;
+	}
+	#menuButton {
+		display: inherit;
+	}
+	#theme {
+		display: none;
+	}
+	#userimg {
+		/* margin-right: 30%; */
+	}
+/* 	input {
+	haut nicht hin beim spinner!
+		width: 94%;
+	}
+ */}
+
+.ui-columntoggler {
+	height: auto !important;
 }
 
 .editButton {
@@ -176,7 +170,8 @@ td.hiddenHintCol {
 }
 
 .loginNoUser {
-	padding-top: 3px;	
+	padding-top: 3px;
+	width: 20em;	
 }
 
 input[readonly=readonly] {
@@ -185,6 +180,14 @@ input[readonly=readonly] {
 	background-image: none;
 }
 
-.planner-icon-races {
-	
+.planner-listbox li.ui-state-disabled {
+	background-color: inherit;
+	color: inherit;
+	opacity: inherit;
+	filter: inherit;
+}
+
+.registrationIncomplete {
+	background-color: #e41d1d66;
+	background-image: none;
 }

@@ -10,35 +10,42 @@
 	<ui:composition>
 		<ui:param name="bundle" value="#{messages.bundle('header')}"/>
 		<div id="heading">
-			<div id="logo">
+			<div style="width: 16px;height: 16px;" id="menuButton" onclick="$('#leftMenuContainer').toggle('slide')"
+					onmouseover="$(this).addClass('ui-state-hover')" onmouseout="$(this).removeClass('ui-state-hover')">
+				<div>―</div><div>―</div><div>―</div>
+			</div>
+			<h:panelGroup id="title" layout="block">
 				<h:form>
 					<p:commandLink action="#{startseiteBean.setMainContent('/sections/start.xhtml')}"
 							update=":mainContent :messages :leftMenu" process="@this" style="outline: none"
-							oncomplete="hideHelp()">
-						<p:graphicImage value="/resources/images/logo.png" style="border: none; height: 100px;"/>
+							oncomplete="hideHelp(); setUrlParam()"
+							value="#{bundle.title}">
 					</p:commandLink>
 				</h:form>
-			</div>
-			<h:panelGroup id="title">
-				<p:outputLabel value="#{bundle.title}"/>
 			</h:panelGroup>
 			<div id="logout">
 				<h:form id="theme">
 					<h:outputScript>
 						PrimeFaces.changeTheme('#{startseiteBean.theme}');
 					</h:outputScript>
+					<f:passThroughAttribute name="autocomplete" value="off"/>
+					<h:outputText value="#{bundle.theme}" style="margin-right: 1em"/>
 					<h:selectOneMenu value="#{startseiteBean.theme}" onchange="PrimeFaces.changeTheme(this.options[this.selectedIndex].value);" styleClass="ui-widget-content">
-						<f:selectItems value="#{'afterdark,afternoon,afterwork,aristo,black-tie,blitzer,bluesky,bootstrap,casablanca,cupertino,cruze,dark-hive,delta,dot-luv,eggplant,excite-bike,flick,glass-x,home,hot-sneaks,humanity,le-frog,midnight,mint-choc,overcast,pepper-grinder,redmond,rocket,sam,smoothness,south-street,start,sunny,swanky-purse,trontastic,ui-darkness,ui-lightness,vader'.split(',')}"/>
+						<f:selectItems value="#{'afterdark,afternoon,afterwork,aristo,black-tie,blitzer,bluesky,bootstrap,casablanca,cupertino,cruze,dark-hive,delta,dot-luv,eggplant,excite-bike,flick,glass-x,home,hot-sneaks,humanity,le-frog,midnight,mint-choc,omega,overcast,pepper-grinder,redmond,rocket,sam,smoothness,south-street,start,sunny,swanky-purse,trontastic,ui-darkness,ui-lightness,vader'.split(',')}"/>
 						<f:ajax partialSubmit="true"/>
 					</h:selectOneMenu>
 				</h:form>
-				<h:form id="currentUser">
+				<h:panelGroup id="currentUser">
 					#{startseiteBean.saveLastLogonTime()}
-					#{bundle.format('loggedin', startseiteBean.leseBenutzerNamen(request.remoteUser))}
-					-
-					<p:commandLink value="#{bundle.logout}" action="#{startseiteBean.logout()}" immediate="true"
-						onsuccess="location.reload()" process="@this" update="@none"/>
-				</h:form>
+					<p:graphicImage id="userimg" value="userimg" alt="" cache="false" stream="false" width="32" height="32"
+						title="#{bundle.format('loggedin', startseiteBean.leseBenutzerNamen(request.remoteUser))}"/>
+					<p:overlayPanel id="currentUserMenu" my="middle top" for="userimg" styleClass="profileMenu" widgetVar="profileMenu" appendToBody="true">
+						<p:graphicImage value="userimg" alt="" cache="false" stream="false" />
+						<form action="logout">
+							<a href="javascript:void(0)" onclick="setUrlParam(); $.post('logout').always(function() { location.reload() })"><h:outputText value="#{bundle.logout}"/></a>
+						</form>
+					</p:overlayPanel>
+				</h:panelGroup>
 			</div>
 		</div>
 	</ui:composition>

@@ -10,29 +10,90 @@
 <ui:composition template="/templates/title.xhtml">
 <ui:define name="content">
 
+	<ui:param name="renderCrudButtonsValue" value="#{renderCrudButtons != null ? renderCrudButtons : true}"/>
+	<ui:param name="renderNewButtonValue" value="#{renderNewButton != null ? renderNewButton : true}"/>
+	<ui:param name="renderCopyButtonValue" value="#{renderCopyButton != null ? renderCopyButton : true}"/>
+
 	<h:form id="datenForm" onkeypress="if (event.keyCode == 13) return false;">
 
-		<p:remoteCommand id="updateCommand" name="updateResultCount" process="@this" update="suchErgebnisTable:resultCount"/>
+		<h:outputScript>
+		function checkEmpty() {
+			if ($(".ui-datatable-empty-message").length > 0)
+				updateResultCount(0);
+		}
+		function updateResultCount(count) {
+			if (count == undefined)
+				count = PF("suchErgebnisTable").tbody.children().length;
+			var l = $("[id*=resultCountLabel]");
+			l.text('#{bundle.format("count", "xxx")}'.replace(/xxx/, count));
+		}
+		function updateColumnWidth(buttonCount) {
+			$("[id*=aktionenColumn]").css("width", "calc(2.5em * " + buttonCount + " + 10px)");
+		}
+		$(".ui-columntoggler").remove();
+		
+		</h:outputScript>
+
+		<h:panelGrid columns="2" width="100%">
+			<h:panelGroup layout="block" style="margin: 5px; float: left">
+				<p:commandButton value="#{bundle.newButton}"
+					action="#{searchBean.anlegen(bearbeitenLink, typ, editBean)}"
+					process="@this"
+					update=":mainContent"
+					style="margin-right: 5px"
+					rendered="#{renderCrudButtonsValue and renderNewButtonValue}"/>
+	
+				<ui:insert name="buttonExt"/>
+			</h:panelGroup>
+			<h:panelGroup layout="block" style="margin: 5px; float: right" rendered="#{renderDownloadPanel}">
+				<p:commandButton value="#{bundle.download}"
+						ajax="false"
+						action="#{uploadBean.download(typ)}"
+						style="float: left; margin-top: 3px">
+				</p:commandButton>
+				<h:panelGroup layout="block" style="float: left">
+					<p:fileUpload fileUploadListener="#{uploadBean.upload}"
+							update="importPanel suchErgebnisTable"
+							multiple="true"
+							label="#{bundle.chooseUpload}"
+							uploadLabel="#{bundle.upload}"
+							cancelLabel="#{messages.cancel}"
+							style="float: left"/>
+					<h:panelGrid id="importPanel" columns="3" style="margin: 5px" rendered="#{renderImportPanel}">
+						<p:outputLabel value="#{bundle.format('uploaded', uploadBean.uploadedSize)}"/>
+						<p:commandButton value="#{bundle.process}" action="#{uploadBean.processUploaded}"
+								process="@this"
+								update="importPanel :leftMenu suchErgebnisTable"
+								disabled="#{uploadBean.uploadedSize == 0}"/>
+						<p:commandButton value="#{messages.delete}" action="#{uploadBean.deleteUploaded}"
+								process="@this"
+								update="importPanel"
+								disabled="#{uploadBean.uploadedSize == 0}"/>
+					</h:panelGrid>
+				</h:panelGroup>
+			</h:panelGroup>
+		</h:panelGrid>
 
 		<p:dataTable id="suchErgebnisTable" widgetVar="suchErgebnisTable"
-				var="item" rowKey="#{item.id}"
+				var="item" rowKey="#{item.id}" rowIndexVar="rowIndex"
 				value="#{searchBean.getDataModel(typ)}"
 				lazy="true" paginator="true" paginatorAlwaysVisible="false"
 				emptyMessage="#{bundle.noResult}" filterEvent="enter"
 				sortMode="multiple"
 				binding="#{searchBean.datatable[null]}"
-				rows="10" rowsPerPageTemplate="10,20,50">
+				rows="#{searchBean.numberOfRows}" rowsPerPageTemplate="50,100,500,1000"
+				reflow="true">
 
-			<f:facet name="footer">
+			<f:facet name="header">
 				<h:panelGroup id="resultCount">
-					<p:outputLabel value="#{bundle.format('count', searchBean.getDataModel(typ).rowCount)}"/>
-					<span id="jResultCount" style="visibility: hidden;">#{searchBean.getDataModel(typ).rowCount}</span>
+					<p:outputLabel id="resultCountLabel"/>
 				</h:panelGroup>
 			</f:facet>
 
-			<p:ajax event="filter" oncomplete="updateResultCount()"/>
+			<p:ajax event="page" listener="#{searchBean.onPagination}"/>
+			<p:ajax event="filter" listener="#{searchBean.onFilter}" oncomplete="checkEmpty()"/>
 			<p:ajax event="sort" listener="#{searchBean.onSort}"/>
-			<f:event type="preRenderView" listener="#{searchBean.preRenderViewListener}"/>
+			<f:event type="preRenderComponent" listener="#{searchBean.onPrerenderTable}"/>
 
 			<p:columns var="column" value="#{searchBean.getColumns(typ)}"
 					filterBy="#{item[column.property]}"
@@ -47,75 +108,49 @@
 				<h:graphicImage value="#{wert}" rendered="#{isImage}"/>
 				<h:outputText value="#{wert}" rendered="#{!isImage}"/>
 			</p:columns>
+			<!--  diese column is ggf. nicht sichtbar.. dann ist der Property-Value null -->
 			<ui:param name="firstProperty" value="#{searchBean.getColumns(typ)[0].property}"/>
-			<p:column id="aktionenColumn" toggleable="false" style="width: #{searchBean.calcColWidth(component)}px" styleClass="hiddenHintCol">
+
+			<p:column id="aktionenColumn" toggleable="false" style="width: calc(2.5em * #{searchBean.getButtonCount(component)} + 10px)" styleClass="hiddenHintCol">
 				<f:facet name="header">
 					<h:outputText value="#{messages.tableHeaderActions}"/>
 					<p:commandButton id="toggler" type="button" title="Spalten" style="float:right" icon="ui-icon-calculator" />
-					<p:columnToggler datasource="suchErgebnisTable" trigger="toggler">
-						<p:ajax event="toggle" listener="#{searchBean.columnChooserListener}"/>
+					<p:columnToggler datasource="suchErgebnisTable" trigger="toggler" widgetVar="toggler">
+						<p:ajax event="toggle" listener="#{searchBean.columnChooserListener}" update="suchErgebnisTable" onstart="PF('toggler').hide()"/>
 					</p:columnToggler>
 				</f:facet>
-			
-				<p:commandButton icon="ui-icon-pencil" title="#{bundle.modify}"
+
+				<p:commandButton id="bearbeitenButton" icon="ui-icon-pencil" title="#{bundle.modify}"
 						action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
-						process="@this"
+						process="@form"
 						update=":mainContent"
-						styleClass="editButton"/>
+						styleClass="editButton"
+						rendered="#{renderCrudButtonsValue}"/>
+
 				<ui:insert name="addRowButtons"/>
+
 				<p:commandButton icon="ui-icon-copy" title="#{bundle.copy}"
 						action="#{searchBean.kopieren(bearbeitenLink, typ, item, editBean)}"
 						process="@this"
-						update=":mainContent :messages"/>
+						update=":mainContent"
+						rendered="#{renderCrudButtonsValue and renderCopyButtonValue}"/>
 				<p:commandButton icon="ui-icon-trash" title="#{bundle.delete}"
 						action="#{searchBean.loeschen(typ, item.id)}"
 						process="@this"
-						update="suchErgebnisTable :messagesPopup"
+						update="suchErgebnisTable messagesPopup"
+						rendered="#{renderCrudButtonsValue}"
 						onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')">
 					<p:confirm icon=""/>
 				</p:commandButton>
 				<h:panelGroup layout="block" id="rowInfo" styleClass="hiddenHint"/>
-				<p:tooltip for="rowInfo" value="#{messages.format('lastChangeHover', item.updateTime, startseiteBean.leseBenutzerNamen(item.updateUser))}"/>
+				<h:outputScript rendered="#{rowIndex == 0}">
+					updateResultCount(#{searchBean.getDataModel(typ).rowCount});
+				</h:outputScript>
+				<h:outputScript rendered="#{rowIndex == (searchBean.getDataModel(typ).rowCount - 1)}">
+					updateColumnWidth(#{searchBean.getMaxButtonCount(component)});
+				</h:outputScript>
 			</p:column>
 		</p:dataTable>
-
-		<h:panelGroup layout="block" style="margin: 5px; float: left">
-			<p:commandButton value="#{bundle.newButton}"
-				action="#{searchBean.anlegen(bearbeitenLink, typ, editBean)}"
-				process="@this"
-				update=":mainContent"
-				style="margin-right: 5px"
-				rendered="#{renderNewButton}"/>
-
-			<ui:insert name="buttonExt"/>
-		</h:panelGroup>
-		<h:panelGroup layout="block" style="margin: 5px; float: right" rendered="#{renderDownloadPanel}">
-			<p:commandButton value="#{bundle.download}"
-					ajax="false"
-					action="#{uploadBean.download(typ)}"
-					style="float: left; margin-top: 3px">
-			</p:commandButton>
-			<h:panelGroup layout="block" style="float: left">
-				<p:fileUpload fileUploadListener="#{uploadBean.upload}"
-						update="importPanel :messagesPopup suchErgebnisTable"
-						multiple="true"
-						label="#{bundle.chooseUpload}"
-						uploadLabel="#{bundle.upload}"
-						cancelLabel="#{messages.cancel}"
-						style="float: left"/>
-				<h:panelGrid id="importPanel" columns="3" style="margin: 5px" rendered="#{renderImportPanel}">
-					<p:outputLabel value="#{bundle.format('uploaded', uploadBean.uploadedSize)}"/>
-					<p:commandButton value="#{bundle.process}" action="#{uploadBean.processUploaded}"
-							process="@this"
-							update="importPanel :messagesPopup :leftMenu suchErgebnisTable"
-							disabled="#{uploadBean.uploadedSize == 0}"/>
-					<p:commandButton value="#{messages.delete}" action="#{uploadBean.deleteUploaded}"
-							process="@this"
-							update="importPanel"
-							disabled="#{uploadBean.uploadedSize == 0}"/>
-				</h:panelGrid>
-			</h:panelGroup>
-		</h:panelGroup>
 
 	</h:form>
 

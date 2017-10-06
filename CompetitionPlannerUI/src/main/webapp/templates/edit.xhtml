@@ -12,23 +12,30 @@
 			<ui:param name="canSave" value="#{true}"/>
 
 			<h:form>
+
 				<p:hotkey bind="esc" action="#{startseiteBean.setMainContent(searchLink)}" process="@this" update=":mainContent"/>
 				<ui:insert name="editArea"/>
-				<h:outputScript>
-				/*	$(":input[type=text]").keydown(function(event) {
-					}); */
-				</h:outputScript>
-				<h:panelGroup layout="block" style="padding-top: 20px">
-					<p:commandButton value="#{messages.save}" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" style="margin-right: 2em;"
+
+				<h:panelGroup layout="block" style="padding-top: 1em;">
+					<p:commandButton value="#{messages.save}" id="btnSave" styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+						style="margin-right: 0.5em;"
 						action="#{bean.save(searchLink)}"
 						process="@form"
-						update=":messages :mainContent"
+						update=":messages :mainContent #{addToUpdate}"
 						rendered="#{canSave}"/>
 					<p:commandButton value="#{messages.cancel}" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
 						action="#{startseiteBean.setMainContent(searchLink)}"
 						process="@this"
 						update=":messages :mainContent"/>
+					<p:defaultCommand target="btnSave" />
 				</h:panelGroup>
+
+				<h:outputScript rendered="#{not empty facesContext.messageList}">
+					setTimeout(function() {
+						$(".ui-layout-unit-content").eq(1).scrollTop(0);
+					}, 100);
+				</h:outputScript>
+
 			</h:form>
 		</ui:define>
 	</ui:composition>
