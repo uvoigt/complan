@@ -9,10 +9,6 @@
 			<supported-locale>de</supported-locale>
 			<supported-locale>au</supported-locale>
 		</locale-config>
-		<resource-bundle>
-			<base-name>MessagesBundle</base-name>
-			<var>msgs</var>
-		</resource-bundle>
 		<el-resolver>org.primefaces.application.exceptionhandler.PrimeExceptionHandlerELResolver</el-resolver>
 	</application>
 	<factory>
