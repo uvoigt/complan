@@ -10,8 +10,11 @@ import org.planner.eo.AbstractEnum;
 import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Club;
+import org.planner.eo.Program;
 import org.planner.eo.Properties;
 import org.planner.eo.Race;
+import org.planner.eo.RegEntry;
+import org.planner.eo.Registration;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.IResultProvider;
@@ -27,7 +30,7 @@ public interface ServiceFacade extends IResultProvider {
 
 	void delete(Class<? extends AbstractEntity> entityType, Long id);
 
-	void delete(Class<? extends AbstractEntity> entityType, List<Long> ids);
+	void deleteRaces(Long announcementId, List<Long> raceIds);
 
 	// int speichernMitFilter(DatenSuchkriterien kriterien, Map<String, String>
 	// werte);
@@ -54,8 +57,6 @@ public interface ServiceFacade extends IResultProvider {
 
 	void saveLastLogonTime();
 
-	User getUserById(Long id);
-
 	String getUserName(String userId);
 
 	List<Role> getRoles();
@@ -79,4 +80,19 @@ public interface ServiceFacade extends IResultProvider {
 
 	void saveRace(Race race);
 
+	List<Announcement> getOpenAnnouncements();
+
+	Long createRegistration(Registration registration);
+
+	void announce(Long announcementId);
+
+	void saveRegEntries(Long registrationId, List<RegEntry> entries);
+
+	void deleteFromRegEntry(Long registrationId, RegEntry entry);
+
+	void submitRegistration(Long registrationId);
+
+	Long createProgram(Program program);
+
+	Program generateProgram(Program program);
 }
