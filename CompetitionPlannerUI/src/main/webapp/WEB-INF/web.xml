@@ -27,15 +27,19 @@
     <param-value>65535</param-value>
   </context-param>
   <context-param>
+    <param-name>javax.faces.INTERPRET_EMPTY_STRING_SUBMITTED_VALUES_AS_NULL</param-name>
+    <param-value>true</param-value>
+  </context-param>
+  <context-param>
     <param-name>com.sun.faces.enableViewStateIdRendering</param-name>
     <param-value>false</param-value>
   </context-param>
   <!--context-param>
-  	<param-name>com.sun.faces.disableClientStateEncryption</param-name>
-  	<param-value>false</param-value>
+    <param-name>primefaces.FONT_AWESOME</param-name>
+    <param-value>true</param-value>
   </context-param-->
   <env-entry>
-  	<!-- keine ViewExpiredException! -->
+    <!-- keine ViewExpiredException! -->
     <env-entry-name>jsf/ClientSideSecretKey</env-entry-name>
     <env-entry-type>java.lang.String</env-entry-type>
     <env-entry-value>eQbfpbhGfilnyzCJ/ws0dA==</env-entry-value>
@@ -60,11 +64,13 @@
       <web-resource-name>Public</web-resource-name>
       <description>keine Zugriffsbeschränkung</description>
       <url-pattern>/resources/css/login.css</url-pattern>
+      <url-pattern>/resources/js/login.js</url-pattern>
       <url-pattern>/resources/images/login.png</url-pattern>
       <url-pattern>/favicon.ico</url-pattern>
       <url-pattern>/register</url-pattern>
       <url-pattern>/passwordreset</url-pattern>
       <url-pattern>/passwordchange</url-pattern>
+      <url-pattern>/logout</url-pattern>
     </web-resource-collection>
   </security-constraint>
   <security-constraint>
@@ -74,46 +80,21 @@
     </web-resource-collection>
     <auth-constraint>
       <role-name>User</role-name>
-      <role-name>Admin</role-name>
-      <role-name>Applicant-Admin</role-name>
-      <role-name>Applicant</role-name>
-      <role-name>Announcer</role-name>
     </auth-constraint>
-    <user-data-constraint>
+    <!--user-data-constraint>
       <transport-guarantee>CONFIDENTIAL</transport-guarantee>
-    </user-data-constraint>
+    </user-data-constraint-->
   </security-constraint>
   <security-role>
-    <description>Der Admin kann alle Benutzer und Meldedaten sehen und ändern.</description>
-    <role-name>Admin</role-name>
-  </security-role>
-  <security-role>
-    <description>Sportwart - Admin, kann melden und zusätzliche Melder anlegen.</description>
-    <role-name>Applicant-Admin</role-name>
-  </security-role>
-  <security-role>
-    <description>Melder, kann melden aber keine zusätzliche Melder anlegen.</description>
-    <role-name>Applicant</role-name>
-  </security-role>
-  <security-role>
-    <description>Ersteller einer Ausschreibung.</description>
-    <role-name>Announcer</role-name>
+    <role-name>User</role-name>
   </security-role>
   <servlet>
     <servlet-name>Login</servlet-name>
     <jsp-file>/WEB-INF/jsp/login.jsp</jsp-file>
   </servlet>
-  <servlet>
-    <servlet-name>Error</servlet-name>
-    <jsp-file>/WEB-INF/jsp/error.jsp</jsp-file>
-  </servlet>
   <servlet-mapping>
     <servlet-name>Login</servlet-name>
     <url-pattern>/login</url-pattern>
-  </servlet-mapping>
-  <servlet-mapping>
-    <servlet-name>Error</servlet-name>
-    <url-pattern>/error</url-pattern>
   </servlet-mapping>
   <servlet>
     <servlet-name>PasswordReset</servlet-name>
@@ -124,12 +105,14 @@
     <url-pattern>/register</url-pattern>
     <url-pattern>/passwordreset</url-pattern>
     <url-pattern>/passwordchange</url-pattern>
+    <url-pattern>/logout</url-pattern>
+    <url-pattern>/userimg</url-pattern>
   </servlet-mapping>
   <login-config>
     <auth-method>FORM</auth-method>
     <form-login-config>
       <form-login-page>/login</form-login-page>
-      <form-error-page>/error</form-error-page>
+      <form-error-page>/login</form-error-page>
     </form-login-config>
   </login-config>
   <error-page>
