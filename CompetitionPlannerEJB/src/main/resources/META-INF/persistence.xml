@@ -4,14 +4,28 @@
 	
 	<persistence-unit name="PLANNER_PU">
 		<provider>org.hibernate.ejb.HibernatePersistence</provider>
-		<jta-data-source>java:/datasources/PlannerDS</jta-data-source>
+		<jta-data-source>java:jboss/datasources/MySQLDS</jta-data-source>
 
-		<!--class>org.planner.eo.Properties</class-->
+		<!--class>org.planner.eo.Address</class>
+		<class>org.planner.eo.Announcement</class>
+		<class>org.planner.eo.Category</class>
+		<class>org.planner.eo.City</class>
+		<class>org.planner.eo.Club</class>
+		<class>org.planner.eo.Country</class>
+		<class>org.planner.eo.Location</class>
+		<class>org.planner.eo.Message</class>
+		<class>org.planner.eo.Permission</class>
+		<class>org.planner.eo.Properties</class>
+		<class>org.planner.eo.Race</class>
+		<class>org.planner.eo.RegEntry</class>
+		<class>org.planner.eo.Registration</class>
+		<class>org.planner.eo.Role</class>
+		<class>org.planner.eo.User</class-->
 
 		<properties>
 			<property name="javax.persistence.validation.mode" value="NONE"/>
 			<property name="hibernate.archive.autodetection" value="class" />
-			<property name="hibernate.show_sql" value="true" />
+			<property name="hibernate.show_sql" value="false" />			
 			<!--property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.WebSphereTransactionManagerLookup" /-->
 			<property name="hibernate.transaction.factory_class" value="org.hibernate.transaction.CMTTransactionFactory" />
 			<property name="hibernate.hbm2ddl.auto" value="update" />
