@@ -1,0 +1,85 @@
+<!--
+				<h:outputText value="#{bundle.opening}"/>
+				<h:panelGrid columns="5">
+					<p:calendar value="# {announcement.opening}" pages="3" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.opening)}"/>
+
+					<h:outputText value="#{bundle.deadline}"/>
+					<p:calendar value="# {announcement.deadline}" pages="3" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.deadline)}"/>
+
+					<h:outputText value="#{bundle.latestDeadline}"/>
+					<p:calendar value="# {announcement.latestDeadline}" pages="3" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.latestDeadline)}"/>
+				</h:panelGrid>
+
+				<h:outputText value="#{bundle.openingLocation}"/>
+				<h:panelGroup>
+					<p:selectOneRadio value="# {announcementBean.openingLocation}" required="true"
+							requiredMessage="#{bundle.format('fieldValidation', bundle.openingLocation)}"
+							onclick="if (this.value == 'address') {PF('openingLocationEdit').show();} else {PF('openingLocationEdit').hide()}"
+							style="float: left">
+						<f:selectItem itemValue="club" itemLabel="#{bundle.club}"/>
+						<f:selectItem itemValue="address" itemLabel="#{bundle.address}"/>
+					</p:selectOneRadio>
+					<p:inplace widgetVar="openingLocationEdit">
+						<f:facet name="output">
+							<h:outputLabel />
+						</f:facet>
+						<f:facet name="input">
+							<ui:param name="address" value="# {announcement.openingLocation.address}"/>
+							<ui:include src="/masterdata/addressArea.xhtml"/>
+						</f:facet>
+					</p:inplace>
+				</h:panelGroup>
+
+				<h:outputText value="#{bundle.courseSize}"/>
+				<h:panelGrid columns="3">
+					<p:inputText value="#{announcement.courseSize}" autocomplete="off" maxlength="255" size="30" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.courseSize)}"/>
+					<h:outputText value="#{bundle.waterDepth}"/>
+					<p:inputText value="#{announcement.waterDepth}" autocomplete="off" maxlength="255" size="30" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.waterDepth)}"/>
+				</h:panelGrid>
+
+				<h:outputText value="#{bundle.tracks}"/>
+				<h:panelGrid columns="6">
+					<h:outputText value="#{bundle.tracksSprint}"/>
+					<p:inputText value="# {announcement.tracksSprint}" autocomplete="off" maxlength="2" size="3" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.tracksSprint)}"/>
+					<h:outputText value="#{bundle.tracksShort}"/>
+					<p:inputText value="# {announcement.tracksShort}" autocomplete="off" maxlength="2" size="3" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.tracksShort)}"/>
+					<h:outputText value="#{bundle.tracksMedium}"/>
+					<p:inputText value="# {announcement.tracksMedium}" autocomplete="off" maxlength="2" size="3" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.tracksMedium)}"/>
+				</h:panelGrid>
+
+				<h:outputText value="#{bundle.fee}"/>
+-->				<!--p:inputText value="# { announcement.fee}" autocomplete="off" maxlength="10" size="12" required="true"
+					requiredMessage="#{bundle.format('fieldValidation', bundle.fee)}"/-->
+<!--
+				<h:outputText value="#{bundle.juryLocation}"/>
+				<h:panelGroup>
+					<p:selectOneRadio value="# {announcementBean.juryLocation}" required="true"
+							requiredMessage="#{bundle.format('fieldValidation', bundle.juryLocation)}"
+							onclick="if (this.value == 'address') {PF('juryLocationEdit').show();} else {PF('juryLocationEdit').hide()}"
+							style="float: left">
+						<f:selectItem itemValue="club" itemLabel="#{bundle.club}"/>
+						<f:selectItem itemValue="address" itemLabel="#{bundle.address}"/>
+					</p:selectOneRadio>
+					<p:inplace widgetVar="juryLocationEdit">
+						<f:facet name="output">
+							<h:outputLabel />
+						</f:facet>
+						<f:facet name="input">
+							<ui:param name="address" value="# {announcement.juryLocation.address}"/>
+							<ui:include src="/masterdata/addressArea.xhtml"/>
+						</f:facet>
+					</p:inplace>
+				</h:panelGroup>
+
+				<h:outputText value="#{bundle.juryEmail}"/>
+				<p:inputText value="# {announcement.juryEmail}" autocomplete="off" maxlength="255" size="30" required="true"
+					requiredMessage="#{bundle.format('fieldValidation', bundle.juryEmail)}"/>
+-->

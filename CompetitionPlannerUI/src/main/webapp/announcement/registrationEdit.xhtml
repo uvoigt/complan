@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:decorate template="/templates/title.xhtml">
+		<ui:param name="bundle" value="#{messages.bundle('registrations')}"/>
+		<ui:param name="bean" value="#{registrationBean}"/>
+		<ui:param name="searchLink" value="/announcement/registrations.xhtml"/>
+
+		<ui:param name="registration" value="#{registrationBean.registration}"/>
+
+		<ui:define name="content">
+
+			<style>
+				.tableTop td {
+					vertical-align: top
+				}
+				.tableTop td button:parent td {
+					vertical-align: middle
+				}
+			</style>
+
+			<h:form>
+
+				<table class="tableTop">
+					<tr>
+						<td style="width: 49%">
+							<p:dataTable id="racesTable" widgetVar="racesTable"
+									var="race" rowKey="#{race.id}"
+									value="#{registrationBean.races}"
+									emptyMessage="#{bundle.noRaces}"
+									sortMode="multiple"
+									selectionMode="multiple"
+									selection="#{registrationBean.selectedRaces}"
+									filterEvent="enter"
+									rows="10"
+									paginator="true" paginatorPosition="top"
+									scrollable="false" scrollHeight="20%"
+									style="width: 100%">
+
+								<f:facet name="header">
+									<h:panelGroup>
+										<p:outputLabel value="#{bundle.format('racesCount', registrationBean.races.size())}"/>
+									</h:panelGroup>
+								</f:facet>
+
+								<p:ajax event="rowSelect" oncomplete="registrationEdit_enableButtons()"/>
+								<p:ajax event="rowUnselect" oncomplete="registrationEdit_enableButtons()"/>
+								<p:ajax event="filter" oncomplete="PF('racesTable').unselectAllRows();registrationEdit_enableButtons()"/>
+
+								<p:column headerText="#{bundle.number}" sortBy="#{race.number}" filterBy="#{race.number}" filterMatchMode="exact">
+									<h:outputText value="#{race.number}"/>
+								</p:column>
+								<p:column headerText="#{bundle.boatClass}" sortBy="#{race.boatClass.text}" filterBy="#{race.boatClass.text}" filterMatchMode="contains">
+									<h:outputText value="#{race.boatClass.text}"/>
+								</p:column>
+								<p:column headerText="#{bundle.gender}" sortBy="#{race.gender.text}" filterBy="#{race.gender.text}" filterMatchMode="contains">
+									<h:outputText value="#{race.gender.text}"/>
+								</p:column>
+								<p:column headerText="#{bundle.ageType}" sortBy="#{race.ageType.text}" filterBy="#{race.ageType.text}" filterMatchMode="contains">
+									<h:outputText value="#{race.ageType.text}"/>
+								</p:column>
+								<p:column headerText="#{bundle.distance}" sortBy="#{race.distance}" filterBy="#{race.distance}" filterMatchMode="contains">
+									<h:outputText value="#{race.distance}"/>
+								</p:column>
+							</p:dataTable>
+						</td>
+						<td style="vertical-align: middle;">
+							<p:commandButton  icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
+								widgetVar="btnAdd"
+								action="#{registrationBean.addToRegistration()}"
+								process="@form"
+								update="registrationTable"/>
+						</td>
+						<td style="width: 49%">
+							<p:dataTable id="athletesTable" widgetVar="athletesTable"
+									var="user" rowKey="#{user.id}"
+									value="#{registrationBean.athletes}"
+									emptyMessage="#{bundle.noAthletes}"
+									sortMode="multiple"
+									selectionMode="multiple"
+									selection="#{registrationBean.selectedAthletes}"
+									filterEvent="enter"
+									rows="10"
+									paginator="true" paginatorPosition="top"
+									scrollable="false" scrollHeight="20%">
+
+								<f:facet name="header">
+									<h:panelGroup>
+										<p:outputLabel value="#{bundle.format('athletesCount', registrationBean.athletes.size())}"/>
+									</h:panelGroup>
+								</f:facet>
+
+								<p:ajax event="rowSelect" oncomplete="registrationEdit_enableButtons()"/>
+								<p:ajax event="rowUnselect" oncomplete="registrationEdit_enableButtons()"/>
+								<p:ajax event="filter" oncomplete="PF('athletesTable').unselectAllRows();registrationEdit_enableButtons()"/>
+								<p:ajax event="rowDblselect" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
+
+								<p:column headerText="#{bundle.firstName}" sortBy="#{user.firstName}" filterBy="#{user.firstName}" filterMatchMode="contains">
+									<h:outputText value="#{user.firstName}"/>
+								</p:column>
+								<p:column headerText="#{bundle.lastName}" sortBy="#{user.lastName}" filterBy="#{user.lastName}" filterMatchMode="contains">
+									<h:outputText value="#{user.lastName}"/>
+								</p:column>
+								<p:column headerText="#{bundle.ageGroup}" sortBy="#{registrationBean.getAgeGroup(user)}" filterBy="#{registrationBean.getAgeGroup(user)}" filterMatchMode="contains">
+									<h:outputText value="#{registrationBean.getAgeGroup(user)}"/>
+								</p:column>
+								<p:column headerText="#{bundle.gender}" sortBy="#{user.gender}" filterBy="#{user.gender}" filterMatchMode="contains">
+									<h:outputText value="#{user.gender}"/>
+								</p:column>
+							</p:dataTable>
+						</td>
+					</tr>
+				</table>
+
+				<p:dataTable id="registrationTable" widgetVar="registrationTable"
+						var="entry" rowKey="#{entry.id}"
+						value="#{registrationBean.registration.entries}"
+						emptyMessage="#{bundle.noRegistrations}"
+						sortMode="single"
+						selectionMode="single"
+						selection="#{registrationBean.selectedEntry}"
+						rows="1000"
+						rowStyleClass="#{registrationBean.getMinimumTeamSize(entry.race) gt entry.participants.size() ? 'registrationIncomplete' : ''}">
+
+					<f:facet name="header">
+						<h:panelGroup>
+							<p:outputLabel value="#{bundle.format('registrationsCount', registrationBean.registration.entries.size())}"/>
+						</h:panelGroup>
+					</f:facet>
+
+					<p:ajax event="rowSelect" oncomplete="registrationEdit_enableButtons()"/>
+					<p:ajax event="rowUnselect" oncomplete="registrationEdit_enableButtons()"/>
+
+					<p:column headerText="#{bundle.race}" sortBy="#{entry.race.number}">
+						<h:outputText value="#{registrationBean.getRaceString(entry)}"/>
+					</p:column>
+					<p:column>
+						<ui:repeat var="participant" value="#{entry.participants}">
+							#{participant.user.firstName}
+							#{participant.user.lastName}
+							<br />
+						</ui:repeat>
+					</p:column>
+					<p:column width="30">
+						<p:commandButton icon="ui-icon-trash" title="#{bundle.deleteParticipant}"
+								action="#{registrationBean.deleteFromRegistration(entry)}"
+								process="@form:registrationTable"
+								update="@form:registrationTable"/>
+					</p:column>
+				</p:dataTable>
+
+			</h:form>
+
+			<h:outputScript>
+				registrationEdit_enableButtons();
+			</h:outputScript>
+
+		</ui:define>
+	</ui:decorate>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:decorate template="/templates/title.xhtml">
+		<ui:param name="bundle" value="#{messages.bundle('programs')}"/>
+
+		<ui:param name="program" value="#{programBean.program}"/>
+
+		<ui:define name="content">
+
+			<h:form>
+
+				<div class="ui-g">
+					<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.heatMode}"/></div>
+					<div class="ui-g-12 ui-md-6 ui-lg-8">
+						<div class="ui-g">
+							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoFinal}"/></div>
+							<div><p:spinner value="#{programBean.intoFinal}" min="0" size="1"/></div>
+						</div>
+						<div class="ui-g">
+							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoSemiFinal}"/></div>
+							<div><p:spinner value="#{programBean.intoSemiFinal}" min="0" size="1"/></div>
+						</div>
+					</div>
+				</div>
+				<h:panelGroup id="childProtection" styleClass="ui-g" layout="block">
+					<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.childProtection}"/></div>
+					<div class="ui-g-12 ui-md-6 ui-lg-8">
+						<div class="ui-g">
+							<div style="width: 15em; margin-right: 1em">
+								<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}">
+									<p:ajax update="childProtection"/>
+								</p:selectBooleanCheckbox>
+							</div>
+						</div>
+						<div class="ui-g">
+							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.racesPerDay}"/></div>
+							<div><p:spinner value="#{programBean.program.options.racesPerDay}" min="0" size="1" 
+									readonly="#{not programBean.program.options.childProtection}"/></div>
+						</div>
+						<div class="ui-g">
+							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoSemiFinal}"/></div>
+							<div><p:spinner value="#{programBean.program.options.protectionPeriod}" min="0" size="1"
+									readonly="#{not programBean.program.options.childProtection}"/></div>
+						</div>
+					</div>
+				</h:panelGroup>
+
+				<p:panelGrid columns="3">
+					<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
+							process="@form" update="programTable"/>
+					<p:commandButton value="#{messages.backToOverview}"
+							action="#{startseiteBean.setMainContent('/announcement/programs.xhtml')}"
+							process="@this" update="mainContent"/>
+				</p:panelGrid>
+
+				<p:dataScroller id="programTable"
+						var="race"
+						value="#{programBean.program.races}"
+						selection="#{programBean.selectedRace}"
+						lazy="false" chunkSize="5" rows="5" mode="inline" scrollHeight="500">
+	
+					<h:panelGroup layout="block" style="width: 100%">
+						<h:panelGroup layout="block" style="width: 100%">
+							<h:outputText value="#{programBean.getRaceString(race.race)}"/>
+						</h:panelGroup>
+						<p:dataList var="team" value="#{race.participants}" emptyMessage="">
+							<ui:repeat var="member" value="#{team.members}">
+								<h:outputText value="#{member.user.firstName}"/>
+								<h:outputText value="#{member.user.lastName}"/>
+								<h:outputText value="#{programBean.getAgeGroup(member.user)}"/>
+								<h:outputText value="#{member.user.gender}"/>
+							</ui:repeat>
+						</p:dataList>
+					</h:panelGroup>
+	
+				</p:dataScroller>
+
+			</h:form>
+
+		</ui:define>
+	</ui:decorate>
+</html>
