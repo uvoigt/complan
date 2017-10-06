@@ -12,7 +12,7 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.UUID;
 
@@ -75,7 +75,7 @@ public class RegistryImpl {
 			// der Caller ist "anonymous", deshalb hier der Benutzer
 			plannerDao.save(user, user.getUserId());
 
-			String emailText = getFormattedMessage("email.passwordchanged.text", user.getFirstName(),
+			String emailText = getFormattedMessage("email.passwordchanged.html", user.getFirstName(),
 					user.getLastName());
 
 			String subject = messages.getMessage("email.passwordchanged.subject");
@@ -100,8 +100,8 @@ public class RegistryImpl {
 		}
 		int paddingLength = decoded[0];
 		int idLength = decoded[paddingLength + 1];
-		long userId = readLong(decoded, paddingLength + 2, idLength);
-		User user = plannerDao.find(User.class, userId);
+		long id = readLong(decoded, paddingLength + 2, idLength);
+		User user = plannerDao.getById(User.class, id);
 		if (user == null || user.getToken() == null || user.getTokenExpires() == null)
 			return null;
 
@@ -111,10 +111,10 @@ public class RegistryImpl {
 		if (!Arrays.equals(hash, hashFromToken))
 			return null;
 
-		if (System.currentTimeMillis() > user.getTokenExpires().getTime()) {
+		if (System.currentTimeMillis() > user.getTokenExpires()) {
 			if (LOG.isInfoEnabled())
-				LOG.info(
-						"Die Gültigkeit des Passwort-Reset- bzw. Registrations-Links für " + user + " ist abgelaufen.");
+				LOG.info("Die Gültigkeit des Passwort-Reset- bzw. Registrations-Links für " //
+						+ user + " ist abgelaufen.");
 			plannerDao.saveToken(user.getId(), null, null);
 			return null;
 		}
@@ -122,7 +122,7 @@ public class RegistryImpl {
 	}
 
 	public String sendRegister(String email, String resetUrl) {
-		User user = masterData.getUserByUserId(email);
+		User user = masterData.getUserByUserId(email, false);
 		if (user != null) {
 			// Ein Benutzer, der sich bereits angemeldet hatte, kann sich nicht
 			// noch einmal registrieren
@@ -130,8 +130,8 @@ public class RegistryImpl {
 				return getFormattedMessage("user.exists", email);
 
 			if (user.getToken() != null) {
-				Date expires = user.getTokenExpires();
-				long millisLeft = expires != null ? expires.getTime() - System.currentTimeMillis() : 0;
+				Long expires = user.getTokenExpires();
+				long millisLeft = expires != null ? expires.longValue() - System.currentTimeMillis() : 0;
 				if (millisLeft > 0)
 					return getFormattedMessage("email.register.alreadysent",
 							CommonMessages.niceTimeString((int) (millisLeft / 1000 / 60)));
@@ -142,20 +142,25 @@ public class RegistryImpl {
 			user.setEmail(email);
 			user.setFirstName("");
 			user.setLastName("");
-			user.setLocked(true);
 			Suchkriterien krit = new Suchkriterien();
-			krit.addFilter(Role_.role.getName(), "User");
+			krit.addFilter(Role_.role.getName(), "Sportwart");
 			krit.setExact(true);
 			krit.setIgnoreCase(false);
-			Role userRole = plannerDao.findEntities(Role.class, krit).getListe().get(0);
-			user.getRoles().add(userRole);
+			List<Role> liste = plannerDao.search(Role.class, krit, null).getListe();
+			// falls die Rolle nicht existiert, kann der Benutzer nichts machen
+			if (liste.size() > 0) {
+				Role role = liste.get(0);
+				user.getRoles().add(role);
+			}
 			user.setClub(null);
 			// Der Club muss nach der Erstanmeldung im Profil gesetzt werden
+			// für den Sportwart gilt, dass er sich
+			// auch seinen Verein anlegen muss
 			plannerDao.save(user, email);
 		}
 
 		String token = UUID.randomUUID().toString();
-		Date expiryDate = storeToken(user.getId(), token, 120);
+		Long expiryDate = storeToken(user.getId(), token, 120);
 		String emailToken = createEmailToken(user, token, expiryDate);
 
 		String subject = messages.getMessage("email.register.subject");
@@ -163,18 +168,18 @@ public class RegistryImpl {
 				DateFormat.getDateTimeInstance().format(expiryDate), resetUrl + "?t=" + emailToken);
 
 		sendEmail(user, subject, emailText);
-		return messages.getMessage("email.register.sent");
+		return getFormattedMessage("email.register.sent", email);
 	}
 
 	public String sendPasswortReset(String userId, String resetUrl) {
-		User user = masterData.getUserByUserId(userId);
+		User user = masterData.getUserByUserId(userId, false);
 		return user != null ? internalSendPasswordReset(user, resetUrl) : messages.getMessage("user.unknown");
 	}
 
-	public String sendPasswortReset(Long userId, String resetUrl) {
-		if (userId == null)
+	public String sendPasswortReset(Long id, String resetUrl) {
+		if (id == null)
 			return null;
-		User user = masterData.getUserById(userId);
+		User user = plannerDao.getById(User.class, id);
 		if (user == null)
 			return null;
 		return internalSendPasswordReset(user, resetUrl);
@@ -183,35 +188,34 @@ public class RegistryImpl {
 	private String internalSendPasswordReset(User user, String resetUrl) {
 		if (user.getToken() != null) {
 			// es existiert bereits ein noch gültiges Sicherheitstoken.
-			Date expires = user.getTokenExpires();
-			long millisLeft = expires != null ? expires.getTime() - System.currentTimeMillis() : 0;
+			Long expires = user.getTokenExpires();
+			long millisLeft = expires != null ? expires.longValue() - System.currentTimeMillis() : 0;
 			if (millisLeft > 0)
 				return getFormattedMessage("email.passwordreset.alreadysent",
 						CommonMessages.niceTimeString((int) (millisLeft / 1000 / 60)));
 		}
 		String token = UUID.randomUUID().toString();
-		Date expiryDate = storeToken(user.getId(), token, 120);
+		Long expiryDate = storeToken(user.getId(), token, 120);
 		String emailToken = createEmailToken(user, token, expiryDate);
 
 		String emailText = getFormattedMessage("email.passwordreset.html", user.getFirstName(), user.getLastName(),
-				DateFormat.getDateTimeInstance().format(expiryDate), resetUrl + "?t=" + emailToken, resetUrl);
-		// TODO das letzte sollte der help-URL sein
+				DateFormat.getDateTimeInstance().format(expiryDate), resetUrl + "?t=" + emailToken);
 
 		String subject = messages.getMessage("email.passwordreset.subject");
 		sendEmail(user, subject, emailText);
-		return messages.getMessage("email.passwordreset.sent");
+		return getFormattedMessage("email.passwordreset.sent", user.getEmail());
 	}
 
-	private Date storeToken(Long userId, String token, int expiryMinutes) {
+	private Long storeToken(Long userId, String token, int expiryMinutes) {
 		// aktualisiere den User
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MINUTE, expiryMinutes);
-		Date tokenExpires = cal.getTime();
+		Long tokenExpires = cal.getTime().getTime();
 		plannerDao.saveToken(userId, token, tokenExpires);
-		return cal.getTime();
+		return tokenExpires;
 	}
 
-	private String createEmailToken(User user, String token, Date expiryDate) {
+	private String createEmailToken(User user, String token, Long expiryDate) {
 		String emailToken = null;
 		try {
 			/*
@@ -277,9 +281,10 @@ public class RegistryImpl {
 			bodyPart.setText(msg, "UTF-8", "html");
 			multipart.addBodyPart(bodyPart);
 			message.setContent(multipart);
-			// message.setFrom(new InternetAddress("noreply@talanx.com",
-			// "HDI-Gerling Sicherheitstechnik GmbH"));
-			message.setFrom(new InternetAddress("uwe_ewald@yahoo.com"));
+			if (Boolean.getBoolean("devmode"))
+				message.setFrom(new InternetAddress("uwe_ewald@yahoo.com"));
+			else
+				message.setFrom(new InternetAddress("noreply@planner.com", "Noreply Planner"));
 			if (StringUtils.isNotBlank(recipient.getFirstName()) || StringUtils.isNotBlank(recipient.getLastName())) {
 				message.addRecipient(RecipientType.TO, new InternetAddress(recipient.getEmail(),
 						recipient.getFirstName() + " " + recipient.getLastName()));
@@ -287,6 +292,8 @@ public class RegistryImpl {
 				message.addRecipient(RecipientType.TO, new InternetAddress(recipient.getEmail()));
 			}
 			Transport.send(message);
+			if (LOG.isInfoEnabled())
+				LOG.info("E-Mail mit Subject: " + subject + " an " + recipient.getEmail() + " versandt.");
 		} catch (SendFailedException e) {
 			throw new FachlicheException(messages.getResourceBundle(), "email.send.error", recipient.getEmail());
 		} catch (Exception e) {
@@ -294,12 +301,12 @@ public class RegistryImpl {
 		}
 	}
 
-	private byte[] shaHash(String userId, String token, Date tokenExpires) {
+	private byte[] shaHash(String userId, String token, long tokenExpires) {
 		try {
 			MessageDigest sha = MessageDigest.getInstance("SHA-512");
 			// erzeuge eine Hashwert über ein Random-Token, den Anmeldenamen
 			// sowie den Ablaufzeitpunkt
-			return sha.digest((token + userId + tokenExpires.getTime()).getBytes("UTF8"));
+			return sha.digest((token + userId + tokenExpires).getBytes("UTF8"));
 		} catch (Exception e) {
 			throw new TechnischeException("Fehler beim Erstellen des SHA-Digest", e);
 		}
