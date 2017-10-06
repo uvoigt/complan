@@ -4,35 +4,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Locale;
-import java.util.Map;
 
-import javax.enterprise.context.SessionScoped;
+import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
+import javax.faces.event.PhaseId;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.planner.remote.ServiceFacade;
-import org.planner.util.Logged;
+import org.planner.ui.util.JsfUtil;
 import org.planner.util.LoggingInterceptor.Silent;
-import org.primefaces.model.menu.DefaultMenuModel;
-import org.primefaces.model.menu.MenuModel;
+import org.primefaces.context.RequestContext;
 
-@Logged
 @Named
-@SessionScoped
+@RequestScoped
 public class StartseiteBean implements Serializable {
-	// private static final Log LOG =
-	// LogFactory.getLog(StartseiteVerwaltenBean.class);
 
 	private static final long serialVersionUID = 1L;
 
-	private String mainContent = "/sections/start.xhtml";
-
-	private String redirectTarget;
-
-	private MenuModel menu;
+	@Inject
+	private UrlParameters urlParameters;
 
 	@Inject
 	private ServiceFacade service;
@@ -45,72 +39,57 @@ public class StartseiteBean implements Serializable {
 
 	@Silent
 	public String getMainContent() {
-		return mainContent;
-	}
 
-	public void setMainContent(String mainContent) {
-		setMainContent(mainContent, false);
-	}
-
-	public void setMainContent(String mainContent, boolean redirect) {
-		if (redirect) {
-			this.mainContent = "/sections/redirect.xhtml";
-			redirectTarget = mainContent;
+		// prüfe auf erste Anmeldung
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		// da dies nach dem Logout erneut aufgerufen wird....
+		String mainContent = null;
+		if (ctx.getCurrentPhaseId() == PhaseId.RENDER_RESPONSE && ctx.getExternalContext().getSession(false) != null) {
+			Boolean firstLogin = (Boolean) ctx.getExternalContext().getSessionMap().get("firstLogin");
+			if (firstLogin == null || firstLogin == true) {
+				String userName = service.getUserName(ctx.getExternalContext().getRemoteUser());
+				// der Username muss dann ein Space sein
+				firstLogin = " ".equals(userName);
+				ctx.getExternalContext().getSessionMap().put("firstLogin", firstLogin);
+				if (firstLogin) {
+					ctx.addMessage(null, new FacesMessage(null, messages.get("firstLogin")));
+					mainContent = "/masterdata/myprofile.xhtml";
+				}
+			}
+		}
+		if (mainContent == null) {
+			mainContent = (String) JsfUtil.getViewVariable("mainContent");
+			if (mainContent == null) {
+				urlParameters.init();
+				mainContent = urlParameters.getMainContent();
+			}
+		}
+		if (mainContent != null) {
+			JsfUtil.setViewVariable("mainContent", mainContent);
+			return mainContent;
 		} else {
-			this.mainContent = mainContent;
+			return "/sections/start.xhtml";
 		}
 	}
 
-	public void setMainContent(String mainContent, String paramName, Object paramValue) {
-		setMainContent(mainContent, true);
-		FacesContext instance = FacesContext.getCurrentInstance();
-		// UIViewRoot viewRoot = instance.getViewRoot();
-		Map<String, Object> map = instance.getExternalContext().getSessionMap();
-		map.put(paramName, paramValue);
-		// ValueExpression ex =
-		// instance.getApplication().getExpressionFactory().createValueExpression(paramValue,
-		// Object.class);
-		// viewRoot.setValueExpression(paramName, ex);
-		// JsfUtil.setContextVariable(paramName, paramValue);
+	public void setMainContent(String mainContent) {
+		setMainContent(mainContent, null);
 	}
 
-	public String getRedirectTarget() {
-		return redirectTarget;
+	public void setMainContent(String mainContent, Long id) {
+		JsfUtil.setViewVariable("mainContent", mainContent);
+		JsfUtil.setViewVariable("id", id);
+		urlParameters.setMainContent(mainContent);
+		urlParameters.setId(id);
+		RequestContext.getCurrentInstance().execute("setUrlParam('" + urlParameters.getEncoded() + "')");
 	}
 
-	public MenuModel getMenu() {
-		if (menu != null)
-			return menu;
-		menu = new DefaultMenuModel();
-		// if (schema == null)
-		// return menu;
-		// DefaultSubMenu dynamicMenu = new
-		// DefaultSubMenu(bundle.get("menu.klasse"));
-		// menu.addElement(dynamicMenu);
-		// int index = 0;
-		// for (SchemaTyp typ : schema.getSchemaTypes()) {
-		// if (!typ.isRootType())
-		// continue;
-		// String label = typ.getLabel();
-		// DefaultMenuItem item = new DefaultMenuItem(label != null ? label :
-		// typ.getName());
-		// item.setId("0_" + index++);
-		// item.setCommand("#{startseiteVerwaltenBean.setMainContent('/mandanten/suchen.xhtml',
-		// 'schemaName', '" + typ.getName() + "')}");
-		// item.setProcess("@this");
-		// item.setOnclick("selectSidebarLink(this)");
-		// if (mainContent != null &&
-		// mainContent.contains("/mandanten/suchen.xhtml")
-		// &&
-		// typ.getName().equals(FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get("schemaName")))
-		// {
-		// item.setStyleClass("ui-state-active");
-		// }
-		// item.setDisabled(ausgewaehlteKonfiguration == null);
-		// item.setUpdate(":mainContent :messages");
-		// dynamicMenu.addElement(item);
-		// }
-		return menu;
+	public void setMainContentAndReset(String mainContent) {
+		setMainContent(mainContent);
+		JsfUtil.setViewVariable("first", null);
+		JsfUtil.setViewVariable("rows", null);
+		JsfUtil.setViewVariable("filters", null);
+		JsfUtil.setViewVariable("sortState", null);
 	}
 
 	public String leseBenutzerNamen(String userId) {
@@ -152,18 +131,19 @@ public class StartseiteBean implements Serializable {
 		}
 	}
 
-	public void logout() {
-		FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
+	public void setProfileSaved() {
+		FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("firstLogin", Boolean.FALSE);
 	}
 
 	public String getHelp() throws IOException {
+		String mainContent = getMainContent();
 		String help = messages.bundle("help").getStringOrNull(mainContent);
 		if (help == null) {
 			Locale locale = FacesContext.getCurrentInstance().getViewRoot().getLocale();
 			InputStream in = getClass().getResourceAsStream("/help/" + locale.getLanguage() + "/" + mainContent);
 			if (in != null) {
 				try {
-					help = IOUtils.toString(in, "UTF8");
+					help = IOUtils.toString(in, "UTF-8");
 				} finally {
 					in.close();
 				}

@@ -1,15 +1,15 @@
 package org.planner.ui.beans;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.planner.eo.AbstractEntity;
 import org.planner.model.IResultProvider;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
+import org.planner.ui.beans.SearchBean.ColumnModel;
 import org.primefaces.component.column.Column;
 import org.primefaces.model.LazyDataModel;
 import org.primefaces.model.SortMeta;
@@ -17,17 +17,8 @@ import org.primefaces.model.SortOrder;
 
 /**
  * <p>
- * Das <code>RemoteDataModel</code> erweitert das <code>LazyDataModel</code> von
- * PrimeFaces um die Fähigkeit, mit Hilfe der Datenbank zu filtern und zu
- * sortieren.
- * </p>
- * 
- * <p>
- * Copyright: Copyright (c) 2012
- * </p>
- * 
- * <p>
- * Organisation: Talanx Systeme AG
+ * Das <code>RemoteDataModel</code> erweitert das <code>LazyDataModel</code> von PrimeFaces um die Fähigkeit, mit Hilfe
+ * der Datenbank zu filtern und zu sortieren.
  * </p>
  * 
  * @param <T>
@@ -36,22 +27,23 @@ import org.primefaces.model.SortOrder;
  * @author Uwe Voigt, IBM
  * @version $Revision: 13814 $
  */
-public class RemoteDataModel<T extends AbstractEntity> extends LazyDataModel<T> {
+public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 	private static final long serialVersionUID = 1L;
 
 	private IResultProvider dataProvider;
 	private Class<T> zeilentyp;
 
-	private List<String> columns;
+	private List<ColumnModel> columns;
 
-	public RemoteDataModel(IResultProvider provider, Class<T> type) {
+	public RemoteDataModel(IResultProvider provider, Class<T> type, List<ColumnModel> columns) {
 		dataProvider = provider;
 		zeilentyp = type;
+		this.columns = columns;
 	}
 
 	@Override
 	public T getRowData(String rowKey) {
-		return dataProvider.getObject(zeilentyp, Long.parseLong(rowKey));
+		return dataProvider.getObject(zeilentyp, Long.parseLong(rowKey), 0);
 	}
 
 	@Override
@@ -76,7 +68,7 @@ public class RemoteDataModel<T extends AbstractEntity> extends LazyDataModel<T> 
 	}
 
 	protected Suchkriterien createKriterien(int first, int pageSize, List<SortMeta> sortMeta,
-			Map<String, Object> filters, List<String> columns) {
+			Map<String, Object> filters, List<ColumnModel> columns) {
 
 		Suchkriterien krit = new Suchkriterien();
 		krit.setZeilenOffset(first);
@@ -86,22 +78,27 @@ public class RemoteDataModel<T extends AbstractEntity> extends LazyDataModel<T> 
 				krit.addSortierung(meta.getSortField(), meta.getSortOrder() == SortOrder.ASCENDING);
 			}
 		}
-		krit.setFilter(checkFilters(filters));
-		krit.setProperties(columns);
+		createFilters(krit, filters);
+		List<String> properties = null;
+		for (ColumnModel column : columns) {
+			if (!column.isVisible())
+				continue;
+			if (properties == null)
+				properties = new ArrayList<>();
+			properties.add(column.getProperty());
+		}
+		krit.setProperties(properties);
 		return krit;
 	}
 
-	protected Map<String, Object> checkFilters(Map<String, Object> filters) {
+	protected void createFilters(Suchkriterien krit, Map<String, Object> filters) {
 		// seit PrimeFaces 5.2 werden von der DataTable alle Filterfelder, ggfs.
 		// mit leeren Strings geliefert
-		Map<String, Object> modified = null;
 		if (filters != null) {
-			modified = new HashMap<String, Object>();
 			for (Entry<String, Object> e : filters.entrySet()) {
 				if (!"".equals(e.getKey()) && !"".equals(e.getValue()))
-					modified.put(e.getKey(), e.getValue());
+					krit.addFilter(e.getKey(), e.getValue());
 			}
 		}
-		return modified;
 	}
 }

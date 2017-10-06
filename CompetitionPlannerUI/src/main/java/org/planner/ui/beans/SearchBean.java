@@ -1,42 +1,46 @@
 package org.planner.ui.beans;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
-import javax.enterprise.context.SessionScoped;
+import javax.el.ELResolver;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIOutput;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ComponentSystemEvent;
 import javax.faces.event.PhaseId;
+import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.mutable.MutableInt;
 import org.planner.eo.AbstractEntity;
+import org.planner.model.LocalizedEnum;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.ColumnHandler.Column;
 import org.planner.ui.beans.UploadBean.DownloadHandler;
 import org.planner.ui.beans.UploadBean.UploadHandler;
-import org.planner.ui.util.CSVParser;
-import org.planner.ui.util.ExtendedBeanELResolver;
 import org.planner.ui.util.JsfUtil;
+import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
-import org.planner.util.Logged;
 import org.planner.util.NLSBundle;
 import org.primefaces.component.api.UIColumn;
 import org.primefaces.component.datatable.DataTable;
 import org.primefaces.event.ToggleEvent;
+import org.primefaces.event.data.FilterEvent;
+import org.primefaces.event.data.PageEvent;
 import org.primefaces.event.data.SortEvent;
 import org.primefaces.model.SortMeta;
 import org.primefaces.model.Visibility;
@@ -45,17 +49,15 @@ import org.primefaces.model.Visibility;
  * Das Bean für die Suche nach XML-basierten Daten. Es wird von den Views
  * <ul>
  * <li>schema_suchen.xhtml</li>
- * <li>suchen.xhtml</li> verwendet. Da sich die Views um das Attribut
- * 'entityTyp' bzw. 'schema' unterscheiden, müssen die spezifischen
- * Instanzvariablen, wie 'dataModel', 'columns' oder auch das Binding der
- * Datatable in Maps vorgehalten werden, deren Key jeweils der Name des
- * Schema-Typs ist.
+ * <li>suchen.xhtml</li> verwendet. Da sich die Views um das Attribut 'entityTyp' bzw. 'schema' unterscheiden, müssen
+ * die spezifischen Instanzvariablen, wie 'dataModel', 'columns' oder auch das Binding der Datatable in Maps vorgehalten
+ * werden, deren Key jeweils der Name des Schema-Typs ist.
  * 
  * @author Uwe Voigt - IBM
  */
-@Logged
+// @Logged
 @Named
-@SessionScoped
+@ViewScoped
 public class SearchBean implements DownloadHandler, UploadHandler, Serializable {
 	public static class ColumnModel implements Serializable {
 		private static final long serialVersionUID = 1L;
@@ -80,33 +82,45 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		public boolean isVisible() {
 			return visible;
 		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (!(obj instanceof ColumnModel))
+				return false;
+			ColumnModel other = (ColumnModel) obj;
+			return property.equals(other.property);
+		}
 	}
 
 	private static final long serialVersionUID = 1L;
 
-	private Map<String, RemoteDataModel<? extends AbstractEntity>> dataModels = new HashMap<String, RemoteDataModel<? extends AbstractEntity>>();
+	private Map<String, RemoteDataModel<? extends Serializable>> dataModels = new HashMap<String, RemoteDataModel<? extends Serializable>>();
 
 	private Map<String, List<ColumnModel>> columns = new HashMap<String, List<ColumnModel>>();
 
 	private Map<String, DataTable> datatables = new HashMap<String, DataTable>();
 
-	// Da die Primefaces-Datatable Schwierigkeiten hat, den Sort-State über
-	// Requests zu persistieren, dieser Workaround.
-	private Map<String, List<SortMeta>> sortState = new HashMap<String, List<SortMeta>>();
-
 	private UploadBean uploadBean;
+
+	@Inject
+	private CsvBean csvBean;
 
 	@Inject
 	private ServiceFacade service;
 
 	@Inject
-	private Messages bundle;
+	private Messages messages;
 
 	@Inject
 	private StartseiteBean startseiteBean;
 
 	@Inject
 	private ColumnHandler columnHandler;
+
+	@Inject
+	private BenutzerEinstellungen settings;
 
 	@PostConstruct
 	public void init() {
@@ -119,24 +133,22 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 	@Override
 	public void handleDownload(OutputStream out, String typ) throws Exception {
-		RemoteDataModel<?> model = createDataModel(typ, new ArrayList<ColumnModel>(), true);
-		List<ColumnModel> columns = getColumns(typ);
+		List<ColumnModel> exportColumns = createExportColumns(typ);
+		RemoteDataModel<Serializable> model = createDataModel(typ, exportColumns);
 		// TODO das war schemaName
 		Map<String, Object> filter = datatables.get(null).getFilters();
-		List<? extends AbstractEntity> list = model.load(0, Integer.MAX_VALUE, null, filter);
-		for (AbstractEntity entity : list) {
-			writeEntity(out, entity, columns);
-		}
+
+		List<Serializable> list = model.load(0, Integer.MAX_VALUE, null, filter);
+		csvBean.writeEntities(exportColumns, out, list, FacesContext.getCurrentInstance().getELContext());
 	}
 
-	protected void writeEntity(OutputStream out, AbstractEntity entity, List<ColumnModel> columns) throws IOException {
-		for (ColumnModel column : columns) {
-			String string = doRender(entity, column);
-			if (string != null)
-				out.write(string.getBytes("iso-8859-1"));
-			out.write(";".getBytes());
+	private List<ColumnModel> createExportColumns(String typ) throws Exception {
+		List<ColumnModel> exportColumns = new ArrayList<>();
+		Class<Serializable> entityType = loadTyp(typ, Serializable.class);
+		for (Column column : columnHandler.getExportColumns(entityType)) {
+			exportColumns.add(new ColumnModel(null, column.getName(), true));
 		}
-		out.write("\r\n".getBytes());
+		return exportColumns;
 	}
 
 	@Override
@@ -149,22 +161,62 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 	@Override
 	public void handleUpload(InputStream in, String typ) throws Exception {
-		Class<AbstractEntity> entityType = loadTyp(typ, AbstractEntity.class);
-		CSVParser<AbstractEntity> csvParser = new CSVParser<>(entityType);
-		List<AbstractEntity> entities = csvParser.parse(in);
+		List<AbstractEntity> entities = csvBean.parse(loadTyp(typ, AbstractEntity.class), createExportColumns(typ),
+				FacesContext.getCurrentInstance().getELContext(), in);
 		// da das bean kein UploadProcessor ist, werden die Daten direkt in
 		// die DB geschrieben!
-		service.dataImport(entities);
+		try {
+			service.dataImport(entities);
+		} catch (FachlicheException e) {
+			List<String> messages = e.getMessages();
+			if (messages == null)
+				messages = Arrays.asList(e.getMessage());
+			for (String msg : messages) {
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, msg));
+			}
+		}
 	}
 
-	public List<ColumnModel> getColumns(String typ) {
-		return columns.get(typ);
+	public int getNumberOfRows() {
+		String typ = (String) JsfUtil.getContextVariable("typ");
+		String propertyName = "numrows." + typ;
+		return settings.getTypedValue(propertyName, Integer.class, 50);
+	}
+
+	public List<ColumnModel> getColumns(String typ) throws Exception {
+		List<ColumnModel> list = columns.get(typ);
+		if (list == null) {
+			list = new ArrayList<ColumnModel>();
+			Class<Serializable> entityType = loadTyp(typ, Serializable.class);
+			NLSBundle nlsBundle = entityType.getAnnotation(NLSBundle.class);
+			if (nlsBundle == null)
+				throw new TechnischeException("Entity " + entityType.getSimpleName() + " muss Annotation "
+						+ NLSBundle.class.getSimpleName() + " besitzen", null);
+			for (Column column : columnHandler.getColumns(entityType)) {
+				if (column.isVisibleForCurrentUser())
+					list.add(new ColumnModel(messages.get(nlsBundle.value() + "." + column.getName()), column.getName(),
+							column.isVisible()));
+			}
+			columns.put(typ, list);
+		}
+		return list;
+	}
+
+	public void onPagination(PageEvent event) {
+		DataTable dataTable = (DataTable) event.getComponent();
+		int rows = dataTable.getRowsToRender();
+		int page = event.getPage();
+		JsfUtil.setViewVariable("rows", rows);
+		JsfUtil.setViewVariable("first", page * rows);
+	}
+
+	public void onFilter(FilterEvent event) {
+		JsfUtil.setViewVariable("filters", event.getFilters());
 	}
 
 	public void onSort(SortEvent event) {
 		List<SortMeta> meta = ((DataTable) event.getComponent()).getMultiSortMeta();
-		String typ = (String) JsfUtil.getContextVariable("typ");
-		sortState.put(typ, meta);
+		JsfUtil.setViewVariable("sortState", meta);
 	}
 
 	public Map<String, DataTable> getDatatable() {
@@ -172,31 +224,17 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	public RemoteDataModel<? extends Serializable> getDataModel(String typ) throws Exception {
-		RemoteDataModel<? extends AbstractEntity> dataModel = dataModels.get(typ);
+		RemoteDataModel<? extends Serializable> dataModel = dataModels.get(typ);
 		if (dataModel == null) {
-			List<ColumnModel> columnList = new ArrayList<ColumnModel>();
-			dataModel = createDataModel(typ, columnList, false);
-
-			columns.put(typ, columnList);
+			dataModel = createDataModel(typ, getColumns(typ));
 			dataModels.put(typ, dataModel);
 		}
 		return dataModel;
 	}
 
-	private RemoteDataModel<? extends AbstractEntity> createDataModel(String typ, List<ColumnModel> columnList,
-			boolean onlyId) throws Exception {
-
-		Class<AbstractEntity> entityType = loadTyp(typ, AbstractEntity.class);
-		NLSBundle nlsBundle = entityType.getAnnotation(NLSBundle.class);
-		if (nlsBundle == null)
-			throw new TechnischeException("Entity " + entityType.getSimpleName() + " muss Annotation "
-					+ NLSBundle.class.getSimpleName() + " besitzen", null);
-		for (Column column : columnHandler.getColumns(entityType)) {
-			columnList.add(new ColumnModel(bundle.get(nlsBundle.value() + "." + column.getName()), column.getName(),
-					column.isVisible()));
-		}
-
-		return new RemoteDataModel<AbstractEntity>(service, entityType);
+	private RemoteDataModel<Serializable> createDataModel(String typ, List<ColumnModel> columnList) throws Exception {
+		Class<Serializable> entityType = loadTyp(typ, Serializable.class);
+		return new RemoteDataModel<Serializable>(service, entityType, columnList);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -210,27 +248,31 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	public void anlegen(String link, String typ, ITarget targetBean) throws Exception {
 		startseiteBean.setMainContent(link);
 		AbstractEntity item = loadTyp(typ, AbstractEntity.class).newInstance();
-		// adminService.speichern(entity);
 		targetBean.setItem(item);
-		// PropertyUtils.setProperty(targetBean, "item", item);
 	}
 
-	public void bearbeiten(String link, String typ, AbstractEntity selectedItem, ITarget targetBean) throws Exception {
-		startseiteBean.setMainContent(link);
-		AbstractEntity item = service.getObject(loadTyp(typ, AbstractEntity.class), selectedItem.getId());
+	public void bearbeiten(String link, String typ, Map<String, Object> selectedItem, ITarget targetBean)
+			throws Exception {
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selectedItem, "id");
+		AbstractEntity item = service.getObject(loadTyp(typ, AbstractEntity.class), id, 1);
 		targetBean.setItem(item);
+		startseiteBean.setMainContent(link, id);
 	}
 
 	public void bearbeiten(String link, Long selectedItemId, ITarget targetBean) throws Exception {
-		startseiteBean.setMainContent(link);
+		startseiteBean.setMainContent(link, selectedItemId);
 		targetBean.setItem(selectedItemId);
 	}
 
-	public void kopieren(String link, String typ, AbstractEntity selectedItem, ITarget targetBean) throws Exception {
+	public void kopieren(String link, String typ, Map<String, Object> selectedItem, ITarget targetBean)
+			throws Exception {
 		startseiteBean.setMainContent(link);
-		AbstractEntity item = service.getObjectForCopy(loadTyp(typ, AbstractEntity.class), selectedItem.getId());
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Object id = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selectedItem, "id");
+		AbstractEntity item = service.getObjectForCopy(loadTyp(typ, AbstractEntity.class), (Long) id);
 		targetBean.setItem(item);
-		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, bundle.get("sucheDaten.copyHint")));
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, messages.get("copyHint")));
 	}
 
 	public void alleKopieren(String link, String typ, String schemaName, Object targetBean) throws Exception {
@@ -264,8 +306,8 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 	public void loeschen(String typ, Object id) throws Exception {
 		service.delete(loadTyp(typ, AbstractEntity.class), (Long) id);
-		FacesContext.getCurrentInstance().addMessage(null,
-				new FacesMessage(null, JsfUtil.getScopedBundle().get("deleteSuccess")));
+		String msg = JsfUtil.getScopedBundle().get("deleteSuccess");
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, msg));
 	}
 
 	public void alleLoeschen(String link, String typ, Object targetBean) throws Exception {
@@ -311,41 +353,21 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	private String doRender(Object o, ColumnModel column) {
-		if (o == null)
+		if (o == null || !column.visible)
 			return null;
 		if (o instanceof String)
 			return (String) o;
 		if (o instanceof Date)
 			return o.toString();
 		if (o instanceof Boolean)
-			return bundle.get("label" + StringUtils.capitalize(o.toString()));
+			return messages.get("label" + StringUtils.capitalize(o.toString()));
+		if (o instanceof LocalizedEnum)
+			return ((LocalizedEnum) o).getText();
 		FacesContext context = FacesContext.getCurrentInstance();
-		// context.getApplication().createConverter(o.getClass().getSuperclass())
-		ExtendedBeanELResolver resolver = new ExtendedBeanELResolver(context.getApplication().getELResolver());
+		ELResolver resolver = context.getApplication().getELResolver();
 		Object v = resolver.getValue(context.getELContext(), o, column.property);
 		if (v == null)
 			return null;
-		// if (value instanceof AbstractEntity) {
-		// try {
-		// Field field = base.getClass().getDeclaredField(propertyString);
-		// Visible visible = field.getAnnotation(Visible.class);
-		// if (visible != null) {
-		// if (visible.asOneColumn()) {
-		// value = delegate.getValue(context, value, propertyString);
-		// } else {
-		//
-		// }
-		// }
-		// } catch (Exception e) {
-		// e.printStackTrace();
-		// }
-		// }
-
-		// Converter converter =
-		// context.getApplication().createConverter(v.getClass());
-		// if (converter != null)
-		// return converter.getAsString(context, null, v);
-
 		return doRender(v, column);
 	}
 
@@ -353,40 +375,49 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		dataModels.clear();
 	}
 
-	public void preRenderViewListener(ComponentSystemEvent event) {
-		FacesContext facesContext = FacesContext.getCurrentInstance();
-		if (!facesContext.isPostback())
-			return;
-
-		String typ = (String) JsfUtil.getContextVariable("typ");
-		DataTable table = getDatatable().get(null);
-		if (table == null)
-			return;
-		List<SortMeta> meta = sortState.get(typ);
-		if (meta != null /* && table.getMultiSortMeta() == null */) {
-			table.setMultiSortMeta(meta);
-			// das sollte dazu führen, dass der Renderer die richtige Column
-			// als sortiert darstellt
-			// in PF 5.0 ist da allerdings ein Bug
-			table.setSortBy(meta.get(0).getSortField());
-		}
+	public void onPrerenderTable(ComponentSystemEvent event) {
+		DataTable table = (DataTable) event.getComponent();
+		Integer first = (Integer) JsfUtil.getViewVariable("first");
+		if (first != null)
+			table.setFirst(first);
+		Integer rows = (Integer) JsfUtil.getViewVariable("rows");
+		if (rows != null)
+			table.setRows(rows);
+		@SuppressWarnings("unchecked")
+		Map<String, Object> filters = (Map<String, Object>) JsfUtil.getViewVariable("filters");
+		if (filters != null)
+			table.setFilters(filters);
+		@SuppressWarnings("unchecked")
+		List<SortMeta> sortState = (List<SortMeta>) JsfUtil.getViewVariable("sortState");
+		if (sortState != null)
+			table.setMultiSortMeta(sortState);
 	}
 
 	public void columnChooserListener(ToggleEvent event) throws Exception {
 		String typ = (String) JsfUtil.getContextVariable("typ");
 		columnHandler.persistToggleState(loadTyp(typ, AbstractEntity.class), (int) event.getData(),
 				event.getVisibility() == Visibility.VISIBLE);
+		dataModels.remove(typ);
 	}
 
-	public int calcColWidth(DataTable table) {
-		// default war 96px
-		int count = table.getColumnsCount();
-		UIColumn column = table.getColumns().get(count - 1);
-		int btnCount = 0;
+	public int getButtonCount(DataTable table) {
+		UIColumn column = table.getColumns().get(table.getColumnsCount() - 1);
+		int buttonCount = 0;
 		for (UIComponent c : column.getChildren()) {
-			if (c instanceof HtmlCommandButton)
-				btnCount++;
+			if (c instanceof HtmlCommandButton && c.isRendered())
+				buttonCount++;
 		}
-		return btnCount * 29 + 10; // 10 ist margin des ersten Buttons
+		MutableInt maxButtons = (MutableInt) table.getAttributes().get("maxButtons");
+		if (maxButtons == null)
+			table.getAttributes().put("maxButtons", new MutableInt(buttonCount));
+		else if (buttonCount > maxButtons.intValue())
+			maxButtons.setValue(buttonCount);
+
+		// 10 ist margin des ersten Buttons
+		return buttonCount;
+	}
+
+	public int getMaxButtonCount(UIOutput output) {
+		return ((MutableInt) datatables.get(null).getAttributes().get("maxButtons")).intValue();
 	}
 }
