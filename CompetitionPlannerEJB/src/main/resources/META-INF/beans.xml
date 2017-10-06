@@ -3,5 +3,6 @@
        xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
 	<interceptors>
 		<class>org.planner.util.LoggingInterceptor</class>
+		<class>org.planner.ejb.ContextInterceptor</class>
 	</interceptors>
 </beans>
