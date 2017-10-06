@@ -7,11 +7,9 @@ import javax.persistence.AccessType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.xml.bind.annotation.XmlRootElement;
 
 @Entity
 @Access(AccessType.FIELD)
-@XmlRootElement
 public class Permission implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -20,6 +18,7 @@ public class Permission implements Serializable {
 		// 0, 1, 2 implizit
 		none, read, write;
 	}
+	// siehe org.jboss.security.acl.ACLImpl
 
 	@Id
 	@GeneratedValue

@@ -13,51 +13,63 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.persistence.OrderBy;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
+import org.planner.model.Gender;
 import org.planner.util.NLSBundle;
 import org.planner.util.Visible;
 
 @Entity
 @Access(AccessType.FIELD)
-@XmlRootElement
 @NLSBundle("users")
 public class User extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;
 
 	@Column(nullable = false, unique = true, length = 32)
-	@Visible(initial = false)
+	@Visible(initial = false, export = true, order = 0)
 	private String userId;
-	private String password;
-	private String token;
-	private Date tokenExpires;
-
-	@ManyToMany(fetch = FetchType.EAGER)
-	@JoinTable(inverseJoinColumns = @JoinColumn(name = "role_id"))
-	private Set<Role> roles = new HashSet<>();
 
 	@Column(nullable = false)
-	@Visible
+	@Visible(export = true, order = 1)
 	private String firstName;
 
 	@Column(nullable = false)
-	@Visible
+	@Visible(export = true, order = 2)
 	private String lastName;
 
-	@Visible
+	@Visible(export = true, order = 3)
 	private String email;
 
-	@ManyToOne /* (optional = false) */
+	@Visible(initial = false, export = true, order = 4)
+	@Temporal(TemporalType.DATE)
+	private Date birthDate;
+
+	@Visible(initial = false, export = true, order = 5)
+	private Gender gender;
+
+	private String password;
+	private String token;
+	private Long tokenExpires;
+
+	@ManyToMany
+	@JoinTable(inverseJoinColumns = @JoinColumn(name = "role_id"))
+	@OrderBy("role")
+	@Visible(export = true, order = 6)
+	private Set<Role> roles = new HashSet<>();
+
 	// aufgrund der Neuanlage bei Registrierung muss das bei der Erstanmeldung
 	// gesetzt werden
-	@Visible(initial = false)
+	@ManyToOne(fetch = FetchType.LAZY) /* (optional = false) */
+	@Visible(initial = false, roles = "Admin", order = 7)
 	private Club club = new Club();
 
-	@Visible(initial = false)
+	@Visible(initial = false, roles = "Admin", order = 8)
 	private Date lastLogon;
 
-	@Visible(initial = false)
+	@Visible(initial = false, order = 6)
 	private Boolean locked;
 
 	public String getUserId() {
@@ -84,11 +96,11 @@ public class User extends AbstractEntity {
 		this.token = token;
 	}
 
-	public Date getTokenExpires() {
+	public Long getTokenExpires() {
 		return tokenExpires;
 	}
 
-	public void setTokenExpires(Date tokenExpires) {
+	public void setTokenExpires(Long tokenExpires) {
 		this.tokenExpires = tokenExpires;
 	}
 
@@ -142,5 +154,21 @@ public class User extends AbstractEntity {
 
 	public boolean isLocked() {
 		return locked != null && locked.booleanValue();
+	}
+
+	public Date getBirthDate() {
+		return birthDate;
+	}
+
+	public void setBirthDate(Date birthDate) {
+		this.birthDate = birthDate;
+	}
+
+	public Gender getGender() {
+		return gender;
+	}
+
+	public void setGender(Gender gender) {
+		this.gender = gender;
 	}
 }

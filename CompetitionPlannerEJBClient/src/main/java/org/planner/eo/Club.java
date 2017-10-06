@@ -6,14 +6,12 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import org.planner.util.NLSBundle;
 import org.planner.util.Visible;
 
 @Entity
 @Access(AccessType.FIELD)
-@XmlRootElement
 @NLSBundle("clubs")
 public class Club extends AbstractEntity {
 
@@ -25,7 +23,7 @@ public class Club extends AbstractEntity {
 
 	// wenn optional false eingeschaltet wird, dann muss auch die Prüfung im
 	// MasterDataServiceImpl.saveAddress angepasst werden
-	@ManyToOne(cascade = CascadeType.MERGE /* optional = false */)
+	@ManyToOne(cascade = CascadeType.ALL /* optional = false */)
 	@Visible(initial = false, depth = 2)
 	private Address address;
 
@@ -38,8 +36,6 @@ public class Club extends AbstractEntity {
 	}
 
 	public Address getAddress() {
-		if (address == null) // TODO evtl. oben init
-			address = new Address();
 		return address;
 	}
 

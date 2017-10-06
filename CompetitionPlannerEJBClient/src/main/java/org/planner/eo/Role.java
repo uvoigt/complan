@@ -4,14 +4,12 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import org.planner.util.NLSBundle;
 import org.planner.util.Visible;
 
 @Entity
 @Access(AccessType.FIELD)
-@XmlRootElement
 @NLSBundle("roles")
 public class Role extends AbstractEntity {
 
@@ -21,7 +19,7 @@ public class Role extends AbstractEntity {
 	@Visible
 	private String role;
 
-	@Visible
+	@Visible(depth = 0)
 	private String description;
 
 	public String getRole() {

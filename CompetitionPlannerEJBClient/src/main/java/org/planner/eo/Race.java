@@ -10,7 +10,6 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
@@ -18,7 +17,6 @@ import org.planner.model.Gender;
 
 @Entity
 @Access(AccessType.FIELD)
-@XmlRootElement
 public class Race extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;
@@ -31,7 +29,7 @@ public class Race extends AbstractEntity {
 	@Temporal(TemporalType.TIME)
 	private Date startTime;
 
-	private long distance;
+	private int distance;
 
 	// @ManyToOne
 	@Column(nullable = false)
@@ -45,6 +43,9 @@ public class Race extends AbstractEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	private Announcement announcement;
+
+	@Column(name = "announcement_id", insertable = false, updatable = false)
+	private Long announcementId;
 
 	public int getNumber() {
 		return number;
@@ -70,11 +71,11 @@ public class Race extends AbstractEntity {
 		this.startTime = startTime;
 	}
 
-	public long getDistance() {
+	public int getDistance() {
 		return distance;
 	}
 
-	public void setDistance(long distance) {
+	public void setDistance(int distance) {
 		this.distance = distance;
 	}
 
@@ -100,6 +101,10 @@ public class Race extends AbstractEntity {
 
 	public void setGender(Gender gender) {
 		this.gender = gender;
+	}
+
+	public Long getAnnouncementId() {
+		return announcementId;
 	}
 
 	public void setAnnouncement(Announcement announcement) {
