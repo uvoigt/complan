@@ -28,7 +28,7 @@ public class ExceptionHandlerFactory extends javax.faces.context.ExceptionHandle
 		public Throwable getRootCause(Throwable throwable) {
 			Throwable rootCause = super.getRootCause(throwable);
 			if (rootCause instanceof EJBException)
-				return ((EJBException) throwable).getCausedByException();
+				return ((EJBException) rootCause).getCausedByException();
 			Throwable ejbException = lookupEJBException(rootCause);
 			if (ejbException instanceof EJBAccessException)
 				return ejbException;

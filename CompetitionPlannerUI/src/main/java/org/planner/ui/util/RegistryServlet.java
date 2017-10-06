@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.mutable.MutableInt;
 import org.planner.eo.User;
+import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.RegistryBean;
 import org.planner.util.CommonMessages;
 import org.slf4j.Logger;
@@ -35,11 +36,18 @@ public class RegistryServlet extends HttpServlet {
 	@Inject
 	private RegistryBean registry;
 
+	@Inject
+	private ServiceFacade service;
+
 	private Map<String, Status> requests = new HashMap<>();
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		if ("/userimg".equals(request.getServletPath())) {
+			userimg(response);
+			return;
+		}
 		if (isPotentialAttack(request, response))
 			return;
 		// Aufruf des E-Mail-Links
@@ -68,6 +76,8 @@ public class RegistryServlet extends HttpServlet {
 			passwordreset(request, response);
 		else if ("/passwordchange".equals(servletPath))
 			passwordchange(request, response);
+		else if ("/logout".equals(servletPath))
+			logout(request, response);
 	}
 
 	private boolean isPotentialAttack(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -144,5 +154,19 @@ public class RegistryServlet extends HttpServlet {
 		} else {
 			request.getRequestDispatcher("/WEB-INF/jsp/error.jsp").forward(request, response);
 		}
+	}
+
+	private void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		request.logout();
+		request.getSession().invalidate();
+		writeResult(response, "ok");
+	}
+
+	private void userimg(HttpServletResponse response) throws IOException {
+		User user = service.getLoggedInUser();
+		String firstName = user.getFirstName();
+		String lastName = user.getLastName();
+		response.setContentType("image/png");
+		new ImageCreator().createCCAbbreviation(firstName, lastName, response.getOutputStream());
 	}
 }
