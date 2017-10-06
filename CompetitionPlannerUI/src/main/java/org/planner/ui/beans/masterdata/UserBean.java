@@ -1,10 +1,12 @@
 package org.planner.ui.beans.masterdata;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import javax.enterprise.context.SessionScoped;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
 import javax.faces.validator.ValidatorException;
@@ -14,43 +16,79 @@ import javax.inject.Named;
 import org.planner.eo.Club;
 import org.planner.eo.Role;
 import org.planner.eo.User;
+import org.planner.model.Gender;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.Messages;
+import org.planner.ui.util.JsfUtil;
 
+//@Logged
 @Named
-@SessionScoped
+@RequestScoped
 public class UserBean extends AbstractEditBean {
 
 	private static final long serialVersionUID = 1L;
 
 	private User user;
-	private List<Long> selectedRoles;
 
 	private User myUser;
 
-	@Inject
-	private RoleBean roleBean;
+	private List<Club> clubs;
+
+	private List<String> selectedRoles;
+
+	private UIInput roleMenu;
 
 	@Inject
-	private Messages bundle;
+	private Messages messages;
+
+	@PostConstruct
+	public void init() {
+		Long id = getIdFromRequestParameters();
+		if (id == null)
+			id = (Long) JsfUtil.getViewVariable("id");
+		if (id != null) {
+			user = service.getObject(User.class, id, 1);
+			JsfUtil.setViewVariable("id", user.getId());
+		} else {
+			user = new User();
+		}
+		myUser = service.getLoggedInUser();
+		prepareSelectedRoles();
+	}
 
 	@Override
 	public void setItem(Object item) {
 		user = (User) item;
-		selectedRoles = new ArrayList<>();
-		for (Role role : user.getRoles()) {
-			selectedRoles.add(role.getId());
-		}
+		prepareSelectedRoles();
+	}
+
+	public UIInput getRoleMenu() {
+		return roleMenu;
+	}
+
+	public void setRoleMenu(UIInput roleMenu) {
+		this.roleMenu = roleMenu;
 	}
 
 	public User getUser() {
 		return user;
 	}
 
+	public String getMale() {
+		return Gender.m.getText();
+	}
+
+	public String getFemale() {
+		return Gender.w.getText();
+	}
+
 	public List<Club> getClubs() {
-		List<Club> clubs = service.getClubs();
-		if (user.getClub() == null || user.getClub().getId() == null)
+		if (this.clubs == null)
+			this.clubs = service.getClubs();
+		List<Club> clubs = new ArrayList<>(this.clubs);
+		if (user.getClub() == null || user.getClub().getId() == null) {
 			clubs.add(0, createSelectClub());
+		}
 		return clubs;
 	}
 
@@ -61,48 +99,72 @@ public class UserBean extends AbstractEditBean {
 
 	public void setClubId(Long value) {
 		Club club = user.getClub();
-		if (club != null)
-			club.setId(value);
+		if (club == null)
+			user.setClub(club = new Club());
+		club.setId(value);
 	}
 
 	private Club createSelectClub() {
 		Club club = new Club();
 		club.setId(-1L);
-		club.setName(bundle.get("labelChoose"));
+		club.setName(messages.get("labelChoose"));
 		return club;
 	}
 
-	public void validate(UIInput menu) {
+	public boolean isRoleSportler() {
+		Object value = roleMenu.getSubmittedValue();
+		if (value != null) {
+			for (String role : (String[]) value) {
+				if ("Sportler".equals(role))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	public void validateClub(UIInput menu) {
 		if ("-1".equals(menu.getSubmittedValue()))
 			throw new ValidatorException(new FacesMessage(menu.getValidatorMessage()));
 	}
 
-	public List<Long> getSelectedRoles() {
+	public List<String> getSelectedRoles() {
 		return selectedRoles;
 	}
 
 	public void setSelectedRoles(List<String> selectedRoles) {
-		this.selectedRoles = new ArrayList<>();
-		for (String roleId : selectedRoles) {
-			this.selectedRoles.add(Long.valueOf(roleId));
-		}
+		this.selectedRoles = selectedRoles;
 	}
 
 	public User getMyUser() {
-		if (myUser == null)
-			myUser = service.getLoggedInUser();
 		return myUser;
+	}
+
+	private void prepareSelectedRoles() {
+		selectedRoles = new ArrayList<>();
+		for (Role role : user.getRoles()) {
+			selectedRoles.add(role.getRole());
+		}
+	}
+
+	public List<Role> getRoles() {
+		return service.getRoles();
+	}
+
+	public Date getToday() {
+		return new Date();
 	}
 
 	@Override
 	protected void doSave() {
 		Set<Role> userRoles = user.getRoles();
-		List<Role> roles = roleBean.getRoles();
-		userRoles.clear();
-		for (Long roleId : selectedRoles) {
-			for (Role role : roles) {
-				if (role.getId().equals(roleId))
-					userRoles.add(role);
+		if (selectedRoles != null) {
+			userRoles.clear();
+			List<Role> roles = getRoles();
+			for (String selectedRole : selectedRoles) {
+				for (Role role : roles) {
+					if (role.getRole().equals(selectedRole))
+						userRoles.add(role);
+				}
 			}
 		}
 		service.saveUser(user);

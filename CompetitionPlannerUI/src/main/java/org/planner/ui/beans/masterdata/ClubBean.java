@@ -1,20 +1,28 @@
 package org.planner.ui.beans.masterdata;
 
-import javax.enterprise.context.SessionScoped;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 
 import org.planner.eo.Club;
 import org.planner.ui.beans.AbstractEditBean;
 
 @Named
-@SessionScoped
+@RequestScoped
 public class ClubBean extends AbstractEditBean {
 
 	private static final long serialVersionUID = 1L;
 
-	private Club club = new Club();
+	private Club club;
 
-	private Club myClub;
+	@PostConstruct
+	public void init() {
+		Long id = getIdFromRequestParameters();
+		if (id != null)
+			club = service.getObject(Club.class, id, 1);
+		else
+			club = new Club();
+	}
 
 	@Override
 	public void setItem(Object item) {
@@ -23,12 +31,6 @@ public class ClubBean extends AbstractEditBean {
 
 	public Club getClub() {
 		return club;
-	}
-
-	public Club getMyClub() {
-		if (myClub == null)
-			myClub = service.getLoggedInUser().getClub();
-		return myClub;
 	}
 
 	@Override

@@ -2,7 +2,7 @@ package org.planner.ui.beans.masterdata;
 
 import java.util.List;
 
-import javax.enterprise.context.SessionScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 
 import org.planner.eo.Address;
@@ -13,7 +13,7 @@ import org.planner.eo.Country_;
 import org.planner.ui.beans.AbstractEditBean;
 
 @Named
-@SessionScoped
+@RequestScoped
 public class AddressBean extends AbstractEditBean {
 
 	private static final long serialVersionUID = 1L;

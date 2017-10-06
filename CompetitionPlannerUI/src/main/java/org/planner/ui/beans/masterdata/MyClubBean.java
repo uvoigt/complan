@@ -4,11 +4,10 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 
+import org.planner.eo.Address;
 import org.planner.eo.Club;
 import org.planner.ui.beans.AbstractEditBean;
-import org.planner.util.Logged;
 
-@Logged
 @Named
 @RequestScoped
 public class MyClubBean extends AbstractEditBean {
@@ -20,6 +19,8 @@ public class MyClubBean extends AbstractEditBean {
 	@PostConstruct
 	public void init() {
 		club = service.getLoggedInUser().getClub();
+		if (club.getAddress() == null)
+			club.setAddress(new Address());
 	}
 
 	public Club getClub() {
