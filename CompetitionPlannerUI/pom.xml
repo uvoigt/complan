@@ -31,7 +31,7 @@
 				</repository>
 				<repository>
 					<id>jsf</id>
-					<url>http://repository.jboss.org</url>
+					<url>http://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
 				</repository>
 			</repositories>
 		</profile>
@@ -48,6 +48,10 @@
 				<repository>
 					<id>primefaces</id>
 					<url>http://repository.primefaces.org</url>
+				</repository>
+				<repository>
+					<id>jsf</id>
+					<url>http://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
 				</repository>
 			</repositories>
 		</profile>
