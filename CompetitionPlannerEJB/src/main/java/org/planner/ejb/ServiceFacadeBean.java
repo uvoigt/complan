@@ -1,5 +1,6 @@
 package org.planner.ejb;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -8,18 +9,21 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 
-import org.planner.business.AdminKonfigurationGFO;
 import org.planner.business.AnnouncementServiceImpl;
 import org.planner.business.CommonImpl;
 import org.planner.business.MasterDataServiceImpl;
+import org.planner.business.ProgramServiceImpl;
 import org.planner.business.RegistryImpl;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEnum;
 import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Club;
+import org.planner.eo.Program;
 import org.planner.eo.Properties;
 import org.planner.eo.Race;
+import org.planner.eo.RegEntry;
+import org.planner.eo.Registration;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.Suchergebnis;
@@ -28,6 +32,7 @@ import org.planner.remote.ServiceFacade;
 import org.planner.util.Logged;
 
 @Logged
+// @Context
 @Stateless
 @RolesAllowed("User")
 public class ServiceFacadeBean implements ServiceFacade {
@@ -45,24 +50,24 @@ public class ServiceFacadeBean implements ServiceFacade {
 	private AnnouncementServiceImpl announcement;
 
 	@Inject
-	private AdminKonfigurationGFO adminGFO;
+	private ProgramServiceImpl program;
 
 	@Inject
 	private RegistryImpl registry;
 
 	@Override
-	public <T extends AbstractEntity> Suchergebnis<T> search(Class<T> entityType, Suchkriterien criteria) {
+	public <T extends Serializable> Suchergebnis<T> search(Class<T> entityType, Suchkriterien criteria) {
 		return common.search(entityType, criteria);
 	}
 
 	@Override
-	public <T extends AbstractEntity> T getObject(Class<T> type, long id) {
-		return adminGFO.getById(type, id);
+	public <T extends Serializable> T getObject(Class<T> type, long id, int fetchDepth) {
+		return common.getById(type, id, fetchDepth);
 	}
 
 	@Override
 	public <T extends AbstractEntity> T getObjectForCopy(Class<T> type, long id) {
-		return adminGFO.getByIdForCopy(type, id);
+		return common.getByIdForCopy(type, id);
 	}
 
 	@Override
@@ -72,12 +77,12 @@ public class ServiceFacadeBean implements ServiceFacade {
 
 	@Override
 	public Map<String, Properties> leseBenutzerEinstellungen() {
-		return adminGFO.leseBenutzerEinstellungen(caller.getLoginName());
+		return common.leseBenutzerEinstellungen(caller.getLoginName());
 	}
 
 	@Override
 	public Map<String, Properties> speichernBenutzerEinstellungen(List<Properties> properties) {
-		return adminGFO.speichernBenutzerEinstellungen(properties, caller.getLoginName());
+		return common.speichernBenutzerEinstellungen(properties, caller.getLoginName());
 	}
 
 	@Override
@@ -86,8 +91,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public void delete(Class<? extends AbstractEntity> entityType, List<Long> ids) {
-		common.delete(entityType, ids);
+	public void deleteRaces(Long announcementId, List<Long> raceIds) {
+		announcement.deleteRaces(announcementId, raceIds);
 	}
 
 	// @Override
@@ -148,17 +153,12 @@ public class ServiceFacadeBean implements ServiceFacade {
 
 	@Override
 	public User getLoggedInUser() {
-		return masterData.getUserByUserId(caller.getLoginName());
+		return masterData.getUserByUserId(caller.getLoginName(), true);
 	}
 
 	@Override
 	public void saveLastLogonTime() {
 		masterData.saveLastLogonTime(caller.getLoginName());
-	}
-
-	@Override
-	public User getUserById(Long id) {
-		return masterData.getUserById(id);
 	}
 
 	@Override
@@ -199,7 +199,7 @@ public class ServiceFacadeBean implements ServiceFacade {
 
 	@Override
 	public void dataImport(List<AbstractEntity> entities) {
-		common.dataImport(entities);
+		common.dataImport(entities, masterData);
 	}
 
 	@Override
@@ -217,5 +217,45 @@ public class ServiceFacadeBean implements ServiceFacade {
 	@Override
 	public void saveRace(Race race) {
 		announcement.saveRace(race);
+	}
+
+	@Override
+	public List<Announcement> getOpenAnnouncements() {
+		return announcement.getOpenAnnouncements();
+	}
+
+	@Override
+	public Long createRegistration(Registration registration) {
+		return announcement.createRegistration(registration);
+	}
+
+	@Override
+	public void announce(Long announcementId) {
+		this.announcement.announce(announcementId);
+	}
+
+	@Override
+	public void saveRegEntries(Long registrationId, List<RegEntry> entries) {
+		this.announcement.saveRegEntries(registrationId, entries);
+	}
+
+	@Override
+	public void deleteFromRegEntry(Long registrationId, RegEntry entry) {
+		this.announcement.deleteFromRegEntry(registrationId, entry);
+	}
+
+	@Override
+	public void submitRegistration(Long registrationId) {
+		this.announcement.submitRegistration(registrationId);
+	}
+
+	@Override
+	public Long createProgram(Program program) {
+		return this.program.createProgram(program);
+	}
+
+	@Override
+	public Program generateProgram(Program program) {
+		return this.program.generateProgram(program);
 	}
 }
