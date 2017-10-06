@@ -4,7 +4,8 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:pe="http://primefaces.org/ui/extensions">
 
 	<ui:decorate template="/templates/edit.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('announcements')}"/>
@@ -14,136 +15,84 @@
 		<ui:param name="announcement" value="#{announcementBean.announcement}"/>
 
 		<ui:define name="editArea">
-			<h:panelGrid columns="2" cellspacing="5">
-				<h:outputText value="#{bundle.name}"/>
-				<p:inputText value="#{announcement.name}" autocomplete="off" maxlength="255" size="100" required="true"
-					requiredMessage="#{bundle.format('fieldValidation', bundle.name)}"/>
 
-				<h:outputText value="#{bundle.category}"/>
-				<p:autoComplete value="#{announcement.category}" converter="#{categoryConverter}"
-					completeMethod="#{announcementBean.getCategories}" var="category" itemValue="#{category.name}" itemLabel="#{category.name}"
-					maxlength="255" size="100"
-					required="true" requiredMessage="#{bundle.format('fieldValidation', bundle.category)}"/>
+			<h:inputHidden id="announcementId" value="#{announcement.id}"/>
 
-				<h:outputText value="#{bundle.dates}"/>
-				<h:panelGrid columns="4">
-					<h:outputText value="#{bundle.startDate}"/>
-					<p:calendar value="#{announcement.startDate}" pages="3" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.startDate)}"/>
-					<h:outputText value="#{bundle.endDate}"/>
-					<p:calendar value="#{announcement.endDate}" pages="3" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.endDate)}"/>
-				</h:panelGrid>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.name}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:inputText value="#{announcement.name}" autocomplete="off" maxlength="255" required="true"
+						requiredMessage="#{bundle.format('fieldValidation', bundle.name)}" style="width: 95%"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.category}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:autoComplete value="#{announcement.category}" converter="#{categoryConverter}"
+						completeMethod="#{announcementBean.getCategories}" var="category" itemValue="#{category.name}" itemLabel="#{category.name}"
+						maxlength="255" required="true" requiredMessage="#{bundle.format('fieldValidation', bundle.category)}"
+						style="width: 100%" inputStyle="width: 95%"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.dates}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<div class="ui-g">
+						<h:outputText value="#{bundle.startDate}"/>
+						<p:calendar widgetVar="startDate"
+								value="#{announcement.startDate}" pages="3" required="true"
+								requiredMessage="#{bundle.format('fieldValidation', bundle.startDate)}"
+								size="6" style="margin: 0 1em 0 1em">
+							<p:ajax event="dateSelect" listener="#{announcementBean.startDateChanged}" update="endDate"/>
+						</p:calendar>
+						<h:outputText value="#{bundle.endDate}"/>
+						<p:calendar id="endDate" binding="#{announcementBean.endDate}"
+							value="#{announcement.endDate}" pages="3" required="true"
+							requiredMessage="#{bundle.format('fieldValidation', bundle.endDate)}"
+							size="6" style="margin-left: 1em"/>
+					</div>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.location}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<h:panelGroup>
+						<p:selectOneRadio value="#{announcementBean.location}" required="true"
+								requiredMessage="#{bundle.format('fieldValidation', bundle.location)}"
+								onclick="if (this.value == 'address') {PF('locationEdit').show();} else {PF('locationEdit').hide()}"
+								style="float: left">
+							<f:selectItem itemValue="club" itemLabel="#{bundle.club}"/>
+							<f:selectItem itemValue="address" itemLabel="#{bundle.address}"/>
+						</p:selectOneRadio>
+						<p:inplace widgetVar="locationEdit">
+							<f:facet name="output">
+								<h:outputLabel />
+							</f:facet>
+							<f:facet name="input">
+								<ui:param name="address" value="#{announcement.location.address}"/>
+								<ui:include src="/masterdata/addressArea.xhtml"/>
+							</f:facet>
+						</p:inplace>
+					</h:panelGroup>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.announce}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:commandButton value="#{bundle.setStatus}" action="#{announcementBean.announce()}"
+						process="announcementId @this" widgetVar="btnStatus" onsuccess="PF('btnStatus').disable()"/>
+				</div>
+			</div>
+			<h:outputScript>
+				if (#{announcement.id == null or announcement.status != "created"})
+					PF("btnStatus").disable();
+				else
+					PF("btnStatus").enable();
+			</h:outputScript>
 
-				<h:outputText value="#{bundle.location}"/>
-				<h:panelGroup>
-					<p:selectOneRadio value="#{announcementBean.location}" required="true"
-							requiredMessage="#{bundle.format('fieldValidation', bundle.location)}"
-							onclick="if (this.value == 'address') {PF('locationEdit').show();} else {PF('locationEdit').hide()}"
-							style="float: left">
-						<f:selectItem itemValue="club" itemLabel="#{bundle.club}"/>
-						<f:selectItem itemValue="address" itemLabel="#{bundle.address}"/>
-					</p:selectOneRadio>
-					<p:inplace widgetVar="locationEdit">
-						<f:facet name="output">
-							<h:outputLabel />
-						</f:facet>
-						<f:facet name="input">
-							<ui:param name="address" value="#{announcement.location.address}"/>
-							<ui:include src="/masterdata/addressArea.xhtml"/>
-						</f:facet>
-					</p:inplace>
-				</h:panelGroup>
+			<pe:ckEditor value="#{announcement.text}" widgetVar="annEditor" language="de"
+				width="90%"/>
 
-				<h:outputText value="#{bundle.opening}"/>
-				<h:panelGrid columns="5">
-					<p:calendar value="#{announcement.opening}" pages="3" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.opening)}"/>
-
-					<h:outputText value="#{bundle.deadline}"/>
-					<p:calendar value="#{announcement.deadline}" pages="3" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.deadline)}"/>
-
-					<h:outputText value="#{bundle.latestDeadline}"/>
-					<p:calendar value="#{announcement.latestDeadline}" pages="3" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.latestDeadline)}"/>
-				</h:panelGrid>
-
-				<h:outputText value="#{bundle.openingLocation}"/>
-				<h:panelGroup>
-					<p:selectOneRadio value="#{announcementBean.openingLocation}" required="true"
-							requiredMessage="#{bundle.format('fieldValidation', bundle.openingLocation)}"
-							onclick="if (this.value == 'address') {PF('openingLocationEdit').show();} else {PF('openingLocationEdit').hide()}"
-							style="float: left">
-						<f:selectItem itemValue="club" itemLabel="#{bundle.club}"/>
-						<f:selectItem itemValue="address" itemLabel="#{bundle.address}"/>
-					</p:selectOneRadio>
-					<p:inplace widgetVar="openingLocationEdit">
-						<f:facet name="output">
-							<h:outputLabel />
-						</f:facet>
-						<f:facet name="input">
-							<ui:param name="address" value="#{announcement.openingLocation.address}"/>
-							<ui:include src="/masterdata/addressArea.xhtml"/>
-						</f:facet>
-					</p:inplace>
-				</h:panelGroup>
-
-				<h:outputText value="#{bundle.courseSize}"/>
-				<h:panelGrid columns="3">
-					<p:inputText value="#{announcement.courseSize}" autocomplete="off" maxlength="255" size="30" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.courseSize)}"/>
-					<h:outputText value="#{bundle.waterDepth}"/>
-					<p:inputText value="#{announcement.waterDepth}" autocomplete="off" maxlength="255" size="30" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.waterDepth)}"/>
-				</h:panelGrid>
-
-				<h:outputText value="#{bundle.tracks}"/>
-				<h:panelGrid columns="6">
-					<h:outputText value="#{bundle.tracksSprint}"/>
-					<p:inputText value="#{announcement.tracksSprint}" autocomplete="off" maxlength="2" size="3" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.tracksSprint)}"/>
-					<h:outputText value="#{bundle.tracksShort}"/>
-					<p:inputText value="#{announcement.tracksShort}" autocomplete="off" maxlength="2" size="3" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.tracksShort)}"/>
-					<h:outputText value="#{bundle.tracksMedium}"/>
-					<p:inputText value="#{announcement.tracksMedium}" autocomplete="off" maxlength="2" size="3" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.tracksMedium)}"/>
-				</h:panelGrid>
-
-				<h:outputText value="#{bundle.fee}"/>
-				<!--p:inputText value="# { announcement.fee}" autocomplete="off" maxlength="10" size="12" required="true"
-					requiredMessage="#{bundle.format('fieldValidation', bundle.fee)}"/-->
-
-				<h:outputText value="#{bundle.juryLocation}"/>
-				<h:panelGroup>
-					<p:selectOneRadio value="#{announcementBean.juryLocation}" required="true"
-							requiredMessage="#{bundle.format('fieldValidation', bundle.juryLocation)}"
-							onclick="if (this.value == 'address') {PF('juryLocationEdit').show();} else {PF('juryLocationEdit').hide()}"
-							style="float: left">
-						<f:selectItem itemValue="club" itemLabel="#{bundle.club}"/>
-						<f:selectItem itemValue="address" itemLabel="#{bundle.address}"/>
-					</p:selectOneRadio>
-					<p:inplace widgetVar="juryLocationEdit">
-						<f:facet name="output">
-							<h:outputLabel />
-						</f:facet>
-						<f:facet name="input">
-							<ui:param name="address" value="#{announcement.juryLocation.address}"/>
-							<ui:include src="/masterdata/addressArea.xhtml"/>
-						</f:facet>
-					</p:inplace>
-				</h:panelGroup>
-
-				<h:outputText value="#{bundle.juryEmail}"/>
-				<p:inputText value="#{announcement.juryEmail}" autocomplete="off" maxlength="255" size="30" required="true"
-					requiredMessage="#{bundle.format('fieldValidation', bundle.juryEmail)}"/>
-
-				<h:outputText value="#{bundle.announce}"/>
-				<p:commandButton value="bundle.sendMail"/>
-
-			</h:panelGrid>
-			<p:textEditor value="#{announcement.text}"/>
 		</ui:define>
 	</ui:decorate>
 </html>

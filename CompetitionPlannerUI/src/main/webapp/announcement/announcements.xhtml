@@ -12,17 +12,28 @@
 		<ui:param name="typ" value="org.planner.eo.Announcement"/>
 		<ui:param name="bearbeitenLink" value="/announcement/announcementEdit.xhtml"/>
 		<ui:param name="editBean" value="#{announcementBean}"/>
-		<ui:param name="renderNewButton" value="true"/>
+		<ui:param name="renderCrudButtons" value="#{roleBean.inRole('Sportwart')}"/>
 		<ui:param name="renderImportPanel" value="false"/>
 
 		<ui:define name="addRowButtons">
 			<p:commandButton id="racesButton" icon="ui-icon-flag" title="#{bundle.races}"
 					action="#{searchBean.bearbeiten('/announcement/racesEdit.xhtml', item.id, racesEditBean)}"
 					process="@this"
-					update=":mainContent"/>
+					update=":mainContent"
+					rendered="#{roleBean.inRole('Sportwart')}"/>
 			<p:commandButton id="pdfButton" icon="ui-icon-print" title="#{bundle.createPdf}"
 					action="#{announcementBean.createPdf(item)}" ajax="false"
 					process="@this"/>
+			<p:commandButton icon="ui-icon-comment" title="#{bundle.register}"
+					action="#{registrationBean.createRegistration(item)}"
+					process="@this"
+					update="mainContent"
+					rendered="#{item.status == 'announced'}"/>
+			<p:commandButton icon="ui-icon-calculator" title="#{bundle.createProgram}"
+					action="#{programBean.createProgram(item)}"
+					process="@this"
+					update="mainContent"
+					rendered="#{item.status == 'announced' and item['club.name'] == announcementBean.loggedInUser.club.name}"/>
 		</ui:define>
 
 	</ui:decorate>

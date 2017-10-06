@@ -13,7 +13,8 @@
 		<ui:define name="content">
 
 			<h:form>
-				<h:inputHidden value="#{racesEditBean.announcementId}"/>
+				<h:inputHidden id="announcementId" value="#{racesEditBean.announcementId}"
+					binding="#{racesEditBean.hiddenAnnouncementId}"/>
 
 				<h:panelGrid columns="2">
 					<h:outputText value="#{bundle.boatClass}"/>
@@ -42,18 +43,23 @@
 					</p:selectManyButton>
 
 					<h:outputText value="#{bundle.day}"/>
-					<p:calendar value="#{racesEditBean.selectedDay}" mindate="#{racesEditBean.announcement.startDate}" maxdate="#{racesEditBean.announcement.endDate}"/>
+					<p:calendar value="#{racesEditBean.selectedDay}" mindate="#{racesEditBean.announcement.startDate}"
+						maxdate="#{racesEditBean.announcement.endDate}" validator="#{racesEditBean.validateDay(component)}"
+						validatorMessage="#{bundle.invalidDay}"/>
 				</h:panelGrid>
-				<p:panelGrid columns="2">
+				<p:panelGrid columns="3">
 					<p:commandButton value="#{bundle.raceAdd}" action="#{racesEditBean.createRaces()}"
 							process="@form" update="@form"/>
 					<p:commandButton value="#{bundle.raceDelete}" widgetVar="btnRaceDelete"
 							action="#{racesEditBean.delete()}"
-							process="@this" update="racesTable"
+							process="@this racesTable announcementId" update="racesTable"
 							onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('raceComfirmMsg', 'xxx')}'.replace(/xxx/, PF('racesTable').getSelectedRowsCount()))"
 							oncomplete="enableButtons()">
 						<p:confirm icon=""/>
 					</p:commandButton>
+					<p:commandButton value="#{messages.backToOverview}"
+							action="#{startseiteBean.setMainContent('/announcement/announcements.xhtml')}"
+							process="@this" update="mainContent"/>
 				</p:panelGrid>
 
 				<h:outputScript>
@@ -75,7 +81,7 @@
 						selection="#{racesEditBean.selectedRaces}"
 						sortMode="multiple"
 						editable="true" editMode="cell"
-						draggableRows="false" rows="1000">
+						rows="1000">
 
 					<f:facet name="header">
 						<h:panelGroup>
@@ -83,12 +89,13 @@
 						</h:panelGroup>
 					</f:facet>
 
+					<p:ajax event="sort" process="@form:announcementId"/>
 					<p:ajax event="toggleSelect" oncomplete="enableButtons()"/>
 					<p:ajax event="rowSelect" oncomplete="enableButtons()"/>
 					<p:ajax event="rowUnselect" oncomplete="enableButtons()"/>
 					<p:ajax event="rowSelectCheckbox" oncomplete="enableButtons()"/>
 					<p:ajax event="rowUnselectCheckbox" oncomplete="enableButtons()"/>
-					<p:ajax event="cellEdit" listener="#{racesEditBean.onCellEdit}"/>
+					<p:ajax event="cellEdit" listener="#{racesEditBean.onCellEdit}" process="@form:announcementId racesTable"/>
 	
 					<p:column selectionMode="multiple" style="width:16px;text-align:center"/>
 					<p:column headerText="#{bundle.day}" sortBy="#{racesEditBean.getRaceDay(race.day)}">
