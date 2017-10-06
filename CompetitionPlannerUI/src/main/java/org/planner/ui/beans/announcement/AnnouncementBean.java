@@ -1,16 +1,22 @@
 package org.planner.ui.beans.announcement;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import javax.enterprise.context.SessionScoped;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Category;
@@ -20,17 +26,24 @@ import org.planner.eo.Location;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
 import org.planner.ui.beans.AbstractEditBean;
+import org.planner.ui.beans.Messages;
 import org.planner.ui.beans.SearchBean.ColumnModel;
-import org.planner.ui.util.PdfCreator;
+import org.planner.ui.util.BerichtGenerator;
+import org.planner.util.LogUtil.TechnischeException;
+import org.primefaces.component.calendar.Calendar;
 import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
 
 import com.itextpdf.text.DocumentException;
 
 @Named
-@SessionScoped
+@RequestScoped
 public class AnnouncementBean extends AbstractEditBean {
 
 	private static final long serialVersionUID = 1L;
+
+	@Inject
+	private Messages messages;
 
 	private Announcement announcement;
 
@@ -40,12 +53,49 @@ public class AnnouncementBean extends AbstractEditBean {
 
 	private List<ColumnModel> columns;
 
+	private Calendar endDate;
+
+	@PostConstruct
+	public void init() {
+		Long id = getIdFromRequestParameters();
+		if (id != null)
+			announcement = service.getObject(Announcement.class, id, 1);
+		else
+			announcement = new Announcement();
+		populateLocation();
+	}
+
 	@Override
 	public void setItem(Object item) {
 		announcement = (Announcement) item;
-		location = announcement.getLocation().getClub() != null ? "club" : "address";
-		openingLocation = announcement.getOpeningLocation().getClub() != null ? "club" : "address";
-		juryLocation = announcement.getJuryLocation().getClub() != null ? "club" : "address";
+		populateLocation();
+		if (announcement.getId() == null) {
+			announcement.setText(getTemplate());
+		}
+	}
+
+	private String getTemplate() {
+		final String name = "/announcementTemplate.xhtml";
+		InputStream in = getClass().getResourceAsStream(name);
+		if (in == null)
+			throw new TechnischeException(name + " nicht gefunden", null);
+		try {
+			try {
+				return IOUtils.toString(in, "UTF-8");
+			} finally {
+				in.close();
+			}
+		} catch (IOException e) {
+			throw new TechnischeException("Fehler beim Lesen von " + name, e);
+		}
+	}
+
+	public Calendar getEndDate() {
+		return endDate;
+	}
+
+	public void setEndDate(Calendar endDate) {
+		this.endDate = endDate;
 	}
 
 	public Announcement getAnnouncement() {
@@ -78,13 +128,22 @@ public class AnnouncementBean extends AbstractEditBean {
 
 	@Override
 	protected void doSave() {
-		Club club = service.getLoggedInUser().getClub();
+		Club club = getLoggedInUser().getClub();
 		handleLocation(location, announcement.getLocation(), club);
-		handleLocation(juryLocation, announcement.getJuryLocation(), club);
-		handleLocation(openingLocation, announcement.getOpeningLocation(), club);
+		// handleLocation(juryLocation, announcement.getJuryLocation(), club);
+		// handleLocation(openingLocation, announcement.getOpeningLocation(),
+		// club);
 		// handleLocation(announcer, announcement.getAnnouncer(), club); TODO
 		// die Meldestelle
 		service.saveAnnouncement(announcement);
+	}
+
+	private void populateLocation() {
+		location = announcement.getId() == null || announcement.getLocation().getClub() != null ? "club" : "address";
+		// openingLocation = announcement.getOpeningLocation().getClub() != null
+		// ? "club" : "address";
+		// juryLocation = announcement.getJuryLocation().getClub() != null ?
+		// "club" : "address";
 	}
 
 	private void handleLocation(String value, Location loc, Club club) {
@@ -94,6 +153,11 @@ public class AnnouncementBean extends AbstractEditBean {
 		} else {
 			loc.setClub(null);
 		}
+	}
+
+	public void startDateChanged(SelectEvent event) {
+		Object value = ((Calendar) event.getSource()).getValue();
+		endDate.setMindate(value);
 	}
 
 	public List<Category> getCategories(String text) {
@@ -114,10 +178,17 @@ public class AnnouncementBean extends AbstractEditBean {
 		return columns;
 	}
 
-	public void createPdf(Announcement announcement) throws DocumentException, IOException {
+	public void announce() {
+		service.announce(announcement.getId());
+		FacesContext.getCurrentInstance().addMessage(null,
+				new FacesMessage(null, messages.get("announcements.statusSet")));
+	}
+
+	public void createPdf(Map<String, Object> row) throws DocumentException, IOException {
 
 		FacesContext facesContext = FacesContext.getCurrentInstance();
 		ExternalContext externalContext = facesContext.getExternalContext();
+		Announcement announcement = service.getObject(Announcement.class, (Long) row.get("id"), 1);
 
 		String contentDispositionValue = "attachment";
 
@@ -134,12 +205,13 @@ public class AnnouncementBean extends AbstractEditBean {
 		OutputStream out = externalContext.getResponseOutputStream();
 
 		try {
-			PdfCreator.createAnnouncent(announcement, out);
+			new BerichtGenerator().generate(announcement, out);
 
 			externalContext.setResponseStatus(HttpServletResponse.SC_OK);
 			externalContext.responseFlushBuffer();
 
 		} catch (Exception e) {
+			e.printStackTrace();
 			externalContext.setResponseStatus(HttpServletResponse.SC_NO_CONTENT);
 		} finally {
 			facesContext.responseComplete();

@@ -1,13 +1,17 @@
 package org.planner.ui.beans.announcement;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import javax.enterprise.context.SessionScoped;
-import javax.inject.Inject;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
+import javax.faces.component.UIInput;
+import javax.faces.validator.ValidatorException;
 import javax.inject.Named;
 
 import org.planner.eo.Announcement;
@@ -15,21 +19,17 @@ import org.planner.eo.Race;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
 import org.planner.model.Gender;
-import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.AbstractEditBean;
 import org.primefaces.event.CellEditEvent;
 
 @Named
-@SessionScoped
+@RequestScoped
 public class RacesEditBean extends AbstractEditBean {
 
 	private static final long serialVersionUID = 1L;
 
 	private static final SimpleDateFormat FORMAT_DAY = new SimpleDateFormat("EEEE");
 	private static final SimpleDateFormat FORMAT_TIME = new SimpleDateFormat("HH:mm");
-
-	@Inject
-	private ServiceFacade service;
 
 	private Long announcementId;
 	private Announcement announcement;
@@ -38,13 +38,26 @@ public class RacesEditBean extends AbstractEditBean {
 	private String[] selectedBoatClasses;
 	private String[] selectedGenders;
 	private String[] selectedDistances;
-	private List<Race> selectedRaces = new ArrayList<>();
+	private List<Race> selectedRaces;
 
 	private Date selectedDay;
 
 	private List<Race> races;
 
+	private UIInput hiddenAnnouncementId;
+
+	@PostConstruct
+	public void init() {
+		announcementId = getIdFromRequestParameters();
+		selectedRaces = new ArrayList<>();
+	}
+
 	public Long getAnnouncementId() {
+		if (announcementId != null)
+			return announcementId;
+		Object value = hiddenAnnouncementId.getSubmittedValue();
+		if (value != null)
+			announcementId = Long.valueOf((String) value);
 		return announcementId;
 	}
 
@@ -52,15 +65,23 @@ public class RacesEditBean extends AbstractEditBean {
 		this.announcementId = announcementId;
 	}
 
+	public UIInput getHiddenAnnouncementId() {
+		return hiddenAnnouncementId;
+	}
+
+	public void setHiddenAnnouncementId(UIInput hiddenAnnouncementId) {
+		this.hiddenAnnouncementId = hiddenAnnouncementId;
+	}
+
 	public Announcement getAnnouncement() {
 		if (announcement == null)
-			announcement = service.getObject(Announcement.class, announcementId);
+			announcement = service.getObject(Announcement.class, announcementId, 1);
 		return announcement;
 	}
 
 	public List<Race> getRaces() {
 		if (races == null)
-			races = service.getRaces(announcementId);
+			races = service.getRaces(getAnnouncementId());
 		return races;
 	}
 
@@ -68,7 +89,7 @@ public class RacesEditBean extends AbstractEditBean {
 		if (offset == null)
 			return "";
 		Calendar cal = Calendar.getInstance();
-		cal.setTime(announcement.getStartDate());
+		cal.setTime(getAnnouncement().getStartDate());
 		cal.add(Calendar.DAY_OF_YEAR, offset);
 		return offset != null ? FORMAT_DAY.format(cal.getTime()) : "";
 	}
@@ -78,8 +99,7 @@ public class RacesEditBean extends AbstractEditBean {
 		for (Race race : selectedRaces) {
 			ids.add(race.getId());
 		}
-		service.delete(Race.class, ids);
-		selectedRaces.clear();
+		service.deleteRaces(getAnnouncementId(), ids);
 		races = null;
 	}
 
@@ -154,14 +174,6 @@ public class RacesEditBean extends AbstractEditBean {
 		// Announcement wäre keine gute Idee, da die Races lazy gezogen werden
 		// und der Logger damit hinfällt
 		announcementId = (Long) item;
-		announcement = null;
-		selectedAgeTypes = null;
-		selectedBoatClasses = null;
-		selectedDistances = null;
-		selectedGenders = null;
-		selectedDay = null;
-		selectedRaces.clear();
-		races = null;
 	}
 
 	@Override
@@ -185,7 +197,7 @@ public class RacesEditBean extends AbstractEditBean {
 
 	public void onCellEdit(CellEditEvent event) {
 		String key = event.getRowKey();
-		Race race = service.getObject(Race.class, Long.valueOf(key));
+		Race race = service.getObject(Race.class, Long.valueOf(key), 0);
 		String columnId = event.getColumn().getColumnKey();
 		if (columnId.endsWith(":time"))
 			race.setStartTime((Date) event.getNewValue());
@@ -194,5 +206,14 @@ public class RacesEditBean extends AbstractEditBean {
 		else
 			return;
 		service.saveRace(race);
+	}
+
+	public void validateDay(org.primefaces.component.calendar.Calendar calendar) throws ParseException {
+		String string = (String) calendar.getSubmittedValue();
+		if (string != null && string.length() > 0) {
+			Date date = new SimpleDateFormat(calendar.calculatePattern()).parse(string);
+			if (date.before(getAnnouncement().getStartDate()) || date.after(getAnnouncement().getEndDate()))
+				throw new ValidatorException(new FacesMessage(calendar.getValidatorMessage()));
+		}
 	}
 }
