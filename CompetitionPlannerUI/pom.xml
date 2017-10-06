@@ -30,8 +30,8 @@
 					<url>http://repository.primefaces.org</url>
 				</repository>
 				<repository>
-					<id>mojarra</id>
-					<url>http://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
+					<id>jsf</id>
+					<url>http://repository.jboss.org</url>
 				</repository>
 			</repositories>
 		</profile>
@@ -96,7 +96,7 @@
 			<groupId>com.sun.faces</groupId>
 			<artifactId>jsf-impl</artifactId>
 			<version>2.2.13.SP1</version>
-			<scope>provided</scope> 
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-fileupload</groupId>
