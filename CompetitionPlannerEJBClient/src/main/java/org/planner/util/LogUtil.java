@@ -4,14 +4,15 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import javax.ejb.ApplicationException;
 import javax.ejb.EJBException;
 import javax.faces.FacesException;
-import javax.faces.application.FacesMessage;
-import javax.faces.context.FacesContext;
+import javax.persistence.OptimisticLockException;
 
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.StandardToStringStyle;
@@ -30,9 +31,10 @@ public class LogUtil {
 	public abstract static class KonfigException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 
+		protected transient boolean logged;
+
 		/**
-		 * Technischer Fehler. Die Nachricht sollte nicht an der Oberfläche
-		 * erscheinen.
+		 * Technischer Fehler. Die Nachricht sollte nicht an der Oberfläche erscheinen.
 		 * 
 		 * @param message
 		 *            Meldung für das Log
@@ -66,8 +68,22 @@ public class LogUtil {
 	public static class FachlicheException extends KonfigException {
 		private static final long serialVersionUID = 1L;
 
+		private List<String> messages;
+
 		public FachlicheException(ResourceBundle bundle, String key, Object... args) {
 			super(bundle, key, args);
+		}
+
+		public void addMessage(ResourceBundle bundle, String key, Object... args) {
+			if (messages == null) {
+				messages = new ArrayList<>();
+				messages.add(getMessage());
+			}
+			messages.add(MessageFormat.format(bundle.getString(key), args));
+		}
+
+		public List<String> getMessages() {
+			return messages;
 		}
 	}
 
@@ -102,6 +118,21 @@ public class LogUtil {
 		}
 	}
 
+	private static class ToStringStyle extends StandardToStringStyle {
+
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		protected void appendInternal(StringBuffer buffer, String fieldName, Object value, boolean detail) {
+			try {
+				super.appendInternal(buffer, fieldName, value, detail);
+			} catch (Exception e) {
+				// normalerweise LazyInitialisationException
+				super.appendDetail(buffer, fieldName, "***" + e + "***");
+			}
+		}
+	}
+
 	/**
 	 * Konstruktor.
 	 */
@@ -110,9 +141,8 @@ public class LogUtil {
 	}
 
 	/**
-	 * Behandelt die Exception indem sie geloggt wird. Im Client-Kontext (wenn
-	 * Primefaces im Classpath gefunden wird) wird außerdem für eine
-	 * {@link FachlicheException} eine <code>FacesMessage</code> erzeugt.
+	 * Behandelt die Exception indem sie geloggt wird. Im Client-Kontext (wenn Primefaces im Classpath gefunden wird)
+	 * wird außerdem für eine {@link FachlicheException} eine <code>FacesMessage</code> erzeugt.
 	 * 
 	 * @param t
 	 *            die Exception
@@ -127,14 +157,24 @@ public class LogUtil {
 	 */
 	public static void handleException(Throwable t, Logger log, String message, Object... params)
 			throws KonfigException {
+		if (t instanceof OptimisticLockException)
+			// nur für die Serverseite
+			throw new FachlicheException(CommonMessages.getResourceBundle(), "optimisticLock");
 		if (t instanceof FachlicheException) {
-			log.debug(message + " - Parameter der Methode: " + paramString(-1, params), t);
+			FachlicheException fex = (FachlicheException) t;
+			if (!fex.logged) {
+				log.debug(message + " - Parameter der Methode: " + paramString(-1, params), t);
+				fex.logged = true;
+			}
 			if (isClient()) {
-				FacesContext.getCurrentInstance().addMessage(null,
-						new FacesMessage(FacesMessage.SEVERITY_WARN, null, t.getMessage()));
-				return;
+				// wird im ExceptionHandler behandelt
+				// FacesContext.getCurrentInstance().addMessage(null,
+				// new FacesMessage(FacesMessage.SEVERITY_WARN, null,
+				// t.getMessage()));
+				// return;
+				throw fex;
 			} else {
-				throw (FachlicheException) t;
+				throw fex;
 			}
 		}
 		if (t instanceof InvocationTargetException)
@@ -146,15 +186,23 @@ public class LogUtil {
 		if (t instanceof EJBException) {
 			t = ((EJBException) t).getCausedByException();
 		}
-		log.error(message + " - Parameter der Methode: " + paramString(-1, params), t);
-		if (t instanceof TechnischeException)
-			throw (TechnischeException) t;
+		TechnischeException tex = t instanceof TechnischeException ? (TechnischeException) t : null;
+		if (tex == null || !tex.logged)
+			logException(t, log, message, params);
+		if (tex != null) {
+			tex.logged = true;
+			throw tex;
+		}
 		throw new TechnischeException(message, t);
+	}
+
+	public static void logException(Throwable t, Logger log, String message, Object... params) {
+		log.error(message + " - Parameter der Methode: " + paramString(-1, params), t);
 	}
 
 	private static boolean isClient() {
 		try {
-			Class.forName("org.primefaces.context.ApplicationContext");
+			Thread.currentThread().getContextClassLoader().loadClass("org.primefaces.context.ApplicationContext");
 			return true;
 		} catch (ClassNotFoundException e) {
 			return false;
@@ -205,8 +253,7 @@ public class LogUtil {
 	 * Returns a string in the following format.
 	 * <ul>
 	 * <li>parameter class name = parameter value</li>
-	 * <li>if the parameter is an object array, a list of string representations
-	 * is returned</li>
+	 * <li>if the parameter is an object array, a list of string representations is returned</li>
 	 * </ul>
 	 * The resulting string is cut if it is longer than 200 characters
 	 * 
@@ -222,13 +269,11 @@ public class LogUtil {
 	 * Returns a string in the following format.
 	 * <ul>
 	 * <li>parameter class name = parameter value</li>
-	 * <li>if the parameter is an object array, a list of string representations
-	 * is returned</li>
+	 * <li>if the parameter is an object array, a list of string representations is returned</li>
 	 * </ul>
 	 * 
 	 * @param pMaxLength
-	 *            the maximal length of the resulting string, if -1, the result
-	 *            string length is never cut
+	 *            the maximal length of the resulting string, if -1, the result string length is never cut
 	 * @param pParams
 	 *            the parameter
 	 * @return the string format
@@ -287,7 +332,7 @@ public class LogUtil {
 			return ((Class<?>) pObject).getName();
 		if (pObject instanceof String)
 			return pObject;
-		StandardToStringStyle style = new StandardToStringStyle();
+		ToStringStyle style = new ToStringStyle();
 		style.setDefaultFullDetail(true);
 		return ReflectionToStringBuilder.reflectionToString(pObject, style);
 	}

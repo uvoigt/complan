@@ -6,7 +6,7 @@ import java.util.ResourceBundle;
 // Als bean hat das nicht funktioniert: es gab "ambiguous dependencies for type"
 // da die Klasse im EAR sowohl über den classspath des EJB.jars, als auch 
 public class CommonMessages {
-	private static final String BUNDLE_NAME = "Messages";
+	private static final String BUNDLE_NAME = "CommonMessages";
 	private static ResourceBundle bundle;
 
 	public static String getMessage(String key) {
