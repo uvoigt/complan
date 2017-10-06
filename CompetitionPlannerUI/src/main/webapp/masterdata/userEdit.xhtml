@@ -4,7 +4,8 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
 
 	<ui:decorate template="/templates/edit.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('users')}"/>
@@ -14,47 +15,94 @@
 		<ui:param name="user" value="#{userBean.user}"/>
 
 		<ui:define name="editArea">
-			<h:panelGroup layout="block">
-				<h:panelGrid columns="2" cellspacing="5">
-					<h:outputText value="#{bundle.userId}"/>
+
+			<h:inputHidden value="#{user.version}"/>
+
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.userId}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.userId}" autocomplete="off" maxlength="32" size="30" readonly="#{user.id != null}" required="true"
 						requiredMessage="#{bundle.format('fieldValidation', bundle.userId)}"/>
-
-					<h:outputText value="#{bundle.firstName}"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.firstName}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.firstName}" autocomplete="off" maxlength="255" size="30" required="true"
 						requiredMessage="#{bundle.format('fieldValidation', bundle.firstName)}"/>
-
-					<h:outputText value="#{bundle.lastName}"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.lastName}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.lastName}" autocomplete="off" maxlength="255" size="30" required="true"
 						requiredMessage="#{bundle.format('fieldValidation', bundle.lastName)}"/>
-
-					<h:outputText value="#{bundle.email}"/>
-					<h:panelGroup>
-						<p:inputText value="#{user.email}" autocomplete="off" maxlength="255" size="30"/>
-						<p:commandButton value="#{bundle.passwordEmail}" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" style="margin-left: 5px"
-							action="#{passwordResetBean.sendPasswortReset(user.id)}"
-							process="@this"
-							update=":messages"
-							disabled="#{user.id == null}"/>
-					</h:panelGroup>
-
-					<h:outputText value="#{bundle.locked}" rendered="#{roleBean.inOneOf('Admin') and user.id != null}"/>
-					<p:selectBooleanCheckbox value="#{user.locked}" rendered="#{roleBean.inOneOf('Admin') and user.id != null}"/>
-
-					<h:outputText value="#{bundle.club}"/>
-					<p:selectOneMenu value="#{userBean.clubId}" validator="#{userBean.validate(component)}"
-							validatorMessage="#{bundle.format('fieldValidation', bundle.club)}">
-						<f:selectItems value="#{userBean.clubs}" var="club" itemValue="#{club.id}" itemLabel="#{club.name}"/>
-					</p:selectOneMenu>
-
-					<h:outputText value="#{bundle.roles}"/>
-					<p:selectManyMenu value="#{userBean.selectedRoles}" showCheckbox="true" required="true"
-							requiredMessage="#{bundle.format('fieldValidation', bundle.roles)}">
-						<f:selectItems value="#{roleBean.roles}" var="role" itemValue="#{role.id}" itemLabel="#{role.role}"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.gender}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:inputSwitch value="#{user.gender}" onLabel="#{userBean.female}" offLabel="#{userBean.male}"
+						converter="#{booleanGenderConverter}"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.birthDate}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:calendar widgetVar="birtDate" value="#{user.birthDate}" autocomplete="off" navigator="true" maxdate="#{userBean.today}"
+						beforeShow="initBirtDate" required="#{userBean.roleSportler}" requiredMessage="#{bundle.birthDateRequired}"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.email}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:inputText value="#{user.email}" autocomplete="off" maxlength="255" size="30"/>
+					<p:commandButton value="#{bundle.passwordEmail}"
+						styleClass="ui-confirmdialog-yes" icon="ui-icon-mail-closed" style="margin-left: 5px"
+						action="#{registryBean.sendPasswortReset(user.id)}"
+						process="@this"
+						update=":messages"
+						disabled="#{(user.id == null or empty user.email) and facesContext.currentPhaseId.name == 'RENDER_RESPONSE'}"/>
+				</div>
+			</div>
+		<c:if test="#{roleBean.inRole('Admin') and user.id != null}">
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.locked}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:selectBooleanCheckbox value="#{user.locked}"/>
+				</div>
+			</div>
+		</c:if>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.club}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<c:choose>
+						<c:when test="#{roleBean.inRole('Admin')}">
+							<p:selectOneMenu value="#{userBean.clubId}" validator="#{userBean.validateClub(component)}"
+									validatorMessage="#{bundle.format('fieldValidation', bundle.club)}">
+								<f:selectItems value="#{userBean.clubs}" var="club" itemValue="#{club.id}" itemLabel="#{club.name}"/>
+							</p:selectOneMenu>
+						</c:when>
+						<c:otherwise>
+							<p:inputText value="#{user.club.name}" size="30" readonly="true"/>
+							<h:inputHidden id="clubid" value="#{userBean.clubId}"/>
+							<h:outputScript>
+								$("[id*=clubid]").val("#{userBean.myUser.club.id}");
+							</h:outputScript>
+						</c:otherwise>
+					</c:choose>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.roles}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:selectManyMenu binding="#{userBean.roleMenu}" value="#{userBean.selectedRoles}" showCheckbox="true" immediate="false"
+							required="true" requiredMessage="#{bundle.format('fieldValidation', bundle.roles)}">
+						<f:selectItems value="#{userBean.roles}" var="role" itemValue="#{role.role}" itemLabel="#{role.role}"/>
 					</p:selectManyMenu>
+				</div>
+			</div>
 
-				</h:panelGrid>
-			</h:panelGroup>
 		</ui:define>
 	</ui:decorate>
 </html>
