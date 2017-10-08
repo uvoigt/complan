@@ -409,14 +409,14 @@
         <subsystem xmlns="urn:jboss:domain:undertow:3.1">
             <buffer-cache name="default"/>
             <server name="default-server">
-                <http-listener name="default" socket-binding="http" redirect-socket="https"/>
+                <http-listener name="default" socket-binding="http" redirect-socket="proxy-https" proxy-address-forwarding="true"/>
                 <!--https-listener name="https" socket-binding="https" security-realm="ApplicationRealm" enable-http2="true"/-->
                 <host name="default-host" alias="localhost">
                     <location name="/" handler="welcome-content"/>
                     <filter-ref name="server-header"/>
                     <filter-ref name="x-powered-by-header"/>
-                    <filter-ref name="dump-request"/>
-                    <filter-ref name="rewrite"/>
+                    <!--filter-ref name="dump-request"/>
+                    <filter-ref name="rewrite"/-->
                 </host>
             </server>
             <servlet-container name="default">
@@ -461,6 +461,7 @@
         <socket-binding name="ajp" port="${jboss.ajp.port:8009}"/>
         <socket-binding name="http" port="${jboss.http.port:8080}"/>
         <socket-binding name="https" port="${jboss.https.port:8443}"/>
+        <socket-binding name="proxy-https" port="443"/>
         <socket-binding name="txn-recovery-environment" port="4712"/>
         <socket-binding name="txn-status-manager" port="4713"/>
         <outbound-socket-binding name="mail-smtp">
