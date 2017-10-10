@@ -47,6 +47,18 @@ public class RegistryImpl {
 
 	private static final Logger LOG = LoggerFactory.getLogger(RegistryImpl.class);
 
+	static String encodePw(String password) {
+		try {
+			MessageDigest sha = MessageDigest.getInstance("SHA-512");
+			byte[] digest = sha.digest(password.getBytes("UTF8"));
+			// mit crlf ist JBoss etwas pissig!
+			return new String(Base64.getMimeEncoder(76, new byte[] { '\n' }).encode(digest), "UTF8");
+		} catch (Exception e) {
+			LogUtil.handleException(e, LOG, "Fehler beim Kodieren des Passworts");
+			return null;
+		}
+	}
+
 	@Inject
 	private Messages messages;
 
@@ -60,32 +72,23 @@ public class RegistryImpl {
 	private Session session;
 
 	public String resetPassword(String token, String password) throws TechnischeException {
-		try {
-			User user = authenticate(token);
-			if (user == null)
-				return null;
-			MessageDigest sha = MessageDigest.getInstance("SHA-512");
-			byte[] digest = sha.digest(password.getBytes("UTF8"));
-			// mit crlf ist JBoss etwas pissig!
-			user.setPassword(new String(Base64.getMimeEncoder(76, new byte[] { '\n' }).encode(digest), "UTF8"));
-			user.setToken(null);
-			user.setTokenExpires(null);
-			if (LOG.isInfoEnabled())
-				LOG.info("Neues Passwort für " + user + " gesetzt.");
-			// der Caller ist "anonymous", deshalb hier der Benutzer
-			plannerDao.save(user, user.getUserId());
-
-			String emailText = getFormattedMessage("email.passwordchanged.html", user.getFirstName(),
-					user.getLastName());
-
-			String subject = messages.getMessage("email.passwordchanged.subject");
-			sendEmail(user, subject, emailText);
-
-			return user.getUserId();
-		} catch (Exception e) {
-			LogUtil.handleException(e, LOG, "Fehler beim Dekodieren des Sicherheitstokens", token);
+		User user = authenticate(token);
+		if (user == null)
 			return null;
-		}
+		user.setPassword(encodePw(password));
+		user.setToken(null);
+		user.setTokenExpires(null);
+		if (LOG.isInfoEnabled())
+			LOG.info("Neues Passwort für " + user + " gesetzt.");
+		// der Caller ist "anonymous", deshalb hier der Benutzer
+		plannerDao.save(user, user.getUserId());
+
+		String emailText = getFormattedMessage("email.passwordchanged.html", user.getFirstName(), user.getLastName());
+
+		String subject = messages.getMessage("email.passwordchanged.subject");
+		sendEmail(user, subject, emailText);
+
+		return user.getUserId();
 	}
 
 	public User authenticate(String token) {
@@ -219,9 +222,8 @@ public class RegistryImpl {
 		String emailToken = null;
 		try {
 			/*
-			 * Das Token hat folgende Zusammensetzung: - Länge der
-			 * Random-Padding-Section (1 byte) - Random-Padding Section - Länge
-			 * der User-ID in Bytes (1 byte) - User-ID - SHA-Hash (64 byte)
+			 * Das Token hat folgende Zusammensetzung: - Länge der Random-Padding-Section (1 byte) - Random-Padding
+			 * Section - Länge der User-ID in Bytes (1 byte) - User-ID - SHA-Hash (64 byte)
 			 */
 			byte[] id = new byte[8];
 			// hänge die User-ID an das Token, um eine Identifikation zu
