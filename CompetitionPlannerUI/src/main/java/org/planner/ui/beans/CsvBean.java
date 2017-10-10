@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +27,7 @@ import org.planner.util.LogUtil.TechnischeException;
 @Named
 @RequestScoped
 public class CsvBean {
-	private String separator = ";";
+	private String separator = ",|;";
 
 	private String nextLine(BufferedReader r) throws IOException {
 		String line = r.readLine();
@@ -116,8 +117,13 @@ public class CsvBean {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Object createPropertyValue(String string, Class<?> type) throws Exception {
-		if (Date.class.equals(type))
-			return new SimpleDateFormat("dd.MM.yyyy").parse(string);
+		if (Date.class.equals(type)) {
+			try {
+				return new SimpleDateFormat("dd.MM.yyyy").parse(string);
+			} catch (ParseException e) {
+				return new SimpleDateFormat("MM/dd/yyyy").parse(string);
+			}
+		}
 		if (Enum.class.isAssignableFrom(type))
 			return Enum.valueOf((Class<Enum>) type, string);
 		return type.getConstructor(String.class).newInstance(string);
@@ -150,6 +156,8 @@ public class CsvBean {
 			} else {
 				propertyValue = createPropertyValue(stringValue,
 						context.getELResolver().getType(context, object, property));
+				if ("".equals(propertyValue))
+					propertyValue = null;
 			}
 			Object prevValue = context.getELResolver().getValue(context, object, property);
 			if (prevValue instanceof Collection)
