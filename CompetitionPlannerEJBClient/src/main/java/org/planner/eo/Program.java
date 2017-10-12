@@ -1,6 +1,6 @@
 package org.planner.eo;
 
-import java.util.Set;
+import java.util.List;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -34,7 +34,7 @@ public class Program extends AbstractEntity {
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "program_id")
 	@OrderBy("startTime")
-	private Set<ProgramRace> races;
+	private List<ProgramRace> races;
 
 	@Lob
 	private String text;
@@ -55,11 +55,11 @@ public class Program extends AbstractEntity {
 		this.options = options;
 	}
 
-	public Set<ProgramRace> getRaces() {
+	public List<ProgramRace> getRaces() {
 		return races;
 	}
 
-	public void setRaces(Set<ProgramRace> races) {
+	public void setRaces(List<ProgramRace> races) {
 		this.races = races;
 	}
 

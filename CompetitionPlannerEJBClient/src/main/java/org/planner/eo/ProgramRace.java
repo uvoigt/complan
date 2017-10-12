@@ -2,7 +2,7 @@ package org.planner.eo;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -51,7 +51,7 @@ public class ProgramRace implements Serializable {
 
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "programrace_id")
-	private Set<Team> participants;
+	private List<Team> participants;
 
 	public Long getId() {
 		return id;
@@ -89,11 +89,11 @@ public class ProgramRace implements Serializable {
 		this.number = number;
 	}
 
-	public Set<Team> getParticipants() {
+	public List<Team> getParticipants() {
 		return participants;
 	}
 
-	public void setParticipants(Set<Team> participants) {
+	public void setParticipants(List<Team> participants) {
 		this.participants = participants;
 	}
 }
