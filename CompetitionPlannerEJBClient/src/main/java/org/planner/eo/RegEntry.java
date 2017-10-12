@@ -18,6 +18,9 @@ public class RegEntry extends AbstractEntity {
 	private static final long serialVersionUID = 1L;
 
 	@ManyToOne
+	private Registration registration;
+
+	@ManyToOne
 	private Race race;
 
 	// beinhaltet ebenfalls die Ersatz-Besetzungen
@@ -25,6 +28,10 @@ public class RegEntry extends AbstractEntity {
 	@JoinColumn(name = "entry_id")
 	@OrderBy("pos")
 	private List<Participant> participants;
+
+	public Registration getRegistration() {
+		return registration;
+	}
 
 	public Race getRace() {
 		return race;
