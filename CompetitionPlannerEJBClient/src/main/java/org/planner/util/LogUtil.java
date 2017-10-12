@@ -3,7 +3,6 @@ package org.planner.util;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -58,7 +57,7 @@ public class LogUtil {
 		 *            optionale Argumente für das Message-Formatting
 		 */
 		protected KonfigException(ResourceBundle bundle, String key, Object... args) throws MissingResourceException {
-			super(MessageFormat.format(bundle.getString(key), args));
+			super(CommonMessages.formatMessage(bundle.getString(key), args));
 		}
 	}
 
@@ -79,7 +78,7 @@ public class LogUtil {
 				messages = new ArrayList<>();
 				messages.add(getMessage());
 			}
-			messages.add(MessageFormat.format(bundle.getString(key), args));
+			messages.add(CommonMessages.formatMessage(bundle.getString(key), args));
 		}
 
 		public List<String> getMessages() {
