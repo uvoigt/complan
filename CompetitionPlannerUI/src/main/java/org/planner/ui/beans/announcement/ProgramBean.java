@@ -37,7 +37,7 @@ public class ProgramBean extends AbstractEditBean {
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
 		if (id != null) {
-			program = service.getObject(Program.class, id, 3);
+			loadProgram(id);
 			JsfUtil.setViewVariable("id", program.getId());
 		}
 	}
@@ -46,9 +46,14 @@ public class ProgramBean extends AbstractEditBean {
 	public void setItem(Object item) {
 		program = (Program) item;
 		// das könnte auch als Argument in der search-xhtml mitgegeben werden
-		program = service.getObject(Program.class, program.getId(), 3);
+		loadProgram(program.getId());
 		JsfUtil.setViewVariable("id", program.getId());
 		parseHeatMode(program.getOptions().getHeatMode());
+	}
+
+	private void loadProgram(Long id) {
+		// TODO auch hier... über einen search-view-parameter die detailtiefe festlegen
+		program = service.getObject(Program.class, id, 3);
 	}
 
 	private void parseHeatMode(String string) {
@@ -85,16 +90,24 @@ public class ProgramBean extends AbstractEditBean {
 		p.setAnnouncement(service.getObject(Announcement.class, announcementId, 1));
 		Long programId = service.createProgram(p);
 		this.program = service.getObject(Program.class, programId, 2);
+		parseHeatMode(options.getHeatMode());
 		startseiteBean.setMainContent("/announcement/programEdit.xhtml", program.getId());
 	}
 
 	public void generateProgram() {
 		updateHeatMode();
 		service.generateProgram(program);
+		loadProgram(program.getId());
 	}
 
-	public String getRaceString(Race race) {
+	public String getRaceString(ProgramRace programRace) {
+		Race race = programRace.getRace();
 		StringBuilder sb = new StringBuilder();
+		sb.append("Rennen "); // TODO messages
+		sb.append(race.getNumber());
+		sb.append("-");
+		sb.append(programRace.getNumber());
+		sb.append(" - ");
 		sb.append(race.getBoatClass().getText());
 		sb.append(" ");
 		sb.append(race.getAgeType().getText());

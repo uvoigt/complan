@@ -15,41 +15,43 @@
 
 			<h:form>
 
-				<div class="ui-g">
-					<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.heatMode}"/></div>
-					<div class="ui-g-12 ui-md-6 ui-lg-8">
-						<div class="ui-g">
-							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoFinal}"/></div>
-							<div><p:spinner value="#{programBean.intoFinal}" min="0" size="1"/></div>
-						</div>
-						<div class="ui-g">
-							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoSemiFinal}"/></div>
-							<div><p:spinner value="#{programBean.intoSemiFinal}" min="0" size="1"/></div>
-						</div>
-					</div>
-				</div>
-				<h:panelGroup id="childProtection" styleClass="ui-g" layout="block">
-					<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.childProtection}"/></div>
-					<div class="ui-g-12 ui-md-6 ui-lg-8">
-						<div class="ui-g">
-							<div style="width: 15em; margin-right: 1em">
-								<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}">
-									<p:ajax update="childProtection"/>
-								</p:selectBooleanCheckbox>
+				<p:fieldset toggleable="true" legend="#{bundle.options}">
+					<div class="ui-g">
+						<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.heatMode}"/></div>
+						<div class="ui-g-12 ui-md-6 ui-lg-8">
+							<div class="ui-g">
+								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoFinal}"/></div>
+								<div><p:spinner value="#{programBean.intoFinal}" min="0" size="1"/></div>
+							</div>
+							<div class="ui-g">
+								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoSemiFinal}"/></div>
+								<div><p:spinner value="#{programBean.intoSemiFinal}" min="0" size="1"/></div>
 							</div>
 						</div>
-						<div class="ui-g">
-							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.racesPerDay}"/></div>
-							<div><p:spinner value="#{programBean.program.options.racesPerDay}" min="0" size="1" 
-									readonly="#{not programBean.program.options.childProtection}"/></div>
-						</div>
-						<div class="ui-g">
-							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoSemiFinal}"/></div>
-							<div><p:spinner value="#{programBean.program.options.protectionPeriod}" min="0" size="1"
-									readonly="#{not programBean.program.options.childProtection}"/></div>
-						</div>
 					</div>
-				</h:panelGroup>
+					<h:panelGroup id="childProtection" styleClass="ui-g" layout="block">
+						<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.childProtection}"/></div>
+						<div class="ui-g-12 ui-md-6 ui-lg-8">
+							<div class="ui-g">
+								<div style="width: 15em; margin-right: 1em">
+									<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}">
+										<p:ajax update="childProtection"/>
+									</p:selectBooleanCheckbox>
+								</div>
+							</div>
+							<div class="ui-g">
+								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.racesPerDay}"/></div>
+								<div><p:spinner value="#{programBean.program.options.racesPerDay}" min="0" size="1" 
+										readonly="#{not programBean.program.options.childProtection}"/></div>
+							</div>
+							<div class="ui-g">
+								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.protectionPeriod}"/></div>
+								<div><p:spinner value="#{programBean.program.options.protectionPeriod}" min="0" size="1"
+										readonly="#{not programBean.program.options.childProtection}"/></div>
+							</div>
+						</div>
+					</h:panelGroup>
+				</p:fieldset>
 
 				<p:panelGrid columns="3">
 					<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
@@ -63,25 +65,46 @@
 						var="race"
 						value="#{programBean.program.races}"
 						selection="#{programBean.selectedRace}"
-						lazy="false" chunkSize="5" rows="5" mode="inline" scrollHeight="500">
-	
-					<h:panelGroup layout="block" style="width: 100%">
-						<h:panelGroup layout="block" style="width: 100%">
-							<h:outputText value="#{programBean.getRaceString(race.race)}"/>
-						</h:panelGroup>
-						<p:dataList var="team" value="#{race.participants}" emptyMessage="">
+						lazy="false" chunkSize="5" rows="5" mode="inline" scrollHeight="5">
+						
+					<h:panelGroup style="width: 100%">
+						<p:dataList var="team" value="#{race.participants}" emptyMessage="" type="none">
+							<f:facet name="header">
+								<h:outputText value="#{programBean.getRaceString(race)}"/>
+							</f:facet>
+							<span style="margin-right: 1em;">#{team.lane}</span>
+
 							<ui:repeat var="member" value="#{team.members}">
-								<h:outputText value="#{member.user.firstName}"/>
-								<h:outputText value="#{member.user.lastName}"/>
-								<h:outputText value="#{programBean.getAgeGroup(member.user)}"/>
-								<h:outputText value="#{member.user.gender}"/>
+								#{member.user.firstName}
+								#{member.user.lastName}
+								(#{programBean.getAgeGroup(member.user)})
 							</ui:repeat>
+								<span style="float: right;">#{team.club.name}</span>						
+								<br />
 						</p:dataList>
 					</h:panelGroup>
 	
 				</p:dataScroller>
 
 			</h:form>
+
+			<h:outputScript>
+				function resizeDsc() {
+					var dsc = $(".ui-datascroller-content");
+					var ph = dsc.parents(".ui-layout-unit-content").height();
+					console.log("ui-layout-unit-content height: " + ph);
+					dsc.parents().eq(1).children().each(function() {
+						ph -= $(this).height();
+					});
+					console.log("height minus all children: " + ph);
+					dsc.height(dsc.height() + ph - 30);
+					console.log("new height: " + (dsc.height() + ph - 30));
+				}
+				$(window).resize(function() {
+					setTimeout(resizeDsc, 300);
+				});
+				setTimeout(resizeDsc, 100);
+			</h:outputScript>
 
 		</ui:define>
 	</ui:decorate>
