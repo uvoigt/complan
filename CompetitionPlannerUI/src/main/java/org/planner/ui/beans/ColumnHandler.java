@@ -42,6 +42,10 @@ public class ColumnHandler {
 			return name;
 		}
 
+		public boolean isMandatory() {
+			return visibility.mandatory();
+		}
+
 		public boolean isVisible() {
 			return visible;
 		}
