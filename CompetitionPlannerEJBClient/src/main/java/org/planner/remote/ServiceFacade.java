@@ -86,6 +86,8 @@ public interface ServiceFacade extends IResultProvider {
 
 	void announce(Long announcementId);
 
+	List<User> getAthletes();
+
 	void saveRegEntries(Long registrationId, List<RegEntry> entries);
 
 	void deleteFromRegEntry(Long registrationId, RegEntry entry);
@@ -94,5 +96,5 @@ public interface ServiceFacade extends IResultProvider {
 
 	Long createProgram(Program program);
 
-	Program generateProgram(Program program);
+	void generateProgram(Program program);
 }

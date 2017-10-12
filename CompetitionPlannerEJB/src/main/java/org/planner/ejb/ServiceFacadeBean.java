@@ -231,22 +231,27 @@ public class ServiceFacadeBean implements ServiceFacade {
 
 	@Override
 	public void announce(Long announcementId) {
-		this.announcement.announce(announcementId);
+		announcement.announce(announcementId);
+	}
+
+	@Override
+	public List<User> getAthletes() {
+		return announcement.getAthletes();
 	}
 
 	@Override
 	public void saveRegEntries(Long registrationId, List<RegEntry> entries) {
-		this.announcement.saveRegEntries(registrationId, entries);
+		announcement.saveRegEntries(registrationId, entries);
 	}
 
 	@Override
 	public void deleteFromRegEntry(Long registrationId, RegEntry entry) {
-		this.announcement.deleteFromRegEntry(registrationId, entry);
+		announcement.deleteFromRegEntry(registrationId, entry);
 	}
 
 	@Override
 	public void submitRegistration(Long registrationId) {
-		this.announcement.submitRegistration(registrationId);
+		announcement.submitRegistration(registrationId);
 	}
 
 	@Override
@@ -255,7 +260,7 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public Program generateProgram(Program program) {
-		return this.program.generateProgram(program);
+	public void generateProgram(Program program) {
+		this.program.generateProgram(program);
 	}
 }
