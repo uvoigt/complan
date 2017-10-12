@@ -19,8 +19,8 @@ import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.User;
+import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
-import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.Messages;
 import org.planner.ui.util.JsfUtil;
@@ -45,6 +45,8 @@ public class RegistrationBean extends AbstractEditBean {
 	private List<User> selectedAthletes;
 
 	private RegEntry selectedEntry;
+
+	private boolean clubVisible;
 
 	@PostConstruct
 	public void init() {
@@ -176,24 +178,44 @@ public class RegistrationBean extends AbstractEditBean {
 	}
 
 	public List<User> getAthletes() {
-		if (athletes == null) {
-			Suchkriterien criteria = new Suchkriterien();
-			criteria.addFilter("club", service.getLoggedInUser().getClub().getId());
-			criteria.addFilter("roles.role", "Sportler");
-			athletes = service.search(User.class, criteria).getListe();
-		}
+		if (athletes == null)
+			athletes = service.getAthletes();
 		return athletes;
 	}
 
-	public String getAgeGroup(User user) {
+	public String getAgeType(User user) {
 		Date birthDate = user.getBirthDate();
 		// Sportler sollten! eigentlich ein Geburtsdatum haben
 		if (birthDate == null)
 			return null;
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(birthDate);
-		int ageGroup = cal.get(Calendar.YEAR);
-		return Integer.toString(ageGroup);
+		int age = Calendar.getInstance().get(Calendar.YEAR) - cal.get(Calendar.YEAR);
+		switch (age) {
+		case 11:
+			return AgeType.schuelerC.getText();
+		case 12:
+			return AgeType.schuelerB.getText();
+		case 13:
+			return AgeType.schuelerA.getText();
+		case 14:
+		case 15:
+			return AgeType.jugend.getText();
+		case 16:
+		case 17:
+			return AgeType.junioren.getText();
+		}
+		if (age < 32)
+			return AgeType.lk.getText();
+		if (age < 40)
+			return AgeType.akA.getText();
+		if (age < 50)
+			return AgeType.akB.getText();
+		if (age < 60)
+			return AgeType.akC.getText();
+		if (age < 70)
+			return AgeType.akD.getText();
+		return AgeType.ak.getText();
 	}
 
 	public String getRaceString(RegEntry entry) {
@@ -212,23 +234,6 @@ public class RegistrationBean extends AbstractEditBean {
 		return sb.toString();
 	}
 
-	public int getMinimumTeamSize(Race race) {
-		switch (race.getBoatClass()) {
-		case c1:
-		case k1:
-			return 1;
-		case c2:
-		case k2:
-			return 2;
-		case c4:
-		case k4:
-			return 4;
-		case c8:
-			return 8;
-		}
-		return 0;
-	}
-
 	public void submitRegistration(Object registration) {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long registrationId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), registration,
@@ -236,6 +241,22 @@ public class RegistrationBean extends AbstractEditBean {
 		service.submitRegistration(registrationId);
 		FacesContext.getCurrentInstance().addMessage(null,
 				new FacesMessage(null, messages.get("registrations.statusSet")));
+	}
+
+	public boolean isClubVisible() {
+		return clubVisible;
+	}
+
+	public void setClubVisible(boolean clubVisible) {
+		this.clubVisible = clubVisible;
+	}
+
+	public void toggleClubVisible() {
+		clubVisible = !clubVisible;
+	}
+
+	public String renderClubName(String name) {
+		return name.replace(" ", "&nbsp;");
 	}
 
 	@Override
