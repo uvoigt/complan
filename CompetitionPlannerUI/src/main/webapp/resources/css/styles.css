@@ -5,7 +5,7 @@
 }
 
 #heading #title {
-	font-size: large;
+	font-weight: bold;
 	padding-left: 1em;
 }
 
@@ -113,6 +113,14 @@
 
 .ui-columntoggler {
 	height: auto !important;
+}
+
+.ui-password-panel {
+	width: 94% !important;
+}
+
+.ui-datatable .ui-column-filter {
+	width: 90% !important;
 }
 
 .editButton {

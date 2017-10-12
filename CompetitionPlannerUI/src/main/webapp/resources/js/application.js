@@ -89,6 +89,11 @@ function registrationEdit_enableButtons() {
 	else
 		PF("btnAdd").disable();
 }
+function toggleColumn(table, index) {
+	var columnHeader = table.thead.children("tr").find("th:nth-child(" + index + ")");
+	columnHeader.toggleClass("ui-helper-hidden");
+	table.tbody.children("tr").find("td:nth-child(" + index + ")").toggleClass("ui-helper-hidden");
+}
 function initBirtDate() {
 	var date = new Date(new Date().getFullYear() - 10, 0, 1, 12);
 	PF("birtDate").setDate(date);
