@@ -64,7 +64,7 @@ public abstract class Authorizer {
 		Predicate createPredicate(Root root, CriteriaBuilder builder) {
 			Predicate registrationClub = builder.equal(root.get(Registration_.club),
 					builder.parameter(Club.class, nextParam(caller.getClub())));
-			Predicate announcementClub = builder.equal(root.get(Announcement_.club),
+			Predicate announcementClub = builder.equal(root.get(Registration_.announcement).get(Announcement_.club),
 					builder.parameter(Club.class, nextParam(caller.getClub())));
 			Predicate registrationStatus = builder.equal(root.get(Registration_.status),
 					builder.parameter(RegistrationStatus.class, nextParam(RegistrationStatus.submitted)));
