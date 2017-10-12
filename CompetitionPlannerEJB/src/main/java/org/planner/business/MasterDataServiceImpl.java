@@ -79,8 +79,12 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		if (user.getClub().getId() == null)
 			saveClub(user.getClub());
 		if (existing != null) {
+			// wenn der User sich gerade selbst speichert (MyProfile), dann ist ggf. das Passwort mit dabei
+			if ((loggedInUser == null || loggedInUser.getId().equals(user.getId())) && user.getPassword() != null)
+				user.setPassword(RegistryImpl.encodePw(user.getPassword()));
+			else
+				user.setPassword(existing.getPassword());
 			// sichere extra Properties vor dem Überschreiben
-			user.setPassword(existing.getPassword());
 			user.setToken(existing.getToken());
 			user.setTokenExpires(existing.getTokenExpires());
 			if (loggedInUser != null) // nicht Admin

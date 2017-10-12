@@ -167,6 +167,7 @@ public class UserBean extends AbstractEditBean {
 				}
 			}
 		}
+		user.setPassword(null);
 		service.saveUser(user);
 	}
 }
