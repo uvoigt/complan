@@ -42,14 +42,14 @@
 						<p:calendar widgetVar="startDate"
 								value="#{announcement.startDate}" pages="3" required="true"
 								requiredMessage="#{bundle.format('fieldValidation', bundle.startDate)}"
-								size="6" style="margin: 0 1em 0 1em">
+								size="7" style="margin: 0 1em 0 1em">
 							<p:ajax event="dateSelect" listener="#{announcementBean.startDateChanged}" update="endDate"/>
 						</p:calendar>
 						<h:outputText value="#{bundle.endDate}"/>
 						<p:calendar id="endDate" binding="#{announcementBean.endDate}"
 							value="#{announcement.endDate}" pages="3" required="true"
 							requiredMessage="#{bundle.format('fieldValidation', bundle.endDate)}"
-							size="6" style="margin-left: 1em"/>
+							size="7" style="margin-left: 1em"/>
 					</div>
 				</div>
 			</div>
