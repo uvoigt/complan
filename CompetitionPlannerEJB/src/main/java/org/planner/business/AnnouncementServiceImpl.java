@@ -4,11 +4,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 
 import org.planner.business.CommonImpl.Operation;
+import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.Announcement;
@@ -24,11 +32,17 @@ import org.planner.eo.RegEntry_;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
+import org.planner.eo.Role;
+import org.planner.eo.Role_;
 import org.planner.eo.User;
+import org.planner.eo.User_;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
 import org.planner.model.Gender;
 import org.planner.model.Suchkriterien;
+import org.planner.model.Suchkriterien.Filter;
+import org.planner.model.Suchkriterien.Filter.Comparison;
+import org.planner.model.Suchkriterien.Filter.Conditional;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.Messages;
 
@@ -181,6 +195,9 @@ public class AnnouncementServiceImpl {
 			// diese!
 			Suchkriterien krit = new Suchkriterien();
 			krit.addFilter(Registration_.announcement.getName(), registration.getAnnouncement().getId());
+			User callingUser = common.getCallingUser();
+			krit.addFilter(Registration_.club.getName(), callingUser.getClub().getId());
+			// TODO das Meldedatum darf nicht überschritten sein!
 			List<Registration> registrations = common.search(Registration.class, krit).getListe();
 			// theoretisch können mehrere existieren, wenn zwei User wirklich
 			// gleichzeitig speichern
@@ -212,6 +229,31 @@ public class AnnouncementServiceImpl {
 		common.save(announcement);
 	}
 
+	public List<User> getAthletes() {
+		return dao.executeOperation(new IOperation<List<User>>() {
+			@Override
+			public List<User> execute(EntityManager em) {
+				CriteriaBuilder builder = em.getCriteriaBuilder();
+				CriteriaQuery<User> query = builder.createQuery(User.class);
+				Root<User> root = query.from(User.class);
+				root.fetch(User_.club);
+				SetJoin<User, Role> roles = root.join(User_.roles);
+				query.where(builder.or(builder.equal(roles.get(Role_.role), "Sportler"),
+						builder.equal(roles.get(Role_.role), "Mastersportler")));
+				return em.createQuery(query).getResultList();
+			}
+		});
+		// Suchkriterien criteria = new Suchkriterien();
+		// criteria.setExact(true);
+		// criteria.setIgnoreCase(false);
+		// criteria.addFilter("roles.role", "Sportler");
+		// criteria.addFilter(new Filter(Conditional.or, Comparison.eq, "roles.role", "Mastersportler"));
+		// criteria.setProperties(Arrays.asList(User_.id.getName(), User_.club.getName() + "." + Club_.name.getName(),
+		// User_.firstName.getName(), User_.lastName.getName(), User_.birthDate.getName(),
+		// User_.gender.getName()));
+		// return dao.search(User.class, criteria, null).getListe();
+	}
+
 	public void saveRegEntries(Long registrationId, List<RegEntry> entries) {
 		Registration registration = common.getById(Registration.class, registrationId, 0);
 		common.checkWriteAccess(registration, Operation.save);
@@ -222,6 +264,8 @@ public class AnnouncementServiceImpl {
 		if (firstEntry != null && firstEntry.getId() != null) {
 			// 1. es wird zu einem existierenden Entry hinzugefügt
 
+			// TODO : prüfen, ob der Sportler schon gemeldet ist ... im K2 kann man ihn in einem anderen Boot nochmal
+			// melden
 			List<Participant> newParticipants = firstEntry.getParticipants();
 			RegEntry existingEntry = common.getById(RegEntry.class, firstEntry.getId(), 0);
 			List<Participant> existingParticipants = existingEntry.getParticipants();
@@ -241,6 +285,7 @@ public class AnnouncementServiceImpl {
 			if (added) {
 				checkMaximalTeamSize(firstEntry.getRace().getBoatClass(), existingParticipants.size());
 				checkGender(firstEntry.getRace().getGender(), existingParticipants);
+				checkIfAlreadyRegistered(firstEntry);
 
 				common.save(existingEntry);
 			}
@@ -253,15 +298,7 @@ public class AnnouncementServiceImpl {
 				checkGender(newEntry.getRace().getGender(), newEntry.getParticipants());
 
 				// außerdem prüfen, ob die Besatzung bzw. ein Teil daraus! bereits in diesem Rennen gemeldet wurde
-				for (Participant participant : newEntry.getParticipants()) {
-					Suchkriterien criteria = new Suchkriterien();
-					criteria.addFilter(RegEntry_.race.getName(), newEntry.getRace().getId());
-					criteria.addFilter(RegEntry_.participants.getName() + ".user", participant.getUser().getId());
-					if (common.search(RegEntry.class, criteria).getGesamtgroesse() > 0)
-						throw new FachlicheException(messages.getResourceBundle(), "registration.alreadyRegistered",
-								participant.getUser().getFirstName() + " " + participant.getUser().getLastName(),
-								newEntry.getRace().getNumber());
-				}
+				checkIfAlreadyRegistered(newEntry);
 
 				common.save(newEntry);
 				registration.getEntries().add(newEntry);
@@ -300,10 +337,11 @@ public class AnnouncementServiceImpl {
 	}
 
 	private void checkMaximalTeamSize(BoatClass boatClass, int numberOfParticipants) {
-		int[] maximalTeamSize = getMaximalTeamSize(boatClass);
-		if (numberOfParticipants > maximalTeamSize[0] + maximalTeamSize[1])
+		int maximalTeamSize = boatClass.getMaximalTeamSize();
+		int allowedSubstitutes = boatClass.getAllowedSubstitutes();
+		if (numberOfParticipants > maximalTeamSize + allowedSubstitutes)
 			throw new FachlicheException(messages.getResourceBundle(), "registration.maximalTimesizeExceeded",
-					maximalTeamSize[0], maximalTeamSize[1], boatClass.getText());
+					maximalTeamSize, allowedSubstitutes, boatClass.getText());
 	}
 
 	private void checkGender(Gender gender, Collection<Participant> participants) {
@@ -314,28 +352,36 @@ public class AnnouncementServiceImpl {
 		}
 	}
 
-	// inklusive Ersatz
-	private int[] getMaximalTeamSize(BoatClass boatClass) {
-		switch (boatClass) {
-		case c1:
-		case k1:
-			return new int[] { 1, 0 };
-		case c2:
-		case k2:
-			return new int[] { 2, 1 };
-		case c4:
-		case k4:
-			return new int[] { 4, 1 };
-		case c8:
-			return new int[] { 8, 2 };
-		default:
-			throw new IllegalArgumentException(boatClass.name());
+	private void checkIfAlreadyRegistered(RegEntry regEntry) {
+		for (Participant participant : regEntry.getParticipants()) {
+			Suchkriterien criteria = new Suchkriterien();
+			criteria.addFilter(RegEntry_.race.getName(), regEntry.getRace().getId());
+			criteria.addFilter(RegEntry_.participants.getName() + ".user", participant.getUser().getId());
+			if (regEntry.getId() != null)
+				criteria.addFilter(
+						new Filter(Conditional.and, Comparison.ne, RegEntry_.id.getName(), regEntry.getId()));
+			if (common.search(RegEntry.class, criteria).getGesamtgroesse() > 0)
+				throw new FachlicheException(messages.getResourceBundle(), "registration.alreadyRegistered",
+						participant.getUser().getFirstName() + " " + participant.getUser().getLastName(),
+						regEntry.getRace().getNumber());
 		}
 	}
 
 	public void submitRegistration(Long registrationId) {
 		Registration registration = common.getById(Registration.class, registrationId, 0);
 		common.checkWriteAccess(registration, Operation.save);
+		List<RegEntry> entries = registration.getEntries();
+		if (entries.isEmpty())
+			throw new FachlicheException(messages.getResourceBundle(), "registration.empty");
+
+		Set<Integer> erroredRaces = new TreeSet<>();
+		for (RegEntry entry : entries) {
+			int minimalTeamSize = entry.getRace().getBoatClass().getMinimalTeamSize();
+			if (entry.getParticipants().size() < minimalTeamSize)
+				erroredRaces.add(entry.getRace().getNumber());
+		}
+		if (!erroredRaces.isEmpty())
+			throw new FachlicheException(messages.getResourceBundle(), "registration.incompleteEntries", erroredRaces);
 		registration.setStatus(RegistrationStatus.submitted);
 		common.save(registration);
 	}
