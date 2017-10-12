@@ -29,7 +29,7 @@ public class User extends AbstractEntity {
 	private static final long serialVersionUID = 1L;
 
 	@Column(nullable = false, unique = true, length = 32)
-	@Visible(initial = false, export = true, order = 0)
+	@Visible(initial = false, export = true, mandatory = true, order = 0)
 	private String userId;
 
 	@Column(nullable = false)
@@ -71,6 +71,20 @@ public class User extends AbstractEntity {
 
 	@Visible(initial = false, order = 6)
 	private Boolean locked;
+
+	public User() {
+	}
+
+	// spezifischer Konstruktor für getAthletes
+	// public User(Long id, String clubName, String firstName, String lastName, Date birthDate, Gender gender) {
+	// this.id = id;
+	// this.club = new Club();
+	// this.club.setName(clubName);
+	// this.firstName = firstName;
+	// this.lastName = lastName;
+	// this.birthDate = birthDate;
+	// this.gender = gender;
+	// }
 
 	public String getUserId() {
 		return userId;

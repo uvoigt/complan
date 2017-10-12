@@ -33,11 +33,11 @@ public class Registration extends AbstractEntity {
 	private static final long serialVersionUID = 1L;
 
 	@ManyToOne(optional = false)
-	@Visible(initial = false, order = 2)
+	@Visible(initial = false, mandatory = true, order = 2)
 	private Club club;
 
 	@ManyToOne(optional = false)
-	@Visible(order = 1)
+	@Visible(order = 1, mandatory = true) // mandatory, damit der Name der Ausschreibung angezeigt wird
 	private Announcement announcement;
 
 	@OneToMany(cascade = CascadeType.ALL)
@@ -45,7 +45,7 @@ public class Registration extends AbstractEntity {
 	private List<RegEntry> entries;
 
 	@Column(nullable = false)
-	@Visible(order = 3)
+	@Visible(order = 3, mandatory = true)
 	private RegistrationStatus status;
 
 	public Club getClub() {

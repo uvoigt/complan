@@ -39,7 +39,7 @@ public class Announcement extends AbstractEntity {
 
 	// competition
 	@Column(nullable = false)
-	@Visible(order = 1)
+	@Visible(order = 1, mandatory = true)
 	private String name;
 
 	// Ort und Zeitangabe der Wettkämpfe
@@ -62,7 +62,7 @@ public class Announcement extends AbstractEntity {
 	// competition end
 
 	@ManyToOne(optional = false)
-	@Visible(order = 2)
+	@Visible(order = 2, mandatory = true)
 	private Club club;
 
 	// Reihenfolge und Startzeiten der Rennen mit Angaben der Streckenlänge,
@@ -119,7 +119,7 @@ public class Announcement extends AbstractEntity {
 	private String text;
 
 	@Column(nullable = false)
-	@Visible(order = 6, depth = 0)
+	@Visible(order = 6, mandatory = true, depth = 0)
 	private AnnouncementStatus status;
 
 	public String getName() {
