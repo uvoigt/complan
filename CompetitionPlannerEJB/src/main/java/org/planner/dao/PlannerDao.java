@@ -410,6 +410,9 @@ public class PlannerDao {
 				predicate = builder.or(predicate, builder.isNull(columnExp));
 			modifiedFilterValues.put(filter.getName(), isTrue);
 		} else if (Date.class.equals(columnExp.getJavaType())) {
+//			predicate = builder.like( // TODO klappt sicherlich nicht mit mysql
+//					builder.function("formatdatetime", String.class, columnExp, builder.literal("dd.MM.YYY")),
+//					builder.parameter(String.class, property));
 			predicate = builder.like(columnExp.as(String.class), builder.parameter(String.class, property));
 			modifiedFilterValues.put(filter.getName(), "%" + filter.getValue() + "%");
 		} else if (columnExp.getJavaType().isEnum()) {
@@ -550,4 +553,7 @@ public class PlannerDao {
 		}
 	}
 
+	public <T> T executeOperation(IOperation<T> op) {
+		return op.execute(em);
+	}
 }
