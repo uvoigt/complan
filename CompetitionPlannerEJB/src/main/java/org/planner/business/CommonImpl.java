@@ -32,6 +32,7 @@ import org.planner.eo.Club;
 import org.planner.eo.Program;
 import org.planner.eo.Properties;
 import org.planner.eo.Race;
+import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Role;
@@ -259,6 +260,9 @@ public class CommonImpl {
 				dao.saveWithCommit(entity, loginName);
 			} catch (RollbackException e) {
 				LogUtil.logException(e, LOG, "Fehler beim Importieren", entities);
+				// e.getCause() instanceof PersistenceException
+				// TODO im preprozessor könnte das Handling für die Hibernate exception
+				// eingebaut werden plus meldung, dass die userid nicht unique ist
 				if (ex == null)
 					ex = new FachlicheException(messages.getResourceBundle(), "dataImport.cannot.save", e);
 				else
@@ -339,6 +343,9 @@ public class CommonImpl {
 			if ("Admin".equals(role.getRole()))
 				throwAccessException(user, operation);
 		}
+		// sich selbst zu löschen erlauben wir auch nicht
+		if (operation == Operation.delete && user.getId().equals(callingUser.getId()))
+			throw new FachlicheException(messages.getResourceBundle(), "user.cannot.deleteself");
 	}
 
 	@SuppressWarnings("unused")
@@ -359,7 +366,6 @@ public class CommonImpl {
 			throw new FachlicheException(messages.getResourceBundle(), "announcement.alreadyAnnounced");
 	}
 
-	@SuppressWarnings("unused")
 	private void checkWriteAccess(Race race, Operation operation, User callingUser) {
 		Announcement announcement = dao.getById(Announcement.class, race.getAnnouncementId());
 		checkWriteAccess(announcement, operation, callingUser);
@@ -377,8 +383,13 @@ public class CommonImpl {
 			throw new FachlicheException(messages.getResourceBundle(), "registration.cannot.save");
 
 		// Eine bereits übermittelte Meldung darf nicht mehr geändert werden
-		if (registration.getStatus() != RegistrationStatus.created)
+		if (registration.getStatus() == RegistrationStatus.submitted)
 			throw new FachlicheException(messages.getResourceBundle(), "registration.alreadySubmitted");
+	}
+
+	@SuppressWarnings("unused")
+	private void checkWriteAccess(RegEntry entry, Operation operation, User callingUser) {
+		checkWriteAccess(entry.getRegistration(), operation, callingUser);
 	}
 
 	@SuppressWarnings("unused")
