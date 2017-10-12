@@ -79,7 +79,7 @@
 				value="#{searchBean.getDataModel(typ)}"
 				lazy="true" paginator="true" paginatorAlwaysVisible="false"
 				emptyMessage="#{bundle.noResult}" filterEvent="enter"
-				sortMode="multiple"
+				sortMode="multiple" selectionMode="single" selection="#{searchBean.selectedItem}"
 				binding="#{searchBean.datatable[null]}"
 				rows="#{searchBean.numberOfRows}" rowsPerPageTemplate="50,100,500,1000"
 				reflow="true">
@@ -93,6 +93,7 @@
 			<p:ajax event="page" listener="#{searchBean.onPagination}"/>
 			<p:ajax event="filter" listener="#{searchBean.onFilter}" oncomplete="checkEmpty()"/>
 			<p:ajax event="sort" listener="#{searchBean.onSort}"/>
+			<p:ajax event="rowDblselect" listener="#{searchBean.bearbeiten(bearbeitenLink, typ, editBean)}" process="@form" update="mainContent"/>
 			<f:event type="preRenderComponent" listener="#{searchBean.onPrerenderTable}"/>
 
 			<p:columns var="column" value="#{searchBean.getColumns(typ)}"
@@ -120,13 +121,6 @@
 					</p:columnToggler>
 				</f:facet>
 
-				<p:commandButton id="bearbeitenButton" icon="ui-icon-pencil" title="#{bundle.modify}"
-						action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
-						process="@form"
-						update=":mainContent"
-						styleClass="editButton"
-						rendered="#{renderCrudButtonsValue}"/>
-
 				<ui:insert name="addRowButtons"/>
 
 				<p:commandButton icon="ui-icon-copy" title="#{bundle.copy}"
@@ -139,7 +133,8 @@
 						process="@this"
 						update="suchErgebnisTable messagesPopup"
 						rendered="#{renderCrudButtonsValue}"
-						onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')">
+						onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"
+						style="float: right;">
 					<p:confirm icon=""/>
 				</p:commandButton>
 				<h:panelGroup layout="block" id="rowInfo" styleClass="hiddenHint"/>

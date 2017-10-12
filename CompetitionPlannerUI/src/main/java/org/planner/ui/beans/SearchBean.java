@@ -3,6 +3,7 @@ package org.planner.ui.beans;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,6 +105,8 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 	private UploadBean uploadBean;
 
+	private Object selectedItem;
+
 	@Inject
 	private CsvBean csvBean;
 
@@ -134,7 +137,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	@Override
 	public void handleDownload(OutputStream out, String typ) throws Exception {
 		List<ColumnModel> exportColumns = createExportColumns(typ);
-		RemoteDataModel<Serializable> model = createDataModel(typ, exportColumns);
+		RemoteDataModel<Serializable> model = createDataModel(typ, exportColumns, null);
 		// TODO das war schemaName
 		Map<String, Object> filter = datatables.get(null).getFilters();
 
@@ -186,20 +189,29 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	public List<ColumnModel> getColumns(String typ) throws Exception {
 		List<ColumnModel> list = columns.get(typ);
 		if (list == null) {
-			list = new ArrayList<ColumnModel>();
+			list = new ArrayList<>();
+			List<ColumnModel> mandatoryColumns = new ArrayList<>();
 			Class<Serializable> entityType = loadTyp(typ, Serializable.class);
 			NLSBundle nlsBundle = entityType.getAnnotation(NLSBundle.class);
 			if (nlsBundle == null)
 				throw new TechnischeException("Entity " + entityType.getSimpleName() + " muss Annotation "
 						+ NLSBundle.class.getSimpleName() + " besitzen", null);
 			for (Column column : columnHandler.getColumns(entityType)) {
+				if (column.isMandatory())
+					mandatoryColumns.add(new ColumnModel(null, column.getName(), false));
 				if (column.isVisibleForCurrentUser())
 					list.add(new ColumnModel(messages.get(nlsBundle.value() + "." + column.getName()), column.getName(),
 							column.isVisible()));
 			}
 			columns.put(typ, list);
+			if (!mandatoryColumns.isEmpty())
+				columns.put(typ + "_m", mandatoryColumns);
 		}
 		return list;
+	}
+
+	private List<ColumnModel> getMandatoryColumns(String typ) {
+		return columns.get(typ + "_m");
 	}
 
 	public void onPagination(PageEvent event) {
@@ -219,6 +231,14 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		JsfUtil.setViewVariable("sortState", meta);
 	}
 
+	public Object getSelectedItem() {
+		return selectedItem;
+	}
+
+	public void setSelectedItem(Object selectedItem) {
+		this.selectedItem = selectedItem;
+	}
+
 	public Map<String, DataTable> getDatatable() {
 		return datatables;
 	}
@@ -226,15 +246,16 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	public RemoteDataModel<? extends Serializable> getDataModel(String typ) throws Exception {
 		RemoteDataModel<? extends Serializable> dataModel = dataModels.get(typ);
 		if (dataModel == null) {
-			dataModel = createDataModel(typ, getColumns(typ));
+			dataModel = createDataModel(typ, getColumns(typ), getMandatoryColumns(typ));
 			dataModels.put(typ, dataModel);
 		}
 		return dataModel;
 	}
 
-	private RemoteDataModel<Serializable> createDataModel(String typ, List<ColumnModel> columnList) throws Exception {
+	private RemoteDataModel<Serializable> createDataModel(String typ, List<ColumnModel> columnList,
+			List<ColumnModel> mandatoryColumns) throws Exception {
 		Class<Serializable> entityType = loadTyp(typ, Serializable.class);
-		return new RemoteDataModel<Serializable>(service, entityType, columnList);
+		return new RemoteDataModel<Serializable>(service, entityType, columnList, mandatoryColumns);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -251,8 +272,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		targetBean.setItem(item);
 	}
 
-	public void bearbeiten(String link, String typ, Map<String, Object> selectedItem, ITarget targetBean)
-			throws Exception {
+	public void bearbeiten(String link, String typ, ITarget targetBean) throws Exception {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selectedItem, "id");
 		AbstractEntity item = service.getObject(loadTyp(typ, AbstractEntity.class), id, 1);
@@ -357,8 +377,10 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 			return null;
 		if (o instanceof String)
 			return (String) o;
+		if (o instanceof Timestamp)
+			return DateFormat.getDateTimeInstance().format(o);
 		if (o instanceof Date)
-			return o.toString();
+			return DateFormat.getDateInstance().format(o);
 		if (o instanceof Boolean)
 			return messages.get("label" + StringUtils.capitalize(o.toString()));
 		if (o instanceof LocalizedEnum)
@@ -398,6 +420,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		columnHandler.persistToggleState(loadTyp(typ, AbstractEntity.class), (int) event.getData(),
 				event.getVisibility() == Visibility.VISIBLE);
 		dataModels.remove(typ);
+		columns.remove(typ);
 	}
 
 	public int getButtonCount(DataTable table) {
