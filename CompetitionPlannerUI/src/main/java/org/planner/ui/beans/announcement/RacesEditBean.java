@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
 import org.planner.model.Gender;
 import org.planner.ui.beans.AbstractEditBean;
+import org.planner.ui.util.JsfUtil;
 import org.primefaces.event.CellEditEvent;
 
 @Named
@@ -44,12 +46,25 @@ public class RacesEditBean extends AbstractEditBean {
 
 	private List<Race> races;
 
+	private List<Integer> distances;
+
 	private UIInput hiddenAnnouncementId;
 
 	@PostConstruct
+	@SuppressWarnings("unchecked")
 	public void init() {
 		announcementId = getIdFromRequestParameters();
 		selectedRaces = new ArrayList<>();
+		distances = (List<Integer>) JsfUtil.getViewVariable("distances");
+		if (distances == null) {
+			distances = new ArrayList<>();
+			distances.add(200);
+			distances.add(500);
+			distances.add(1000);
+			distances.add(2000);
+			distances.add(5000);
+		}
+		JsfUtil.setViewVariable("distances", distances);
 	}
 
 	public Long getAnnouncementId() {
@@ -83,6 +98,10 @@ public class RacesEditBean extends AbstractEditBean {
 		if (races == null)
 			races = service.getRaces(getAnnouncementId());
 		return races;
+	}
+
+	public List<Integer> getDistances() {
+		return distances;
 	}
 
 	public String getRaceDay(Integer offset) {
@@ -214,6 +233,17 @@ public class RacesEditBean extends AbstractEditBean {
 			Date date = new SimpleDateFormat(calendar.calculatePattern()).parse(string);
 			if (date.before(getAnnouncement().getStartDate()) || date.after(getAnnouncement().getEndDate()))
 				throw new ValidatorException(new FacesMessage(calendar.getValidatorMessage()));
+		}
+	}
+
+	public Integer getNewDistance() {
+		return null;
+	}
+
+	public void setNewDistance(Integer distance) {
+		if (distance != null) {
+			distances.add(distance);
+			Collections.sort(distances);
 		}
 	}
 }

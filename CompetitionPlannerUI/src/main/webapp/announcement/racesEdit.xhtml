@@ -16,37 +16,69 @@
 				<h:inputHidden id="announcementId" value="#{racesEditBean.announcementId}"
 					binding="#{racesEditBean.hiddenAnnouncementId}"/>
 
-				<h:panelGrid columns="2">
-					<h:outputText value="#{bundle.boatClass}"/>
-					<p:selectManyButton value="#{racesEditBean.selectedBoatClasses}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.boatClass)}">
-						<f:selectItems value="#{racesEditBean.boatClasses}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
-					</p:selectManyButton>
+				<h:panelGroup layout="block" styleClass="ui-g">
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em">
+						<h:outputText value="#{bundle.boatClass}"/>
+					</h:panelGroup>
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-8">
+						<p:selectManyButton value="#{racesEditBean.selectedBoatClasses}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.boatClass)}">
+							<f:selectItems value="#{racesEditBean.boatClasses}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
+						</p:selectManyButton>
+					</h:panelGroup>
+				</h:panelGroup>
 
-					<h:outputText value="#{bundle.gender}"/>
-					<p:selectManyButton value="#{racesEditBean.selectedGenders}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.gender)}">
-						<f:selectItems value="#{racesEditBean.genders}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
-					</p:selectManyButton>
+				<h:panelGroup layout="block" styleClass="ui-g">
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em">
+						<h:outputText value="#{bundle.gender}"/>
+					</h:panelGroup>
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-8">
+						<p:selectManyButton value="#{racesEditBean.selectedGenders}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.gender)}">
+							<f:selectItems value="#{racesEditBean.genders}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
+						</p:selectManyButton>
+					</h:panelGroup>
+				</h:panelGroup>
 
-					<h:outputText value="#{bundle.ageType}"/>
-					<p:selectManyButton value="#{racesEditBean.selectedAgeTypes}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.ageType)}">
-						<f:selectItems value="#{racesEditBean.ageTypes}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
-					</p:selectManyButton>
+				<h:panelGroup layout="block" styleClass="ui-g">
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em">
+						<h:outputText value="#{bundle.ageType}"/>
+					</h:panelGroup>
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-8">
+						<p:selectManyButton value="#{racesEditBean.selectedAgeTypes}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.ageType)}">
+							<f:selectItems value="#{racesEditBean.ageTypes}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
+						</p:selectManyButton>
+					</h:panelGroup>
+				</h:panelGroup>
 
-					<h:outputText value="#{bundle.distance}"/>
-					<p:selectManyButton value="#{racesEditBean.selectedDistances}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.distance)}">
-						<f:selectItem itemValue="200" itemLabel="200"/>
-						<f:selectItem itemValue="500" itemLabel="500"/>
-						<f:selectItem itemValue="1000" itemLabel="1000"/>
-						<f:selectItem itemValue="2000" itemLabel="2000"/>
-						<f:selectItem itemValue="5000" itemLabel="5000"/>
-						<f:selectItem itemValue="todo" itemLabel="TODO add"/>
-					</p:selectManyButton>
+				<h:panelGroup layout="block" styleClass="ui-g">
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em">
+						<h:outputText value="#{bundle.distance}"/>
+					</h:panelGroup>
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-8">
+						<p:selectManyButton id="distances" value="#{racesEditBean.selectedDistances}" required="true" requiredMessage="#{bundle.format('fieldSelection', bundle.distance)}">
+							<f:selectItems value="#{racesEditBean.distances}" />
+						</p:selectManyButton>
+						<p:inplace cancelLabel="#{messages.cancel}" saveLabel="#{messages.save}" editor="true">
+							<p:ajax event="save" update="distances"/>
+							<f:facet name="output">
+								<p:commandButton type="button" value="#{bundle.addDistance}"/>
+							</f:facet>
+							<f:facet name="input">
+								<p:inputText value="#{racesEditBean.newDistance}"/>
+							</f:facet>
+						</p:inplace>
+					</h:panelGroup>
+				</h:panelGroup>
 
-					<h:outputText value="#{bundle.day}"/>
-					<p:calendar value="#{racesEditBean.selectedDay}" mindate="#{racesEditBean.announcement.startDate}"
-						maxdate="#{racesEditBean.announcement.endDate}" validator="#{racesEditBean.validateDay(component)}"
-						validatorMessage="#{bundle.invalidDay}"/>
-				</h:panelGrid>
+				<h:panelGroup layout="block" styleClass="ui-g">
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em">
+						<h:outputText value="#{bundle.day}"/>
+					</h:panelGroup>
+					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-8">
+						<p:calendar value="#{racesEditBean.selectedDay}" mindate="#{racesEditBean.announcement.startDate}"
+							maxdate="#{racesEditBean.announcement.endDate}" validator="#{racesEditBean.validateDay(component)}"
+							validatorMessage="#{bundle.invalidDay}"/>
+					</h:panelGroup>
+				</h:panelGroup>
 				<p:panelGrid columns="3">
 					<p:commandButton value="#{bundle.raceAdd}" action="#{racesEditBean.createRaces()}"
 							process="@form" update="@form"/>
@@ -128,7 +160,7 @@
 				</p:dataTable>
 
 				<h:outputScript>
-					enableButtons();
+					setTimeout(enableButtons, 500);
 				</h:outputScript>
 			</h:form>
 		</ui:define>
