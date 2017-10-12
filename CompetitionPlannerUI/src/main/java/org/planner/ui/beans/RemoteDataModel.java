@@ -34,11 +34,14 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 	private Class<T> zeilentyp;
 
 	private List<ColumnModel> columns;
+	private List<ColumnModel> mandatory;
 
-	public RemoteDataModel(IResultProvider provider, Class<T> type, List<ColumnModel> columns) {
+	public RemoteDataModel(IResultProvider provider, Class<T> type, List<ColumnModel> columns,
+			List<ColumnModel> mandatoryColumns) {
 		dataProvider = provider;
 		zeilentyp = type;
 		this.columns = columns;
+		this.mandatory = mandatoryColumns;
 	}
 
 	@Override
@@ -87,6 +90,15 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 				properties = new ArrayList<>();
 			properties.add(column.getProperty());
 		}
+		if (mandatory != null) {
+			for (ColumnModel column : mandatory) {
+				if (properties == null)
+					properties = new ArrayList<>();
+				if (!properties.contains(column.getProperty()))
+					properties.add(column.getProperty());
+			}
+		}
+
 		krit.setProperties(properties);
 		return krit;
 	}
