@@ -25,7 +25,7 @@ public class Team implements Serializable {
 	@GeneratedValue
 	private Long id;
 
-	private String name;
+	private int lane;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	private Club club;
@@ -39,12 +39,12 @@ public class Team implements Serializable {
 		return id;
 	}
 
-	public String getName() {
-		return name;
+	public int getLane() {
+		return lane;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setLane(int lane) {
+		this.lane = lane;
 	}
 
 	public Club getClub() {
