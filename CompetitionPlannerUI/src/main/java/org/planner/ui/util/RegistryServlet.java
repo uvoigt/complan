@@ -167,6 +167,7 @@ public class RegistryServlet extends HttpServlet {
 		String firstName = user.getFirstName();
 		String lastName = user.getLastName();
 		response.setContentType("image/png");
-		new ImageCreator().createCCAbbreviation(firstName, lastName, response.getOutputStream());
+		byte[] image = new ImageCreator().createCCAbbreviation(firstName, lastName);
+		response.getOutputStream().write(image);
 	}
 }

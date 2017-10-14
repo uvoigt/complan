@@ -9,8 +9,8 @@ import java.awt.Point;
 import java.awt.RadialGradientPaint;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 import javax.imageio.ImageIO;
 
@@ -18,7 +18,7 @@ import com.jhlabs.image.ChromeFilter;
 
 public class ImageCreator {
 
-	public void createCCAbbreviation(String firstName, String lastName, OutputStream out) throws IOException {
+	public byte[] createCCAbbreviation(String firstName, String lastName) throws IOException {
 		int width = 64;
 		int height = 64;
 		BufferedImage src = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -57,6 +57,11 @@ public class ImageCreator {
 		filter.setAmount(0.66f);
 		filter.setDiffuseColor(-4408132);
 		filter.filter(src, dest);
+		// aus irgendeinem Grund kam es beim direkten Schreiben auf den ServletOutputStream
+		// ab und zu zum Hängenbleiben in PNGImageWriter Zeile 140 ...
+		// io.undertow.servlet.spec.ServletOutputStreamImpl Zeile 566
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ImageIO.write(dest, "PNG", out);
+		return out.toByteArray();
 	}
 }
