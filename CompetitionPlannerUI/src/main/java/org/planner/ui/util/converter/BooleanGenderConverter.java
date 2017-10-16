@@ -15,7 +15,7 @@ public class BooleanGenderConverter implements Converter {
 		if ("false".equals(value))
 			return Gender.m;
 		if ("true".equals(value))
-			return Gender.w;
+			return Gender.f;
 		throw new IllegalArgumentException(value);
 	}
 
@@ -23,7 +23,7 @@ public class BooleanGenderConverter implements Converter {
 	public String getAsString(FacesContext context, UIComponent component, Object value) {
 		if (value == Gender.m)
 			return "false";
-		if (value == Gender.w)
+		if (value == Gender.f)
 			return "true";
 		return null;
 	}
