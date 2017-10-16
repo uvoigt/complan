@@ -1,63 +1,6 @@
 @CHARSET "UTF-8";
 #heading {
-	padding: 0px;
 	overflow: hidden;
-}
-
-#heading #title {
-	font-weight: bold;
-	padding-left: 1em;
-}
-
-#heading #title a {
-	text-decoration: none;
-}
-
-#userimg {
-	cursor: pointer;
-	margin-right: 65%;
-}
-
-#heading #logout {
-	position: fixed;
-	right: 0;
-	top: 0.2em;
-}
-
-#heading #logout select {
-	margin-right: 10px;
-}
-
-#heading #logout > * {
-	float: left;
-}
-
-#heading #logoutButton {
-	background: none repeat scroll 0 0 transparent;
-	border: medium none;
-	cursor: pointer;
-	text-decoration: underline;
-}
-
-.profileMenu {
-	width: 12.5em;
-	font-size: smaller;
-	text-align: center;
-}
-
-#leftMenuContainer {
-	float: left;
-	display: inherit;
-}
-
-#contentGroup {
-	height: 100%;	
-}
-
-#mainContent {
-	position: relative;
-	min-height: 100%;
-	margin-left: 13.3em;
 }
 
 #menuButton {
@@ -73,6 +16,57 @@
 	position: relative;
 	height: 5px;
 	top: -8px;
+}
+
+#heading #title {
+	font-weight: bold;
+	padding-left: 1em;
+}
+
+#heading #title a {
+	text-decoration: none;
+}
+
+#heading #logout {
+	position: fixed;
+	right: 0;
+	top: 0;
+}
+
+#heading #logout > * {
+	float: left;
+}
+
+#logout #theme {
+	margin-top: 3px;
+}
+
+#logout #userimg {
+	cursor: pointer;
+	margin-right: 1em;
+}
+
+.profileMenu {
+	width: 12.5em;
+	font-size: smaller;
+	text-align: center;
+	left: auto !important;
+	right: 2px;
+}
+
+#leftMenuContainer {
+	float: left;
+	display: inherit;
+}
+
+#contentGroup {
+	height: 100%;	
+}
+
+#mainContent {
+	position: relative;
+	min-height: 100%;
+	margin-left: 13.3em;
 }
 
 #start {
@@ -198,4 +192,26 @@ input[readonly=readonly] {
 .registrationIncomplete {
 	background-color: #e41d1d66;
 	background-image: none;
+}
+
+.ui-datalist-header {
+	text-align: left !important;	
+}
+.numberCol {
+	float: left;
+}
+
+.person1Col {
+	float: left;
+	margin-left: 2em;
+	width: 30%;
+}
+
+.person2Col {
+	float: left;
+	width: 30%;
+}
+
+.teamCol {
+	text-align: right;
 }
