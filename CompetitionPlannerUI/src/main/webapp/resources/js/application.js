@@ -70,9 +70,6 @@ function createXMLHttpRequest() {
 function message(msg) {
 	$(".loginMessage").html(msg);
 }
-function emptyResponse() {
-	return "<?xml version='1.0' encoding='UTF-8'?><partial-response />";
-}
 function setUrlParam(val) {
 	val = val !== undefined ? "?i=" + encodeURIComponent(val) : location.protocol + "//" + location.host + location.pathname;
 	if (history.replaceState)
@@ -94,9 +91,10 @@ function toggleColumn(table, index) {
 	columnHeader.toggleClass("ui-helper-hidden");
 	table.tbody.children("tr").find("td:nth-child(" + index + ")").toggleClass("ui-helper-hidden");
 }
-function initBirtDate() {
-	var date = new Date(new Date().getFullYear() - 10, 0, 1, 12);
-	PF("birtDate").setDate(date);
+function initEmptyBirthDate() {
+	var birthDate = PF("birthDate");
+	if (birthDate.getDate() == null)
+		birthDate.setDate(new Date(new Date().getFullYear() - 15, 0, 1, 12));
 }
 function initTableDND(sourceTable, targetTable) {
 	sourceTable.draggable({
@@ -154,7 +152,7 @@ function setupAjax(loginTitle) {
 				dlg.jq.find("input[type=text]").val("");
 				dlg.jq.find('input[type=password]').val("");
 				dlg.show();
-				data = emptyResponse();
+				data = "<?xml version='1.0' encoding='UTF-8'?><partial-response />";
 			}
 			return data;
 		}
@@ -177,7 +175,7 @@ PrimeFaces.locales["de"] = {
 	isRTL: false,
 	showMonthAfterYear: false,
 	yearSuffix: "",
-	timeOnlyTitle: "Nur Zeit",
+	timeOnlyTitle: "",
 	timeText: "Zeit",
 	hourText: "Stunde",
 	minuteText: "Minute",
