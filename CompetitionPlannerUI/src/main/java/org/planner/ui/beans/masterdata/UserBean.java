@@ -79,7 +79,7 @@ public class UserBean extends AbstractEditBean {
 	}
 
 	public String getFemale() {
-		return Gender.w.getText();
+		return Gender.f.getText();
 	}
 
 	public List<Club> getClubs() {
@@ -115,7 +115,7 @@ public class UserBean extends AbstractEditBean {
 		Object value = roleMenu.getSubmittedValue();
 		if (value != null) {
 			for (String role : (String[]) value) {
-				if ("Sportler".equals(role))
+				if ("Sportler".equals(role) || "Mastersportler".equals(role))
 					return true;
 			}
 		}
