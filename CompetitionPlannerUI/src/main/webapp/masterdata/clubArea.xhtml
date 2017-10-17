@@ -10,15 +10,22 @@
 		<ui:param name="bundle" value="#{messages.bundle('clubs')}"/>
 
 		<div class="ui-g">
-			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.name}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.name}"/></div>
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<p:inputText value="#{club.name}" autocomplete="off" maxlength="255" required="true"
 					requiredMessage="#{bundle.format('fieldValidation', bundle.name)}"
-					style="width: 98%"/>
+					readonly="#{not canSave}" style="width: 98%"/>
 			</div>
 		</div>
 		<div class="ui-g">
-			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em; font-weight: bold;"><h:outputText value="#{bundle.address}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.shortName}"/></div>
+			<div class="ui-g-12 ui-md-6 ui-lg-8">
+				<p:inputText value="#{club.shortName}" autocomplete="off" maxlength="32"
+					readonly="#{not canSave}" style="width: 98%"/>
+			</div>
+		</div>
+		<div class="ui-g">
+			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em; font-weight: bold;"><h:outputText value="#{bundle.address}"/></div>
 			<h:panelGroup layout="block" style="width: 100%;">
 				<ui:param name="address" value="#{club.address}"/>
 				<ui:include src="addressArea.xhtml"/>
