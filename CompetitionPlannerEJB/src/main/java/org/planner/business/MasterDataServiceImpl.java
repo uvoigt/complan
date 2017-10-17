@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.transaction.RollbackException;
 
 import org.planner.business.CommonImpl.Operation;
 import org.planner.dao.PlannerDao;
@@ -45,7 +46,7 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 
 	public String getUserName(String userId) {
 		User user = dao.getUserByUserId(userId);
-		return user != null ? user.getFirstName() + " " + user.getLastName() : userId;
+		return user != null ? user.getName() : userId;
 	}
 
 	public User getUserByUserId(String userId, boolean fetch) {
@@ -192,5 +193,11 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		} else {
 			throw new TechnischeException("Dieser Typ kann nicht importiert werden", null);
 		}
+	}
+
+	@Override
+	public String handleItemRollback(AbstractEntity entity, RollbackException e) {
+		User user = (User) entity;
+		return messages.getFormattedMessage("userImport.itemRollback", user.getUserId());
 	}
 }
