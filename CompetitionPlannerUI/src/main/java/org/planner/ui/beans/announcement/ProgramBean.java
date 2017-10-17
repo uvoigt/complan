@@ -6,6 +6,7 @@ import java.util.Date;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.planner.eo.AbstractEntity_;
@@ -13,9 +14,10 @@ import org.planner.eo.Announcement;
 import org.planner.eo.Program;
 import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramRace;
-import org.planner.eo.Race;
 import org.planner.eo.User;
+import org.planner.model.AgeType;
 import org.planner.ui.beans.AbstractEditBean;
+import org.planner.ui.beans.Messages;
 import org.planner.ui.util.JsfUtil;
 
 @Named
@@ -24,10 +26,10 @@ public class ProgramBean extends AbstractEditBean {
 
 	private static final long serialVersionUID = 1L;
 
-	private Program program;
+	@Inject
+	private Messages messages;
 
-	private int intoSemiFinal;
-	private int intoFinal;
+	private Program program;
 
 	private ProgramRace selectedRace;
 
@@ -48,24 +50,11 @@ public class ProgramBean extends AbstractEditBean {
 		// das könnte auch als Argument in der search-xhtml mitgegeben werden
 		loadProgram(program.getId());
 		JsfUtil.setViewVariable("id", program.getId());
-		parseHeatMode(program.getOptions().getHeatMode());
 	}
 
 	private void loadProgram(Long id) {
 		// TODO auch hier... über einen search-view-parameter die detailtiefe festlegen
 		program = service.getObject(Program.class, id, 3);
-	}
-
-	private void parseHeatMode(String string) {
-		if (string != null) {
-			String[] split = string.split(";");
-			intoFinal = Integer.parseInt(split[0]);
-			intoSemiFinal = Integer.parseInt(split[1]);
-		}
-	}
-
-	private void updateHeatMode() {
-		program.getOptions().setHeatMode(intoFinal + ";" + intoSemiFinal);
 	}
 
 	@Override
@@ -80,69 +69,53 @@ public class ProgramBean extends AbstractEditBean {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long announcementId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), announcement,
 				AbstractEntity_.id.getName());
+		Announcement announcementEntity = service.getObject(Announcement.class, announcementId, 1);
 		Program p = new Program();
 		ProgramOptions options = new ProgramOptions();
-		options.setHeatMode("1;3");
+		int numberOfDays = (int) ((announcementEntity.getEndDate().getTime()
+				- announcementEntity.getStartDate().getTime()) / 1000 / 60 / 60 / 24);
+		numberOfDays++;
+		Date[] beginTimes = new Date[numberOfDays];
+		for (int i = 0; i < beginTimes.length; i++) {
+			beginTimes[i] = createTime(8, 0);
+		}
+		options.setBeginTimes(beginTimes);
 		options.setChildProtection(true);
 		options.setProtectionPeriod(60);
 		options.setRacesPerDay(5);
+		options.setIntoFinal(1);
+		options.setIntoSemiFinal(3);
+		options.setTimeLag(3);
+		options.setLaunchBreak(createTime(12, 0));
+		options.setBreakDuration(60);
 		p.setOptions(options);
-		p.setAnnouncement(service.getObject(Announcement.class, announcementId, 1));
+		p.setAnnouncement(announcementEntity);
 		Long programId = service.createProgram(p);
 		this.program = service.getObject(Program.class, programId, 2);
-		parseHeatMode(options.getHeatMode());
 		startseiteBean.setMainContent("/announcement/programEdit.xhtml", program.getId());
 	}
 
+	private Date createTime(int hours, int minutes) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.YEAR, 0);
+		calendar.set(Calendar.MONTH, 0);
+		calendar.set(Calendar.DAY_OF_MONTH, 1);
+		calendar.set(Calendar.HOUR_OF_DAY, hours);
+		calendar.set(Calendar.MINUTE, minutes);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
+		return new Date(calendar.getTimeInMillis());
+	}
+
 	public void generateProgram() {
-		updateHeatMode();
 		service.generateProgram(program);
 		loadProgram(program.getId());
 	}
 
-	public String getRaceString(ProgramRace programRace) {
-		Race race = programRace.getRace();
-		StringBuilder sb = new StringBuilder();
-		sb.append("Rennen "); // TODO messages
-		sb.append(race.getNumber());
-		sb.append("-");
-		sb.append(programRace.getNumber());
-		sb.append(" - ");
-		sb.append(race.getBoatClass().getText());
-		sb.append(" ");
-		sb.append(race.getAgeType().getText());
-		sb.append(" ");
-		sb.append(race.getGender().getText());
-		sb.append(" ");
-		sb.append(race.getDistance());
-		return sb.toString();
-	}
-
 	public String getAgeGroup(User user) {
-		Date birthDate = user.getBirthDate();
-		// Sportler sollten! eigentlich ein Geburtsdatum haben
-		if (birthDate == null)
+		if (user.getAgeType().ordinal() >= AgeType.junioren.ordinal())
 			return null;
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(birthDate);
-		int ageGroup = cal.get(Calendar.YEAR);
-		return Integer.toString(ageGroup);
-	}
-
-	public int getIntoSemiFinal() {
-		return intoSemiFinal;
-	}
-
-	public void setIntoSemiFinal(int intoSemiFinal) {
-		this.intoSemiFinal = intoSemiFinal;
-	}
-
-	public int getIntoFinal() {
-		return intoFinal;
-	}
-
-	public void setIntoFinal(int intoFinal) {
-		this.intoFinal = intoFinal;
+		return new StringBuilder().append("(").append(user.getAge()).append(")").toString();
 	}
 
 	public ProgramRace getSelectedRace() {
