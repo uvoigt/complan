@@ -14,6 +14,9 @@
         <dependent-module archiveName="commons-lang-2.6.jar" deploy-path="/" handle="module:/classpath/var/M2_REPO/commons-lang/commons-lang/2.6/commons-lang-2.6.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
+        <dependent-module archiveName="joda-time-2.9.9.jar" deploy-path="/" handle="module:/classpath/var/M2_REPO/joda-time/joda-time/2.9.9/joda-time-2.9.9.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <property name="java-output-path" value="/CompetitionPlannerEAR/target/classes"/>
     </wb-module>
 </project-modules>
