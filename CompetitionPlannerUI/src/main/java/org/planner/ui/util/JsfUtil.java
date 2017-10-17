@@ -1,6 +1,9 @@
 package org.planner.ui.util;
 
+import java.util.Map;
+
 import javax.faces.context.FacesContext;
+import javax.faces.event.PhaseId;
 import javax.faces.view.facelets.FaceletContext;
 
 import org.planner.ui.beans.Messages;
@@ -29,7 +32,7 @@ public class JsfUtil {
 	public static Object getContextVariable(String name) {
 		FaceletContext ctx = (FaceletContext) FacesContext.getCurrentInstance().getAttributes()
 				.get(FaceletContext.FACELET_CONTEXT_KEY);
-		return ctx.getAttribute(name);
+		return ctx != null ? ctx.getAttribute(name) : null;
 	}
 
 	/**
@@ -46,15 +49,31 @@ public class JsfUtil {
 		ctx.setAttribute(name, value);
 	}
 
+	@SuppressWarnings("rawtypes")
 	public static Object getViewVariable(String name) {
-		return FacesContext.getCurrentInstance().getViewRoot().getViewMap().get(name);
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		StateSaver stateSaver = (StateSaver) ctx.getViewRoot().findComponent("stateSaver");
+		if (stateSaver == null)
+			stateSaver = new StateSaver();
+		if (ctx.getCurrentPhaseId() == PhaseId.RESTORE_VIEW) {
+			Map<Object, Object> attributes = ctx.getAttributes();
+			// da das restore view im UiRoot in dieser Phase umgangen wird, mach ich das hier selber
+			Object[] state = (Object[]) attributes.get("com.sun.faces.FACES_VIEW_STATE");
+			Object viewState = ((Map) state[1]).get("stateSaver");
+			stateSaver.restoreState(ctx, viewState);
+		}
+		return stateSaver.get(name);
 	}
 
 	public static void setViewVariable(String name, Object value) {
+		StateSaver stateSaver = (StateSaver) FacesContext.getCurrentInstance().getViewRoot()
+				.findComponent("stateSaver");
+		if (stateSaver == null)
+			return;
 		if (value != null)
-			FacesContext.getCurrentInstance().getViewRoot().getViewMap().put(name, value);
+			stateSaver.put(name, value);
 		else
-			FacesContext.getCurrentInstance().getViewRoot().getViewMap().remove(name);
+			stateSaver.remove(name);
 	}
 
 	private JsfUtil() {
