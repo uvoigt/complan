@@ -21,7 +21,7 @@ import org.planner.util.CommonMessages;
 
 @Entity
 @Access(AccessType.FIELD)
-public class ProgramRace implements Serializable {
+public class ProgramRace extends HasHeatMode implements Serializable {
 
 	public enum RaceType implements LocalizedEnum {
 		heat, semiFinal, finalA, finalB;
@@ -29,6 +29,10 @@ public class ProgramRace implements Serializable {
 		@Override
 		public String getText() {
 			return CommonMessages.getEnumText(this);
+		}
+
+		public boolean isFinal() {
+			return this == finalA || this == finalB;
 		}
 	}
 
