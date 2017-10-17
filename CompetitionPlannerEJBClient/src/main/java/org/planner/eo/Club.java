@@ -21,6 +21,9 @@ public class Club extends AbstractEntity {
 	@Visible
 	private String name;
 
+	@Column(length = 32)
+	private String shortName; // wird z.B. in Programmen angezeigt
+
 	// wenn optional false eingeschaltet wird, dann muss auch die Prüfung im
 	// MasterDataServiceImpl.saveAddress angepasst werden
 	@ManyToOne(cascade = CascadeType.ALL /* optional = false */)
@@ -33,6 +36,14 @@ public class Club extends AbstractEntity {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getShortName() {
+		return shortName;
+	}
+
+	public void setShortName(String shortName) {
+		this.shortName = shortName;
 	}
 
 	public Address getAddress() {
