@@ -25,10 +25,10 @@ public abstract class AbstractEntity implements Serializable {
 	@Version
 	private int version;
 
-	@Column(length = 32)
+	@Column(length = 32, updatable = false)
 	private String createUser;
 
-	@Column
+	@Column(updatable = false)
 	private Date createTime;
 
 	@Column(length = 32)
