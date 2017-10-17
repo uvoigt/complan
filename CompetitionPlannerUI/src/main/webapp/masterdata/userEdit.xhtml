@@ -49,8 +49,8 @@
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.birthDate}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
-					<p:calendar widgetVar="birtDate" value="#{user.birthDate}" autocomplete="off" navigator="true" maxdate="#{userBean.today}"
-						beforeShow="initBirtDate" required="#{userBean.roleSportler}" requiredMessage="#{bundle.birthDateRequired}"/>
+					<p:calendar widgetVar="birthDate" value="#{user.birthDate}" autocomplete="off" navigator="true" maxdate="#{userBean.today}"
+						beforeShow="initEmptyBirthDate" required="#{userBean.roleSportler}" requiredMessage="#{bundle.birthDateRequired}"/>
 				</div>
 			</div>
 			<div class="ui-g">
@@ -84,7 +84,7 @@
 							</p:selectOneMenu>
 						</c:when>
 						<c:otherwise>
-							<p:inputText value="#{user.club.name}" size="30" readonly="true"/>
+							<p:inputText value="#{user.club.id ne null ? user.club.name : userBean.myUser.club.name}" size="30" readonly="true"/>
 							<h:inputHidden id="clubid" value="#{userBean.clubId}"/>
 							<h:outputScript>
 								$("[id*=clubid]").val("#{userBean.myUser.club.id}");
