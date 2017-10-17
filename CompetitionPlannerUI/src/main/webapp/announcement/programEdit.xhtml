@@ -4,7 +4,8 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
 
 	<ui:decorate template="/templates/title.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('programs')}"/>
@@ -80,7 +81,7 @@
 					</h:panelGroup>
 				</p:fieldset>
 
-				<p:panelGrid columns="3">
+				<p:panelGrid columns="3" styleClass="ui-panelgrid-blank">
 					<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
 							process="@form" update="programTable" oncomplete="resizeDsc()"/>
 					<p:commandButton value="#{messages.backToOverview}"
@@ -93,31 +94,40 @@
 						value="#{programBean.program.races}"
 						selection="#{programBean.selectedRace}"
 						lazy="false" chunkSize="5" rows="5" mode="inline" scrollHeight="5">
-						
-					<h:panelGroup style="width: 100%">
-						<p:dataList var="team" value="#{race.participants}" emptyMessage="" type="none">
-							<f:facet name="header">
-								<h:panelGroup>#{programBean.getRaceString(race)}</h:panelGroup>
-								<h:panelGroup style="float: right">#{race.startTime}</h:panelGroup>
-							</f:facet>
-							<h:panelGroup styleClass="numberCol" layout="block">
-								<h:outputText value="#{team.lane}"/>
-							</h:panelGroup>
 
-							<ui:repeat var="member" value="#{team.members}" varStatus="status">
-								<h:panelGroup styleClass="#{status.even ? 'person1Col' : 'person2Col'}" layout="block">
+					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable">
+						<f:facet name="header">
+							<h:panelGroup layout="block" styleClass="raceTitle">
+								<h:outputText value="#{bundle.race} "/>
+								<h:outputText value="#{race.race.number}"/>
+								<h:outputText value="#{race.number != null ? '-'.concat(race.number) : null}"/><br/><h:outputText value="#{race.race.boatClass.text} "/>
+								<h:outputText value="#{race.race.gender.getAgeFriendlyText(race.race.ageType)} "/>
+								<h:outputText value="#{race.race.ageType.text} "/>
+								<h:outputText value="#{race.race.distance} m"/>
+							</h:panelGroup>
+							<h:panelGroup layout="block" styleClass="raceInfo">
+								<h:outputText value="#{race.number}. #{race.raceType.text}"/>
+							</h:panelGroup>
+							<h:panelGroup layout="block" style="text-align: right">#{race.startTime}</h:panelGroup>
+						</f:facet>
+						<p:column styleClass="numberCol">
+							<h:outputText value="#{team.lane}"/>
+						</p:column>
+
+						<p:column styleClass="teamCol">
+							<p:dataGrid columns="2" var="member" value="#{team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
+								<h:panelGroup style="text-align: left">
 									<h:outputText value="#{member.user.firstName} "/>
 									<h:outputText value="#{member.user.lastName} "/>
 									<h:outputText value="#{programBean.getAgeGroup(member.user)}"/>
 								</h:panelGroup>
-							</ui:repeat>
+							</p:dataGrid>
+						</p:column>
+						<p:column>
+							<h:outputText value="#{not empty team.club.shortName ? team.club.shortName : team.club.name}"/>
+						</p:column>
 
-							<h:panelGroup styleClass="teamCol">
-								<h:outputText value="#{team.club.name}"/>
-							</h:panelGroup><br />
-
-						</p:dataList>
-					</h:panelGroup>
+					</p:dataTable>
 	
 				</p:dataScroller>
 

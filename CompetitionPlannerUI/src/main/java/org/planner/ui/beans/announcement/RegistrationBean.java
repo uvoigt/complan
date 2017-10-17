@@ -1,8 +1,6 @@
 package org.planner.ui.beans.announcement;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -19,7 +17,6 @@ import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.User;
-import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.Messages;
@@ -47,6 +44,8 @@ public class RegistrationBean extends AbstractEditBean {
 	private RegEntry selectedEntry;
 
 	private boolean clubVisible;
+
+	private boolean showEffect;
 
 	@PostConstruct
 	public void init() {
@@ -149,6 +148,9 @@ public class RegistrationBean extends AbstractEditBean {
 			}
 			service.saveRegEntries(registration.getId(), entries);
 		}
+		// wurde etwas hinzugefügt. Um das im UI sichtbar zu machen
+		// kommt ein Effekt im Header der Tabelle in Frage
+		showEffect = true;
 		loadRegistration(registration.getId());
 	}
 
@@ -166,6 +168,7 @@ public class RegistrationBean extends AbstractEditBean {
 
 	public void deleteFromRegistration(RegEntry entry) {
 		service.deleteFromRegEntry(registration.getId(), entry);
+		showEffect = true;
 		loadRegistration(registration.getId());
 	}
 
@@ -183,45 +186,11 @@ public class RegistrationBean extends AbstractEditBean {
 		return athletes;
 	}
 
-	public String getAgeType(User user) {
-		Date birthDate = user.getBirthDate();
-		// Sportler sollten! eigentlich ein Geburtsdatum haben
-		if (birthDate == null)
-			return null;
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(birthDate);
-		int age = Calendar.getInstance().get(Calendar.YEAR) - cal.get(Calendar.YEAR);
-		switch (age) {
-		case 11:
-			return AgeType.schuelerC.getText();
-		case 12:
-			return AgeType.schuelerB.getText();
-		case 13:
-			return AgeType.schuelerA.getText();
-		case 14:
-		case 15:
-			return AgeType.jugend.getText();
-		case 16:
-		case 17:
-			return AgeType.junioren.getText();
-		}
-		if (age < 32)
-			return AgeType.lk.getText();
-		if (age < 40)
-			return AgeType.akA.getText();
-		if (age < 50)
-			return AgeType.akB.getText();
-		if (age < 60)
-			return AgeType.akC.getText();
-		if (age < 70)
-			return AgeType.akD.getText();
-		return AgeType.ak.getText();
-	}
-
 	public String getRaceString(RegEntry entry) {
 		Race race = entry.getRace();
 		StringBuilder sb = new StringBuilder();
-		sb.append("Renn-Nr.: ");
+		sb.append(messages.get("registrations.raceNo"));
+		sb.append(" ");
 		sb.append(race.getNumber());
 		sb.append(" - ");
 		sb.append(race.getBoatClass().getText());
@@ -249,6 +218,10 @@ public class RegistrationBean extends AbstractEditBean {
 
 	public void setClubVisible(boolean clubVisible) {
 		this.clubVisible = clubVisible;
+	}
+
+	public boolean isShowEffect() {
+		return showEffect;
 	}
 
 	public void toggleClubVisible() {
