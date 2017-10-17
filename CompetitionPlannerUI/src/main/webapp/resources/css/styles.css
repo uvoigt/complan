@@ -197,21 +197,46 @@ input[readonly=readonly] {
 .ui-datalist-header {
 	text-align: left !important;	
 }
+
+.teamTable .ui-datatable-header {
+	float: left;
+	width: 100%;
+	padding: 0 !important;
+}
+.teamTable .ui-datatable-tablewrapper {
+	clear: both;
+}
+.teamTable thead {
+	display: none;
+}
+.teamTable .ui-column-title {
+	display: none !important;
+}
+
+.teamTable .raceTitle {
+	text-align: left;
+	width: 40%;
+	float: left;
+	padding: 4px 10px;
+}
+
+.teamTable .raceInfo {
+	width: 40;
+	float: left;
+}
+
+.teamTable tbody, .teamTable tr, .teamTable td {
+	border: none !important;
+}
+
 .numberCol {
-	float: left;
-}
-
-.person1Col {
-	float: left;
-	margin-left: 2em;
-	width: 30%;
-}
-
-.person2Col {
-	float: left;
-	width: 30%;
+	width: 10px;	
 }
 
 .teamCol {
-	text-align: right;
+	width: 75%;
+}
+
+.teamMembers > div {
+	border: none;
 }
