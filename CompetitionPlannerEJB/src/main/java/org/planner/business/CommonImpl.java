@@ -26,6 +26,7 @@ import org.planner.ejb.CallerProvider;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEnum;
 import org.planner.eo.AbstractEnum_;
+import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
@@ -260,13 +261,10 @@ public class CommonImpl {
 				dao.saveWithCommit(entity, loginName);
 			} catch (RollbackException e) {
 				LogUtil.logException(e, LOG, "Fehler beim Importieren", entities);
-				// e.getCause() instanceof PersistenceException
-				// TODO im preprozessor könnte das Handling für die Hibernate exception
-				// eingebaut werden plus meldung, dass die userid nicht unique ist
 				if (ex == null)
-					ex = new FachlicheException(messages.getResourceBundle(), "dataImport.cannot.save", e);
-				else
-					ex.addMessage(messages.getResourceBundle(), "dataImport.reason", i + 1, e);
+					ex = new FachlicheException(messages.getResourceBundle(), "dataImport.importError", e);
+				String errorMsg = preprozessor.handleItemRollback(entity, e);
+				ex.addMessage(messages.getResourceBundle(), "dataImport.itemError", i + 1, errorMsg);
 			}
 		}
 		if (ex != null)
@@ -321,6 +319,11 @@ public class CommonImpl {
 			if (club.getId() == null || !club.getId().equals(callingUser.getClub().getId()))
 				throwAccessException(club, operation);
 		}
+	}
+
+	@SuppressWarnings("unused")
+	private void checkWriteAccess(Address address, Operation operation, User callingUser) {
+		// keine Möglichkeit, das zu prüfen
 	}
 
 	@SuppressWarnings("unused")
