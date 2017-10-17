@@ -284,8 +284,9 @@ public class AnnouncementServiceImpl {
 			}
 			if (added) {
 				checkMaximalTeamSize(firstEntry.getRace().getBoatClass(), existingParticipants.size());
-				checkGender(firstEntry.getRace().getGender(), existingParticipants);
+				checkGender(firstEntry.getRace(), existingParticipants);
 				checkIfAlreadyRegistered(firstEntry);
+				checkRaceAgeTypeAgainstParticipant(firstEntry);
 
 				common.save(existingEntry);
 			}
@@ -295,10 +296,11 @@ public class AnnouncementServiceImpl {
 			for (RegEntry newEntry : entries) {
 
 				checkMaximalTeamSize(newEntry.getRace().getBoatClass(), newEntry.getParticipants().size());
-				checkGender(newEntry.getRace().getGender(), newEntry.getParticipants());
+				checkGender(newEntry.getRace(), newEntry.getParticipants());
 
 				// außerdem prüfen, ob die Besatzung bzw. ein Teil daraus! bereits in diesem Rennen gemeldet wurde
 				checkIfAlreadyRegistered(newEntry);
+				checkRaceAgeTypeAgainstParticipant(newEntry);
 
 				common.save(newEntry);
 				registration.getEntries().add(newEntry);
@@ -344,26 +346,77 @@ public class AnnouncementServiceImpl {
 					maximalTeamSize, allowedSubstitutes, boatClass.getText());
 	}
 
-	private void checkGender(Gender gender, Collection<Participant> participants) {
-		for (Participant user : participants) {
-			if (user.getUser().getGender() != gender)
-				throw new FachlicheException(messages.getResourceBundle(), "registration.illegalGender", gender,
-						user.getUser().getGender());
+	private void checkGender(Race race, Collection<Participant> participants) {
+		for (Participant participant : participants) {
+			User user = participant.getUser();
+			if (user.getGender() != race.getGender()) {
+				throw new FachlicheException(messages.getResourceBundle(), "registration.illegalGender",
+						race.getGender().getAgeFriendlyText(race.getAgeType()),
+						user.getGender().getAgeFriendlyText(user.getAgeType()));
+			}
 		}
 	}
 
-	private void checkIfAlreadyRegistered(RegEntry regEntry) {
-		for (Participant participant : regEntry.getParticipants()) {
+	private void checkIfAlreadyRegistered(RegEntry entry) {
+		for (Participant participant : entry.getParticipants()) {
 			Suchkriterien criteria = new Suchkriterien();
-			criteria.addFilter(RegEntry_.race.getName(), regEntry.getRace().getId());
+			criteria.addFilter(RegEntry_.race.getName(), entry.getRace().getId());
 			criteria.addFilter(RegEntry_.participants.getName() + ".user", participant.getUser().getId());
-			if (regEntry.getId() != null)
-				criteria.addFilter(
-						new Filter(Conditional.and, Comparison.ne, RegEntry_.id.getName(), regEntry.getId()));
+			if (entry.getId() != null)
+				criteria.addFilter(new Filter(Conditional.and, Comparison.ne, RegEntry_.id.getName(), entry.getId()));
 			if (common.search(RegEntry.class, criteria).getGesamtgroesse() > 0)
 				throw new FachlicheException(messages.getResourceBundle(), "registration.alreadyRegistered",
 						participant.getUser().getFirstName() + " " + participant.getUser().getLastName(),
-						regEntry.getRace().getNumber());
+						entry.getRace().getNumber());
+		}
+	}
+
+	private void checkRaceAgeTypeAgainstParticipant(RegEntry entry) {
+		// hoch- runter melden
+		AgeType raceAgeType = entry.getRace().getAgeType();
+		for (Participant participant : entry.getParticipants()) {
+			AgeType userAgeType = participant.getUser().getAgeType();
+			switch (userAgeType) {
+			case schuelerA:
+			case schuelerB:
+			case schuelerC:
+			case jugend:
+			case junioren:
+			case lk:
+				// diese Altersklassen dürfen nicht gegen Jüngere fahren
+				if (raceAgeType.compareTo(userAgeType) < 0 ||
+				// Spezialfall: die Jüngeren dürfen, LK-Fahrer aber nicht: gegen Ältere fahren
+						userAgeType == AgeType.lk && raceAgeType.compareTo(userAgeType) > 0)
+					throw new FachlicheException(messages.getResourceBundle(), "registration.illegalAgeType",
+							participant.getUser().getName(), entry.getRace().getNumber());
+				break;
+			case ak:
+				// diesen Fall gibt es nicht, ein Sportler ist immer einer AK zugeordnet
+				break;
+			case akA:
+			case akB:
+			case akC:
+			case akD:
+			case akE:
+				// AK-Fahrer dürfen generell nicht gegen Ältere fahren
+				if (raceAgeType.compareTo(userAgeType) > 0 && raceAgeType != AgeType.ak ||
+				// aber gegen Jüngere nur nicht unterhalb LK
+						raceAgeType.compareTo(userAgeType) < 0 && raceAgeType.compareTo(AgeType.lk) < 0)
+					throw new FachlicheException(messages.getResourceBundle(), "registration.illegalAgeType",
+							participant.getUser().getName(), entry.getRace().getNumber());
+				break;
+			}
+			switch (raceAgeType) {
+			default:
+				break;
+			case ak:
+				// Spezialfall AK, da sind alle AKs zusammengefasst
+				// Der Fahrer muss lediglich in der AK sein
+				if (userAgeType.compareTo(AgeType.akA) < 0)
+					throw new FachlicheException(messages.getResourceBundle(), "registration.illegalAgeType",
+							participant.getUser().getName(), entry.getRace().getNumber());
+				break;
+			}
 		}
 	}
 
@@ -379,6 +432,7 @@ public class AnnouncementServiceImpl {
 			int minimalTeamSize = entry.getRace().getBoatClass().getMinimalTeamSize();
 			if (entry.getParticipants().size() < minimalTeamSize)
 				erroredRaces.add(entry.getRace().getNumber());
+			checkRaceAgeTypeAgainstParticipant(entry);
 		}
 		if (!erroredRaces.isEmpty())
 			throw new FachlicheException(messages.getResourceBundle(), "registration.incompleteEntries", erroredRaces);
