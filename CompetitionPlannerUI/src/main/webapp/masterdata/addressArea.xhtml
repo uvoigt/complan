@@ -8,55 +8,46 @@
 
 	<ui:composition>
 		<ui:param name="bundle" value="#{messages.bundle('addresses')}"/>
-		<ui:param name="safeAddress" value="#{address != null ? address : addressBean.newAddress()}"/>
 
 		<div class="ui-g" style="clear: both;">
 			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.country}"/></div>
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
-				<p:autoComplete value="#{safeAddress.country}" converter="#{countryConverter}"
+				<p:autoComplete value="#{address.country}" converter="#{countryConverter}"
 					completeMethod="#{addressBean.getCountries}" var="country" itemValue="#{country.name}" itemLabel="#{country.name}"
-					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.country)}"
-					readonly="#{not canSave}"/>
+					required="#{addressBean.required}" requiredMessage="#{bundle.format('fieldValidation', bundle.country)}"
+					readonly="#{not canSave}" binding="#{addressBean.uiCountry}"/>
 			</div>
 		</div>
 		<div class="ui-g">
 			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.city}"/></div>
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
-				<p:autoComplete value="#{safeAddress.city}" converter="#{cityConverter}"
+				<p:autoComplete value="#{address.city}" converter="#{cityConverter}"
 					completeMethod="#{addressBean.getCities}" var="city" itemValue="#{city.name}" itemLabel="#{city.name}"
-					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.city)}"
-					readonly="#{not canSave}"/>
+					required="#{addressBean.required}" requiredMessage="#{bundle.format('fieldValidation', bundle.city)}"
+					readonly="#{not canSave}" binding="#{addressBean.uiCity}"/>
 			</div>
 		</div>
 		<div class="ui-g">
 			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.postCode}"/></div>
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
-				<p:inputText value="#{safeAddress.postCode}" autocomplete="off" maxlength="10" size="10"
-					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.postCode)}"
-					readonly="#{not canSave}"/>
+				<p:inputText value="#{address.postCode}" autocomplete="off" maxlength="10" size="10"
+					required="#{addressBean.required}" requiredMessage="#{bundle.format('fieldValidation', bundle.postCode)}"
+					readonly="#{not canSave}" binding="#{addressBean.uiPostCode}"/>
 			</div>
 		</div>
 		<div class="ui-g">
 			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.street}"/></div>
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
-				<p:inputText value="#{safeAddress.street}" autocomplete="off" maxlength="255"
-					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.street)}"
-					readonly="#{not canSave}"
+				<p:inputText value="#{address.street}" autocomplete="off" maxlength="255"
+					required="#{addressBean.required}" requiredMessage="#{bundle.format('fieldValidation', bundle.street)}"
+					readonly="#{not canSave}" binding="#{addressBean.uiStreet}"
 					style="width: 98%"/>
-			</div>
-		</div>
-		<div class="ui-g">
-			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.number}"/></div>
-			<div class="ui-g-12 ui-md-6 ui-lg-8">
-				<p:inputText value="#{safeAddress.number}" autocomplete="off" maxlength="10" size="10"
-					required="#{addressReqired}" requiredMessage="#{bundle.format('fieldValidation', bundle.number)}"
-					readonly="#{not canSave}"/>
 			</div>
 		</div>
 		<div class="ui-g">
 			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.addition}"/></div>
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
-				<p:inputText value="#{safeAddress.addition}" autocomplete="off" maxlength="255"
+				<p:inputText value="#{address.addition}" autocomplete="off" maxlength="255"
 					readonly="#{not canSave}"
 					style="width: 98%"/>
 			</div>
@@ -64,7 +55,7 @@
 		<div class="ui-g">
 			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.homepage}"/></div>
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
-				<p:inputText value="#{safeAddress.homepage}" autocomplete="off" maxlength="255"
+				<p:inputText value="#{address.homepage}" autocomplete="off" maxlength="255"
 					readonly="#{not canSave}"
 					style="width: 98%"/>
 			</div>
