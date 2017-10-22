@@ -16,7 +16,6 @@ import org.planner.business.ProgramServiceImpl;
 import org.planner.business.RegistryImpl;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEnum;
-import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
@@ -95,28 +94,6 @@ public class ServiceFacadeBean implements ServiceFacade {
 		announcement.deleteRaces(announcementId, raceIds);
 	}
 
-	// @Override
-	// public int speichernMitFilter(DatenSuchkriterien kriterien, Map<String,
-	// String> werte) {
-	// return adminGFO.speichernMitFilter(kriterien, werte,
-	// benutzer.getLoginName());
-	// }
-	//
-	// @Override
-	//// @RolesAllowed("User")
-	// public int loeschen(Class<? extends AbstractEO> entityType,
-	// DatenSuchkriterien kriterien) {
-	// return adminGFO.loeschenMitFilter(entityType, kriterien);
-	// }
-	//
-	// @Override
-	//// @RolesAllowed("User")
-	// public int kopieren(Class<AbstractEO> entityType, DatenSuchkriterien
-	// kriterien) {
-	// return adminGFO.kopierenMitFilter(entityType, kriterien,
-	// benutzer.getLoginName());
-	// }
-
 	@Override
 	@PermitAll
 	public String sendRegister(String email, String resetUrl) {
@@ -182,11 +159,6 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public Address saveAddress(Address address) {
-		return masterData.saveAddress(address);
-	}
-
-	@Override
 	@RolesAllowed("Admin")
 	public Role saveRole(Role role) {
 		return masterData.saveRole(role);
@@ -235,8 +207,9 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public List<User> getAthletes() {
-		return announcement.getAthletes();
+	@SuppressWarnings("unchecked")
+	public <T extends Serializable> Suchergebnis<T> getAthletes(Suchkriterien criteria) {
+		return (Suchergebnis<T>) announcement.getAthletes(criteria);
 	}
 
 	@Override
