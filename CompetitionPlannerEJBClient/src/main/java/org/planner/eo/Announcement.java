@@ -6,6 +6,7 @@ import java.util.Set;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -57,7 +58,7 @@ public class Announcement extends AbstractEntity {
 	private Location location = new Location();
 
 	// Kategorie des Wettkampfes
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private Category category;
 	// competition end
 
