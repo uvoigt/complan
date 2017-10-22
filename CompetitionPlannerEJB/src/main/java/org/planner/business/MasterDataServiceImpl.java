@@ -24,7 +24,6 @@ import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.model.Suchkriterien.Filter;
 import org.planner.model.Suchkriterien.Filter.Comparison;
-import org.planner.model.Suchkriterien.Filter.Conditional;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
@@ -99,27 +98,21 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		dao.saveLastLogonTime(userId);
 	}
 
-	public Address saveAddress(Address address) {
-		common.checkWriteAccess(address, Operation.save);
+	private Address saveAddress(Address address) {
 		if (address.getCountry() == null || address.getCity() == null || address.getPostCode() == null
-				|| address.getStreet() == null || address.getNumber() == null)
+				|| address.getStreet() == null)
 			return null;
 		Country country = address.getCountry();
 		if (country.getId() == null)
-			common.save(country);
-		else
-			address.setCountry(common.getById(Country.class, country.getId(), 0));
+			common.createEnum(country);
 		City city = address.getCity();
 		if (city.getId() == null)
-			common.save(city);
-		else
-			address.setCity(common.getById(City.class, city.getId(), 0));
-		return common.save(address);
+			common.createEnum(city);
+		return address;
 	}
 
 	public Club saveClub(Club club) {
 		common.checkWriteAccess(club, Operation.save);
-		Address address = club.getAddress();
 		if (club.getId() == null) {
 			Suchkriterien krit = new Suchkriterien();
 			krit.setExact(true); // ignore case ist ok
@@ -128,6 +121,7 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 				throw new FachlicheException(messages.getResourceBundle(), "club.exists", club.getName());
 		}
 		// nur, da hier auch null zurückkommen kann
+		Address address = club.getAddress();
 		if (address != null)
 			club.setAddress(saveAddress(address));
 		return common.save(club);
@@ -153,7 +147,7 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		if (!caller.isInRole("Admin")) {
 			krit.setExact(true);
 			krit.setIgnoreCase(false);
-			krit.addFilter(new Filter(Conditional.and, Comparison.ne, Role_.role.getName(), "Admin"));
+			krit.addFilter(new Filter(Comparison.ne, Role_.role.getName(), "Admin"));
 		}
 		Suchergebnis<Role> entities = dao.search(Role.class, krit, null);
 		return entities.getListe();
