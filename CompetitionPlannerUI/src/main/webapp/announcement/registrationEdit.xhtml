@@ -26,6 +26,19 @@
 
 			<h:form>
 
+				<h:outputScript>
+				function checkEmpty() {
+					if ($("[id$=athletesTable] .ui-datatable-empty-message").length > 0)
+						updateResultCount(0);
+				}
+				function updateResultCount(count) {
+					if (count == undefined)
+						count = PF("athletesTable").tbody.children().length;
+					var l = $("[id*=resultCountLabel]");
+					l.text('#{bundle.format("athletesCount", "xxx")}'.replace(/xxx/, count));
+				}
+				</h:outputScript>
+
 				<table class="tableTop">
 					<tr>
 						<td style="width: 49%">
@@ -56,7 +69,7 @@
 								<p:column headerText="#{bundle.boatClass}" sortBy="#{race.boatClass.text}" filterBy="#{race.boatClass.text}" filterMatchMode="contains">
 									<h:outputText value="#{race.boatClass.text}"/>
 								</p:column>
-								<p:column headerText="#{bundle.ageType}" sortBy="#{race.ageType.text}" filterBy="#{race.ageType.text}" filterMatchMode="contains">
+								<p:column headerText="#{bundle.ageType}" sortBy="#{race.ageType}" filterBy="#{race.ageType.text}" filterMatchMode="contains">
 									<h:outputText value="#{race.ageType.text}"/>
 								</p:column>
 								<p:column headerText="#{bundle.gender}" sortBy="#{race.gender.text}" filterBy="#{race.gender.text}" filterMatchMode="contains">
@@ -68,8 +81,15 @@
 							</p:dataTable>
 						</td>
 						<td style="vertical-align: middle;">
+							<p:commandButton  icon="ui-icon-person" title="#{bundle.addRequest}"
+								widgetVar="btnAddRequest"
+								action="#{registrationBean.addRequest(bundle)}"
+								process="@form"
+								update="registrationTable"
+								oncomplete="PF('registrationTable').filter()"
+								style="margin-bottom: 1em"/>
 							<p:commandButton  icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
-								widgetVar="btnAdd"
+								widgetVar="btnAddAthlete"
 								action="#{registrationBean.addToRegistration()}"
 								process="@form"
 								update="registrationTable"
@@ -85,29 +105,31 @@
 									selectionMode="multiple"
 									selection="#{registrationBean.selectedAthletes}"
 									filterEvent="enter"
-									rows="10"
+									rows="10" lazy="true" rowIndexVar="rowIndex"
 									paginator="true" paginatorPosition="top"
 									scrollable="false" scrollHeight="20%">
 
 								<f:facet name="header">
-									<p:outputLabel value="#{bundle.format('athletesCount', registrationBean.athletes.size())}"/>
+									<h:panelGroup id="resultCount">
+										<p:outputLabel id="resultCountLabel"/>
+									</h:panelGroup>
 									<p:commandButton id="toggler" action="#{registrationBean.toggleClubVisible()}"
 										style="float:right; margin: -5px -10px 0 0;"
 										icon="ui-icon-calculator" title="#{bundle.chooseClub}" onclick="toggleColumn(PF('athletesTable'), 1)"
-										update="@form:clubVisible"/>
+										update="@form:clubVisible athletesTable"/>
 								</f:facet>
 
 								<p:ajax event="page" process="@form:clubVisible" update="@form:clubVisible"/>
 								<p:ajax event="sort" process="@form:clubVisible" update="@form:clubVisible"/>
 								<p:ajax event="rowSelect" oncomplete="registrationEdit_enableButtons()"/>
 								<p:ajax event="rowUnselect" oncomplete="registrationEdit_enableButtons()"/>
-								<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible" oncomplete="PF('athletesTable').unselectAllRows();registrationEdit_enableButtons()"/>
+								<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible" oncomplete="PF('athletesTable').unselectAllRows();registrationEdit_enableButtons();checkEmpty()"/>
 								<p:ajax event="rowDblselect" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"
 									oncomplete="PF('registrationTable').filter()"/>
 
 								<p:column headerText="#{bundle.club}" sortBy="#{user.club.name}" filterBy="#{user.club.name}" filterMatchMode="contains"
 										visible="#{registrationBean.clubVisible}" filterValue="#{registrationBean.loggedInUser.club.name}">
-									<h:outputText value="#{user.club.name}"/>
+									<h:outputText value="#{registrationBean.renderClubName(user)}"/>
 								</p:column>
 								<p:column headerText="#{bundle.firstName}" sortBy="#{user.firstName}" filterBy="#{user.firstName}" filterMatchMode="contains">
 									<h:outputText value="#{user.firstName}"/>
@@ -115,11 +137,14 @@
 								<p:column headerText="#{bundle.lastName}" sortBy="#{user.lastName}" filterBy="#{user.lastName}" filterMatchMode="contains">
 									<h:outputText value="#{user.lastName}"/>
 								</p:column>
-								<p:column headerText="#{bundle.ageType}" sortBy="#{user.ageType.text}" filterBy="#{user.ageType.text}" filterMatchMode="contains">
-									<h:outputText value="#{user.ageType.text}"/>
+								<p:column headerText="#{bundle.ageType}" sortBy="#{user.birthDate}" filterBy="#{user.ageType}" filterMatchMode="contains">
+									<h:outputText value="#{registrationBean.renderAgeType(user)}"/>
 								</p:column>
-								<p:column headerText="#{bundle.gender}" sortBy="#{user.gender.text}" filterBy="#{user.gender.text}" filterMatchMode="contains">
+								<p:column headerText="#{bundle.gender}" sortBy="#{user.gender}" filterBy="#{user.gender}" filterMatchMode="contains">
 									<h:outputText value="#{user.gender.text}"/>
+								<h:outputScript rendered="#{rowIndex == 0}">
+									updateResultCount(#{registrationBean.athletes.rowCount});
+								</h:outputScript>
 								</p:column>
 							</p:dataTable>
 						</td>
@@ -148,14 +173,15 @@
 					<p:ajax event="rowUnselect" oncomplete="registrationEdit_enableButtons()"/>
 					<p:ajax event="filter" oncomplete="PF('registrationTable').unselectAllRows()"/>
 
-					<p:column headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry)}" filterMatchMode="contains" filterStyle="width: 80%">
-						<h:outputText value="#{registrationBean.getRaceString(entry)}"/>
+					<p:column headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry, bundle)}" filterMatchMode="contains" filterStyle="width: 80%">
+						<h:outputText value="#{registrationBean.getRaceString(entry, bundle)}"/>
 					</p:column>
 					<p:column>
-						<ui:repeat var="participant" value="#{entry.participants}">
-							#{participant.user.firstName}
-							#{participant.user.lastName}
-							<br />
+						<ui:repeat var="participant" value="#{entry.participants}" varStatus="status">
+							<h:outputText value="#{'&lt;br /&gt;'}" escape="false" rendered="#{status.index > 0}"/>
+							<h:outputText value="#{participant.remark != null ? participant.remark : participant.user.firstName} "/>
+							<h:outputText value="#{participant.user.lastName}"/>
+							<h:outputText value=" (#{participant.user.club.shortNameOrName})" rendered="#{participant.user.club.id != entry.registration.club.id and participant.remark == null}"/>
 						</ui:repeat>
 					</p:column>
 					<p:column width="30">
@@ -173,7 +199,7 @@
 				setTimeout(function() {
 					registrationEdit_enableButtons();
 					PF("athletesTable").filter();
-				}, 500);
+				}, 100);
 			</h:outputScript>
 
 		</ui:define>
