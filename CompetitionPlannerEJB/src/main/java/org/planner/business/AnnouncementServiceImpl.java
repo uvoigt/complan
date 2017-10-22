@@ -1,28 +1,34 @@
 package org.planner.business;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
 
+import org.joda.time.LocalDate;
 import org.planner.business.CommonImpl.Operation;
-import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
+import org.planner.dao.QueryModifier;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Announcement_;
 import org.planner.eo.Category;
+import org.planner.eo.Club_;
 import org.planner.eo.Location;
 import org.planner.eo.Participant;
 import org.planner.eo.Race;
@@ -32,22 +38,78 @@ import org.planner.eo.RegEntry_;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
-import org.planner.eo.Role;
 import org.planner.eo.Role_;
 import org.planner.eo.User;
 import org.planner.eo.User_;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
 import org.planner.model.Gender;
+import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.model.Suchkriterien.Filter;
 import org.planner.model.Suchkriterien.Filter.Comparison;
-import org.planner.model.Suchkriterien.Filter.Conditional;
+import org.planner.model.Suchkriterien.SortField;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.Messages;
 
 @Named
 public class AnnouncementServiceImpl {
+
+	private class AthletesFilterer extends QueryModifier {
+		private final Suchkriterien criteria;
+		private int[] ages;
+		boolean sortFieldModified;
+
+		private AthletesFilterer(Suchkriterien criteria) {
+			this.criteria = criteria;
+		}
+
+		@Override
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		public Predicate createPredicate(Root root, CriteriaBuilder builder) {
+			SetJoin roles = root.join(User_.roles);
+			Predicate isSportler = builder.equal(roles.get(Role_.role), nextParam(builder, "Sportler"));
+			Predicate isMasterSportler = builder.equal(roles.get(Role_.role), nextParam(builder, "Mastersportler"));
+			Predicate result = builder.or(isSportler, isMasterSportler);
+
+			if (ages == null)
+				extractAgeFilter();
+			if (ages != null) {
+				int year = LocalDate.now().getYear();
+				LocalDate fromD = new LocalDate(year - ages[1], 1, 1);
+				LocalDate toD = new LocalDate(year - ages[0], 12, 31);
+				result = builder.and(result,
+						builder.between(root.get(User_.birthDate),
+								(Expression<Date>) nextParam(builder, fromD.toDate()),
+								(Expression<Date>) nextParam(builder, toD.toDate())));
+			}
+			List<SortField> sortierung = criteria.getSortierung();
+			if (!sortFieldModified && sortierung != null) {
+				for (Iterator<SortField> it = sortierung.iterator(); it.hasNext();) {
+					SortField sortField = it.next();
+					if ("birthDate".equals(sortField.getSortierFeld())) {
+						sortField.setAsc(!sortField.isAsc());
+						sortFieldModified = true;
+					}
+				}
+			}
+			return result;
+		}
+
+		private void extractAgeFilter() {
+			Map<String, Filter> filter = criteria.getFilter();
+			Filter ageTypeFilter = filter != null ? filter.remove("ageType") : null;
+			if (ageTypeFilter == null)
+				return;
+			List<AgeType> matchingAgeTypes = new ArrayList<>();
+			String filterValue = ((String) ageTypeFilter.getValue()).toLowerCase();
+			for (AgeType ageType : AgeType.values()) {
+				if (ageType.getText().toLowerCase().contains(filterValue))
+					matchingAgeTypes.add(ageType);
+			}
+			ages = User.getAgesForAgeType(matchingAgeTypes);
+		}
+	}
 
 	@Inject
 	private CommonImpl common;
@@ -81,7 +143,7 @@ public class AnnouncementServiceImpl {
 		}
 		Category category = announcement.getCategory();
 		if (category.getId() == null)
-			common.save(category);
+			common.createEnum(category);
 		// Location announcer = announcement.getAnnouncer();
 		// if (announcer.getClub() != null)
 		// announcer.setAddress(null);
@@ -229,29 +291,11 @@ public class AnnouncementServiceImpl {
 		common.save(announcement);
 	}
 
-	public List<User> getAthletes() {
-		return dao.executeOperation(new IOperation<List<User>>() {
-			@Override
-			public List<User> execute(EntityManager em) {
-				CriteriaBuilder builder = em.getCriteriaBuilder();
-				CriteriaQuery<User> query = builder.createQuery(User.class);
-				Root<User> root = query.from(User.class);
-				root.fetch(User_.club);
-				SetJoin<User, Role> roles = root.join(User_.roles);
-				query.where(builder.or(builder.equal(roles.get(Role_.role), "Sportler"),
-						builder.equal(roles.get(Role_.role), "Mastersportler")));
-				return em.createQuery(query).getResultList();
-			}
-		});
-		// Suchkriterien criteria = new Suchkriterien();
-		// criteria.setExact(true);
-		// criteria.setIgnoreCase(false);
-		// criteria.addFilter("roles.role", "Sportler");
-		// criteria.addFilter(new Filter(Conditional.or, Comparison.eq, "roles.role", "Mastersportler"));
-		// criteria.setProperties(Arrays.asList(User_.id.getName(), User_.club.getName() + "." + Club_.name.getName(),
-		// User_.firstName.getName(), User_.lastName.getName(), User_.birthDate.getName(),
-		// User_.gender.getName()));
-		// return dao.search(User.class, criteria, null).getListe();
+	public Suchergebnis<? extends Serializable> getAthletes(final Suchkriterien criteria) {
+		criteria.setProperties(Arrays.asList(User_.club.getName() + "." + Club_.name.getName(),
+				User_.club.getName() + "." + Club_.shortName.getName(), User_.firstName.getName(),
+				User_.lastName.getName(), User_.birthDate.getName(), User_.gender.getName()));
+		return common.internalSearch(User.class, criteria, new AthletesFilterer(criteria));
 	}
 
 	public void saveRegEntries(Long registrationId, List<RegEntry> entries) {
@@ -264,19 +308,23 @@ public class AnnouncementServiceImpl {
 		if (firstEntry != null && firstEntry.getId() != null) {
 			// 1. es wird zu einem existierenden Entry hinzugefügt
 
-			// TODO : prüfen, ob der Sportler schon gemeldet ist ... im K2 kann man ihn in einem anderen Boot nochmal
-			// melden
 			List<Participant> newParticipants = firstEntry.getParticipants();
 			RegEntry existingEntry = common.getById(RegEntry.class, firstEntry.getId(), 0);
 			List<Participant> existingParticipants = existingEntry.getParticipants();
 			int maxPos = determineMaxPos(existingParticipants);
 			boolean added = false;
+			boolean isRequest = false;
 			OuterLoop: for (Participant newParticipant : newParticipants) {
-				// Hibernate kümmert sich zwar ohnehin um eine unique Liste
-				// aber um die position würde immer weiter hochgezählt werden
-				for (Participant existingParticipant : existingParticipants) {
-					if (existingParticipant.getUser().getId().equals(newParticipant.getUser().getId()))
-						continue OuterLoop;
+				// Sonderfall: es wird ein Teilnehmer gesucht
+				if (newParticipant.getRemark() != null) {
+					isRequest = true;
+				} else {
+					// Hibernate kümmert sich zwar ohnehin um eine unique Liste
+					// aber die Position würde immer weiter hochgezählt werden
+					for (Participant existingParticipant : existingParticipants) {
+						if (existingParticipant.getUser().getId().equals(newParticipant.getUser().getId()))
+							continue OuterLoop;
+					}
 				}
 				newParticipant.setPos(++maxPos);
 				existingParticipants.add(newParticipant);
@@ -284,9 +332,11 @@ public class AnnouncementServiceImpl {
 			}
 			if (added) {
 				checkMaximalTeamSize(firstEntry.getRace().getBoatClass(), existingParticipants.size());
-				checkGender(firstEntry.getRace(), existingParticipants);
-				checkIfAlreadyRegistered(firstEntry);
-				checkRaceAgeTypeAgainstParticipant(firstEntry);
+				if (!isRequest) {
+					checkGender(firstEntry.getRace(), existingParticipants);
+					checkIfAlreadyRegistered(firstEntry);
+					checkRaceAgeTypeAgainstParticipant(firstEntry);
+				}
 
 				common.save(existingEntry);
 			}
@@ -322,11 +372,12 @@ public class AnnouncementServiceImpl {
 				break;
 			}
 		}
-		if (participants.isEmpty()) {
+		if (participants.isEmpty())
 			common.delete(RegEntry.class, entry.getId());
-		} else {
+		else
 			common.save(entry);
-		}
+		// damit update timestamp und user geschrieben werden
+		common.save(registration);
 	}
 
 	private int determineMaxPos(List<Participant> participants) {
@@ -363,7 +414,7 @@ public class AnnouncementServiceImpl {
 			criteria.addFilter(RegEntry_.race.getName(), entry.getRace().getId());
 			criteria.addFilter(RegEntry_.participants.getName() + ".user", participant.getUser().getId());
 			if (entry.getId() != null)
-				criteria.addFilter(new Filter(Conditional.and, Comparison.ne, RegEntry_.id.getName(), entry.getId()));
+				criteria.addFilter(new Filter(Comparison.ne, RegEntry_.id.getName(), entry.getId()));
 			if (common.search(RegEntry.class, criteria).getGesamtgroesse() > 0)
 				throw new FachlicheException(messages.getResourceBundle(), "registration.alreadyRegistered",
 						participant.getUser().getFirstName() + " " + participant.getUser().getLastName(),
@@ -375,6 +426,8 @@ public class AnnouncementServiceImpl {
 		// hoch- runter melden
 		AgeType raceAgeType = entry.getRace().getAgeType();
 		for (Participant participant : entry.getParticipants()) {
+			if (participant.getRemark() != null)
+				continue;
 			AgeType userAgeType = participant.getUser().getAgeType();
 			switch (userAgeType) {
 			case schuelerA:
