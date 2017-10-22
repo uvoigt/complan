@@ -48,7 +48,7 @@ public abstract class AbstractEditBean implements ITarget, Serializable {
 		}
 	}
 
-	protected Suchkriterien createAutocompleteCriteria(String text, String property) {
+	public static Suchkriterien createAutocompleteCriteria(String text, String property) {
 		Suchkriterien criteria = new Suchkriterien();
 		criteria.addFilter(property, text);
 		criteria.addSortierung(property, true);
