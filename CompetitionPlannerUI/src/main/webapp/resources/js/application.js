@@ -11,14 +11,14 @@ function navItemSelected() {
 function hideHelp() {
 	PF("layout").hide("east");
 }
-function toggleHelp() {
-	var layout = PF("layout");
-	if (layout.layout.east.state.isVisible)
-		layout.hide("east");
+function toggleHelp(show) {
+	var helpUI = $("#helpUI");
+	if (show === false)
+		helpUI.animate({ "left": "100%" }, 200);
 	else
-		layout.show("east");
+		helpUI.animate({ "left": "40%" }, 200);
 }
-function sendLogin(msgError) {
+function sendLogin() {
 	var dlg = PF("loginDlg");
 	var req = createXMLHttpRequest();
 	req.open("POST", "j_security_check");
@@ -33,7 +33,7 @@ function sendLogin(msgError) {
 				//	PrimeFaces.ajax.AjaxRequest(dlg.cfg, ext);
 				refresh();							
 			} else {
-				message(msgError);
+				message("{msg:loginError}");
 			}
 		}
 	}
@@ -79,12 +79,16 @@ function registrationEdit_enableButtons() {
 	var racesTable = PF("racesTable");
 	var athletesTable = PF("athletesTable");
 	var registrationTable = PF("registrationTable");
-	if ((athletesTable && athletesTable.getSelectedRowsCount() > 0) &&
-			((racesTable && racesTable.getSelectedRowsCount() > 0)
-				|| (registrationTable && registrationTable.getSelectedRowsCount() > 0)))
-		PF("btnAdd").enable();
+	var registrationSelected = registrationTable && registrationTable.getSelectedRowsCount() > 0;
+	if (athletesTable && athletesTable.getSelectedRowsCount() > 0 &&
+			(racesTable && racesTable.getSelectedRowsCount() > 0 || registrationSelected))
+		PF("btnAddAthlete").enable();
 	else
-		PF("btnAdd").disable();
+		PF("btnAddAthlete").disable();
+	if (registrationSelected)
+		PF("btnAddRequest").enable();
+	else
+		PF("btnAddRequest").disable();
 }
 function toggleColumn(table, index) {
 	var columnHeader = table.thead.children("tr").find("th:nth-child(" + index + ")");
@@ -96,57 +100,11 @@ function initEmptyBirthDate() {
 	if (birthDate.getDate() == null)
 		birthDate.setDate(new Date(new Date().getFullYear() - 15, 0, 1, 12));
 }
-function initTableDND(sourceTable, targetTable) {
-	sourceTable.draggable({
-		helper: "clone",
-		scope: "treetotable",
-		zIndex: ++PrimeFaces.zindex
-	});
-	targetTable.droppable({
-		activeClass: "ui-state-active",
-		hoverClass: "ui-state-highlight",
-		tolerance: "pointer",
-		scope: "treetotable",
-		drop: function(event, ui) {
-			var property = ui.draggable.find('td').text(),
-				droppedColumnId = $(this).parents('th:first').attr('id'),
-				dropPos = $(this).hasClass('dropleft') ? 0 : 1;
-
-			treeToTable([
-				{name: 'property', value:  property}
-				,{name: 'droppedColumnId', value: droppedColumnId}
-				,{name: 'dropPos', value: dropPos}
-			]);
-		}
-	});
-
-	$('.ui-datatable th').draggable({
-		scope: 'tabletotree',
-		helper: function() {
-			var th = $(this);
-
-			return th.clone().appendTo(document.body).css('width', th.width());
-		}
-	});
-
-	$('.ui-tree').droppable({
-		helper: 'clone',
-		scope: 'tabletotree',
-		activeClass: 'ui-state-active',
-		hoverClass: 'ui-state-highlight',
-		tolerance: 'touch',
-		drop: function(event, ui) {                               
-			tableToTree([
-				{name: 'colIndex', value:  ui.draggable.index()}
-			]);
-		}
-	});
-}
-function setupAjax(loginTitle) {
+function setupAjax() {
 	$.ajaxSetup({
 		dataFilter: function(data) {
 			$(document).off("keydown");
-			if (data.indexOf(loginTitle) != -1) {
+			if (data.indexOf("{msg:loginTitle}") != -1) {
 				PrimeFaces.debug("Detected unauthenticated request");
 				var dlg = PF("loginDlg");
 				dlg.jq.find("input[type=text]").val("");
