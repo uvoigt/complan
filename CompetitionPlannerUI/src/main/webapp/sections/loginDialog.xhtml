@@ -9,9 +9,9 @@
 	<ui:composition>
 		<h:outputScript>
 			function login() {
-				sendLogin("#{messages.loginError}");
+				sendLogin();
 			}
-			setupAjax("#{messages.loginTitle}");
+			setupAjax();
 		</h:outputScript>
 		<p:dialog widgetVar="loginDlg" id="loginDialog" header="#{messages.loginTitle}" showEffect="clip" hideEffect="clip"
 				responsive="true" draggable="false" modal="true" closable="false" resizable="false" appendTo="body"
