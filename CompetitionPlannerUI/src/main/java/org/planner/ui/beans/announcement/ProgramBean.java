@@ -113,7 +113,7 @@ public class ProgramBean extends AbstractEditBean {
 	}
 
 	public String getAgeGroup(User user) {
-		if (user.getAgeType().ordinal() >= AgeType.junioren.ordinal())
+		if (user == null || user.getAgeType().ordinal() >= AgeType.junioren.ordinal())
 			return null;
 		return new StringBuilder().append("(").append(user.getAge()).append(")").toString();
 	}
