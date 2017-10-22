@@ -2,15 +2,16 @@ package org.planner.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 /**
- * Suchkriterien für die Suche von Entitäten. Es werden Attribute für das
- * Blättern (Paging) des Resultats, Sortierung, Projektion (select-clause) und
- * Selektion (where-clause) angeboten.
+ * Suchkriterien für die Suche von Entitäten. Es werden Attribute für das Blättern (Paging) des Resultats, Sortierung,
+ * Projektion (select-clause) und Selektion (where-clause) angeboten.
  * 
  * @author Uwe Voigt - IBM
  */
@@ -66,13 +67,8 @@ public class Suchkriterien implements Serializable {
 			eq, ne
 		}
 
-		public enum Conditional {
-			or, and
-		}
-
 		private static final long serialVersionUID = 1L;
 
-		private Conditional conditionalOp = Conditional.and;
 		private Comparison comparisonOp = Comparison.eq;
 		private String name;
 		private Object value;
@@ -82,8 +78,7 @@ public class Suchkriterien implements Serializable {
 			this.value = value;
 		}
 
-		public Filter(Conditional conditional, Comparison comparison, String name, Object value) {
-			this.conditionalOp = conditional;
+		public Filter(Comparison comparison, String name, Object value) {
 			this.comparisonOp = comparison;
 			this.name = name;
 			this.value = value;
@@ -91,10 +86,6 @@ public class Suchkriterien implements Serializable {
 
 		public Comparison getComparisonOperator() {
 			return comparisonOp;
-		}
-
-		public Conditional getConditionalOperator() {
-			return conditionalOp;
 		}
 
 		public String getName() {
@@ -119,7 +110,7 @@ public class Suchkriterien implements Serializable {
 
 	private int zeilenOffset;
 	private int zeilenAnzahl;
-	private List<Filter> filter;
+	private Map<String, Filter> filter;
 	private boolean ignoreCase = true;
 	private boolean exact;
 	private List<SortField> sortierung;
@@ -141,14 +132,14 @@ public class Suchkriterien implements Serializable {
 		this.zeilenAnzahl = zeilenAnzahl;
 	}
 
-	public List<Filter> getFilter() {
+	public Map<String, Filter> getFilter() {
 		return filter;
 	}
 
 	public void addFilter(Filter filter) {
 		if (this.filter == null)
-			this.filter = new ArrayList<>();
-		this.filter.add(filter);
+			this.filter = new HashMap<>();
+		this.filter.put(filter.getName(), filter);
 	}
 
 	public void addFilter(String name, Object value) {
