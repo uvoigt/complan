@@ -1,5 +1,6 @@
 package org.planner.remote;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -7,7 +8,6 @@ import javax.ejb.Remote;
 
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEnum;
-import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
@@ -18,6 +18,8 @@ import org.planner.eo.Registration;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.IResultProvider;
+import org.planner.model.Suchergebnis;
+import org.planner.model.Suchkriterien;
 
 @Remote
 public interface ServiceFacade extends IResultProvider {
@@ -31,13 +33,6 @@ public interface ServiceFacade extends IResultProvider {
 	void delete(Class<? extends AbstractEntity> entityType, Long id);
 
 	void deleteRaces(Long announcementId, List<Long> raceIds);
-
-	// int speichernMitFilter(DatenSuchkriterien kriterien, Map<String, String>
-	// werte);
-	// int loeschen(Class<? extends AbstractEO> entityType, DatenSuchkriterien
-	// kriterien);
-	//
-	// int kopieren(Class<AbstractEO> entityType, DatenSuchkriterien kriterien);
 
 	String sendRegister(String email, String resetUrl);
 
@@ -65,8 +60,6 @@ public interface ServiceFacade extends IResultProvider {
 
 	Club saveClub(Club club);
 
-	Address saveAddress(Address address);
-
 	Role saveRole(Role role);
 
 	Announcement saveAnnouncement(Announcement announcement);
@@ -86,7 +79,7 @@ public interface ServiceFacade extends IResultProvider {
 
 	void announce(Long announcementId);
 
-	List<User> getAthletes();
+	<T extends Serializable> Suchergebnis<T> getAthletes(Suchkriterien criteria);
 
 	void saveRegEntries(Long registrationId, List<RegEntry> entries);
 
