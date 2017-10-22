@@ -1,7 +1,11 @@
 package org.planner.ui.beans.announcement;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -17,25 +21,33 @@ import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.User;
+import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
+import org.planner.model.IResultProvider;
+import org.planner.model.Suchergebnis;
+import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.AbstractEditBean;
+import org.planner.ui.beans.ColumnHandler;
+import org.planner.ui.beans.ColumnHandler.Column;
 import org.planner.ui.beans.Messages;
+import org.planner.ui.beans.RemoteDataModel;
+import org.planner.ui.beans.SearchBean.ColumnModel;
 import org.planner.ui.util.JsfUtil;
 
 @Named
 @RequestScoped
-public class RegistrationBean extends AbstractEditBean {
+public class RegistrationBean extends AbstractEditBean implements IResultProvider {
 
 	private static final long serialVersionUID = 1L;
 
 	@Inject
-	private Messages messages;
+	private ColumnHandler columnHandler;
 
 	private Registration registration;
 
 	private List<Race> races;
 
-	private List<User> athletes;
+	private RemoteDataModel<? extends Serializable> athletes;
 
 	private List<Race> selectedRaces;
 
@@ -67,7 +79,8 @@ public class RegistrationBean extends AbstractEditBean {
 
 	private void loadRegistration(Long id) {
 		// TODO auch hier... über einen search-view-parameter die detailtiefe festlegen
-		registration = service.getObject(Registration.class, id, 2);
+		// 4 aufgrund der Anzeige des Vereins bei manchen Sportlern, ansonsten reicht 2
+		registration = service.getObject(Registration.class, id, 4);
 	}
 
 	public Registration getRegistration() {
@@ -166,6 +179,17 @@ public class RegistrationBean extends AbstractEditBean {
 		entry.setParticipants(participants);
 	}
 
+	public void addRequest(Messages bundle) {
+		if (selectedEntry != null) {
+			List<RegEntry> entries = new ArrayList<>(1);
+			entries.add(selectedEntry);
+			Participant request = new Participant();
+			request.setRemark(bundle.get("requestMsg"));
+			selectedEntry.setParticipants(Arrays.asList(request));
+			service.saveRegEntries(registration.getId(), entries);
+		}
+	}
+
 	public void deleteFromRegistration(RegEntry entry) {
 		service.deleteFromRegEntry(registration.getId(), entry);
 		showEffect = true;
@@ -180,16 +204,26 @@ public class RegistrationBean extends AbstractEditBean {
 		return races;
 	}
 
-	public List<User> getAthletes() {
-		if (athletes == null)
-			athletes = service.getAthletes();
+	public RemoteDataModel<? extends Serializable> getAthletes() {
+		if (athletes == null) {
+
+			List<ColumnModel> columns = new ArrayList<>();
+			Column[] userColumns = columnHandler.getColumns(User.class);
+
+			columns.add(new ColumnModel(null, userColumns[8].getName(), clubVisible));
+			columns.add(new ColumnModel(null, userColumns[1].getName(), true));
+			columns.add(new ColumnModel(null, userColumns[2].getName(), true));
+			columns.add(new ColumnModel(null, userColumns[4].getName(), true));
+			columns.add(new ColumnModel(null, userColumns[5].getName(), true));
+			athletes = new RemoteDataModel<>(this, User.class, columns, null);
+		}
 		return athletes;
 	}
 
-	public String getRaceString(RegEntry entry) {
+	public String getRaceString(RegEntry entry, Messages bundle) {
 		Race race = entry.getRace();
 		StringBuilder sb = new StringBuilder();
-		sb.append(messages.get("registrations.raceNo"));
+		sb.append(bundle.get("raceNo"));
 		sb.append(" ");
 		sb.append(race.getNumber());
 		sb.append(" - ");
@@ -209,7 +243,7 @@ public class RegistrationBean extends AbstractEditBean {
 				AbstractEntity_.id.getName());
 		service.submitRegistration(registrationId);
 		FacesContext.getCurrentInstance().addMessage(null,
-				new FacesMessage(null, messages.get("registrations.statusSet")));
+				new FacesMessage(null, JsfUtil.getScopedBundle().get("registrations.statusSet")));
 	}
 
 	public boolean isClubVisible() {
@@ -226,13 +260,32 @@ public class RegistrationBean extends AbstractEditBean {
 
 	public void toggleClubVisible() {
 		clubVisible = !clubVisible;
+		athletes = null;
 	}
 
-	public String renderClubName(String name) {
-		return name.replace(" ", "&nbsp;");
+	public Object renderClubName(Map<String, Object> user) {
+		Object shortName = user.get("club.shortName");
+		if (shortName != null)
+			return shortName;
+		return user.get("club.name");
+	}
+
+	public String renderAgeType(Map<String, Object> user) {
+		AgeType ageType = User.getAgeType((Date) user.get("birthDate"));
+		return ageType != null ? ageType.getText() : null;
 	}
 
 	@Override
 	protected void doSave() {
+	}
+
+	@Override
+	public <T extends Serializable> Suchergebnis<T> search(Class<T> entityType, Suchkriterien criteria) {
+		return service.getAthletes(criteria);
+	}
+
+	@Override
+	public <T extends Serializable> T getObject(Class<T> type, long id, int fetchDepth) {
+		return service.getObject(type, id, fetchDepth);
 	}
 }
