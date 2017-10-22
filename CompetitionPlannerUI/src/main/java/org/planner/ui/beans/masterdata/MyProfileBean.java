@@ -4,6 +4,7 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 
+import org.planner.eo.Address;
 import org.planner.eo.Club;
 import org.planner.eo.User;
 import org.planner.ui.beans.AbstractEditBean;
@@ -30,8 +31,11 @@ public class MyProfileBean extends AbstractEditBean {
 	}
 
 	public Club getNewClub() {
-		if (newClub == null)
+		if (newClub == null) {
 			newClub = new Club();
+			// damit besteht überhaupt erst die Chance, diese einzugeben
+			newClub.setAddress(new Address());
+		}
 		return newClub;
 	}
 
