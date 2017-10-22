@@ -16,6 +16,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.Entity;
 
 import org.planner.eo.AbstractEntity;
 import org.planner.util.LogUtil.TechnischeException;
@@ -129,7 +130,7 @@ public class ColumnHandler {
 			if (field.getGenericType() instanceof ParameterizedType)
 				propertyType = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
 			getColumnsForType(propertyType, propertyName, result, level + 1, visible);
-			if (!AbstractEntity.class.isAssignableFrom(propertyType)) {
+			if (propertyType.getAnnotation(Entity.class) == null) {
 				result.add(new Column(propertyName, visibility != null ? visibility : visible));
 			}
 		}
