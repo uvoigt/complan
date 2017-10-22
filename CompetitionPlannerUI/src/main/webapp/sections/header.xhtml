@@ -9,11 +9,9 @@
 <body>
 	<ui:composition>
 		<ui:param name="bundle" value="#{messages.bundle('header')}"/>
-		<div id="heading">
-			<div style="width: 16px;height: 16px;" id="menuButton" onclick="$('#leftMenuContainer').toggle('slide')"
-					onmouseover="$(this).addClass('ui-state-hover')" onmouseout="$(this).removeClass('ui-state-hover')">
-				<div>―</div><div>―</div><div>―</div>
-			</div>
+		<h:panelGroup layout="block" id="heading">
+			<div id="menuButton" onclick="$('#leftMenuContainer').toggle('slide')"
+					onmouseover="$(this).addClass('ui-state-hover')" onmouseout="$(this).removeClass('ui-state-hover')"><div>―</div><div>―</div><div>―</div></div>
 			<h:panelGroup id="title" layout="block">
 				<h:form>
 					<p:commandLink action="#{startseiteBean.setMainContent('/sections/start.xhtml')}"
@@ -47,7 +45,7 @@
 					</p:overlayPanel>
 				</h:panelGroup>
 			</div>
-		</div>
+		</h:panelGroup>
 	</ui:composition>
 </body>
 </html>
