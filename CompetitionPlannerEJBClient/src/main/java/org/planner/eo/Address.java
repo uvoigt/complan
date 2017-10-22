@@ -1,23 +1,35 @@
 package org.planner.eo;
 
+import java.io.Serializable;
+
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.Version;
 
 import org.planner.util.Visible;
 
 @Entity
 @Access(AccessType.FIELD)
-public class Address extends AbstractEntity {
+public class Address implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	@ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+	@Id
+	@GeneratedValue
+	private Long id;
+
+	@Version
+	private int version;
+
+	@ManyToOne(optional = false, cascade = CascadeType.ALL)
 	private Country country;
 
-	@ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+	@ManyToOne(optional = false, cascade = CascadeType.ALL)
 	@Visible
 	private City city;
 
@@ -28,10 +40,6 @@ public class Address extends AbstractEntity {
 	@Column(nullable = false)
 	@Visible(initial = false)
 	private String street;
-
-	@Column(nullable = false, length = 10)
-	@Visible(initial = false)
-	private String number;
 
 	private String addition;
 
@@ -67,14 +75,6 @@ public class Address extends AbstractEntity {
 
 	public void setStreet(String street) {
 		this.street = street;
-	}
-
-	public String getNumber() {
-		return number;
-	}
-
-	public void setNumber(String number) {
-		this.number = number;
 	}
 
 	public String getAddition() {
