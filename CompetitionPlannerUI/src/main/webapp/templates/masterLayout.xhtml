@@ -18,7 +18,7 @@
 </h:head>
 
 <h:body id="body">
-	<p:layout fullPage="true" widgetVar="layout" closeTitle="#{messages.labelClose}">
+	<p:layout fullPage="true" widgetVar="layout">
 		<pl:stateSaver id="stateSaver"/>
 		<p:layoutUnit position="north">
 			<ui:insert name="heading">
@@ -27,9 +27,6 @@
 		</p:layoutUnit>
 		<p:layoutUnit position="center">
 			<p:growl id="messagesPopup" showDetail="true" showSummary="false"/>
-			<h:form id="pollForm">
-				<p:poll interval="60" listener="#{startseiteBean.poll}" global="false" update=":messages" process="@this" rendered="false"/>
-			</h:form>
 			<ui:insert name="loginDialog">
 				<ui:include src="/sections/loginDialog.xhtml"/>
 			</ui:insert>
@@ -52,9 +49,7 @@
 						<p:messages id="messages" showDetail="true" autoUpdate="true" closable="true" showSummary="false"/>
 
 						<ui:include src="#{startseiteBean.mainContent}" />
-						<h:form>
-							<p:hotkey bind="f1" process="@none" update="help" oncomplete="toggleHelp()"/>
-						</h:form>
+
 					</h:panelGroup>
 					<h:form rendered="false">
 						<pe:ckEditor value="#{announcement.text}" widgetVar="annEditor" language="de"/>
@@ -62,12 +57,16 @@
 				</ui:insert>
 			</h:panelGroup>
 		</p:layoutUnit>
-		<p:layoutUnit position="east" visible="false" closable="true" header="#{messages.help}" resizable="true" size="30%">
-			<p:fieldset id="help">
-				<h:outputText value="#{startseiteBean.help}" escape="false"/>
-			</p:fieldset>
-		</p:layoutUnit>
-		<ui:debug rendered="#{facesContext.application.projectStage == 'Development'}"/>
 	</p:layout>
+	<h:panelGroup id="helpUI" layout="block" styleClass="help ui-widget ui-widget-content">
+		<h:panelGroup layout="block" styleClass="ui-layout-unit-header ui-widget-header ui-corner-all">
+			<h:panelGroup styleClass="ui-layout-unit-header-title"><h:outputText value="#{messages.help}"/></h:panelGroup>
+			<a href="#" class="ui-layout-unit-header-icon ui-state-default ui-corner-all" onclick="toggleHelp(false); return false;" title="#{messages.labelClose}"><span class="ui-icon ui-icon-close"></span></a>
+		</h:panelGroup>
+		<p:fieldset id="help">
+			<h:outputText value="#{startseiteBean.help}" escape="false"/>
+		</p:fieldset>
+	</h:panelGroup>
+	<ui:debug rendered="#{facesContext.application.projectStage == 'Development'}"/>
 </h:body>
 </html>
