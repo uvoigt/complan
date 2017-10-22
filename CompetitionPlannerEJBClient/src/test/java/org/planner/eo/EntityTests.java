@@ -3,6 +3,7 @@ package org.planner.eo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -23,11 +24,14 @@ public class EntityTests {
 	@BeforeClass
 	public static void create() {
 		Map<String, String> properties = new HashMap<>();
-		// properties.put("hibernate.default_schema", "tadeas_user");
 		properties.put("hibernate.connection.username", "sa");
 		properties.put("hibernate.connection.password", "sa");
-		properties.put("hibernate.connection.url", "jdbc:h2:tcp://localhost/plannerdb");
-		emf = Persistence.createEntityManagerFactory("PLANNER_TEST_PU", properties);
+		properties.put("hibernate.connection.url", "jdbc:h2:unittestdb");
+		try {
+			emf = Persistence.createEntityManagerFactory("PLANNER_TEST_PU", properties);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@AfterClass
@@ -57,7 +61,23 @@ public class EntityTests {
 	}
 
 	@Test
+	public void createUser() {
+		em.getTransaction().begin();
+		User user = new User();
+		user.setFirstName("Unit");
+		user.setLastName("Test");
+		String userId = UUID.randomUUID().toString().replace("-", "");
+		if (userId.length() > 32)
+			userId = userId.substring(0, 32);
+		user.setUserId(userId);
+		user.setClub(null);
+		em.persist(user);
+		em.getTransaction().commit();
+	}
+
+	@Test
 	public void testRegistration() {
+		System.out.println("EntityTests.testRegistration()");
 		// em.getTransaction().begin();
 
 		// Announcement announcement = em.find(Announcement.class, 2505L);
