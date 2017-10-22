@@ -2,8 +2,9 @@
 #heading {
 	overflow: hidden;
 }
-
 #menuButton {
+	width: 16px;
+	height: 16px;
 	margin: 0 10px 0 10px;
 	padding: 1px 4px 3px 2px;
 	float: left;
@@ -76,6 +77,14 @@
 	top: 50%;
 	height: 50%;
 	width: 100%;
+}
+
+.help {
+	height: 100%;
+	width: 60%;
+	left: 100%;
+	position: fixed;
+	overflow: auto;
 }
 
 @media only screen and (max-width: 700px) {
