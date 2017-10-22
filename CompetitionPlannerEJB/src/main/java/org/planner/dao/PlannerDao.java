@@ -92,14 +92,14 @@ public class PlannerDao {
 
 	@Transactional(TxType.SUPPORTS)
 	public <T extends Serializable> Suchergebnis<T> search(Class<?> entityType, Class<T> returningType,
-			Suchkriterien kriterien, Authorizer authorizer) {
-		return executePagingQuery(em, entityType, kriterien, returningType, authorizer);
+			Suchkriterien kriterien, QueryModifier queryModifier) {
+		return executePagingQuery(em, entityType, kriterien, returningType, queryModifier);
 	}
 
 	@Transactional(TxType.SUPPORTS)
 	public <T extends Serializable> Suchergebnis<T> search(Class<T> entityType, Suchkriterien kriterien,
-			Authorizer authorizer) {
-		return executePagingQuery(em, entityType, kriterien, entityType, authorizer);
+			QueryModifier queryModifier) {
+		return executePagingQuery(em, entityType, kriterien, entityType, queryModifier);
 	}
 
 	public void delete(AbstractEntity entity) {
@@ -237,12 +237,12 @@ public class PlannerDao {
 	 *            die Suchkriterien
 	 * @param returningType
 	 *            der Ergebnis-Typ als Inhalt der Liste im Suchergebnis
-	 * @param authorizer
-	 *            authorizer für Queries
+	 * @param queryModifier
+	 *            Modifier für Queries
 	 * @return das Ergebnis
 	 */
 	private <T extends Serializable> Suchergebnis<T> executePagingQuery(EntityManager em, Class<?> entityType,
-			Suchkriterien kriterien, Class<T> returningType, Authorizer authorizer) {
+			Suchkriterien kriterien, Class<T> returningType, QueryModifier queryModifier) {
 
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Paged query: entityType:" + entityType + "\nreturnType:" + returningType + "\n" + kriterien);
@@ -253,13 +253,13 @@ public class PlannerDao {
 		Root<?> countRoot = countQuery.from(entityType);
 		countQuery.select(builder.count(countRoot));
 
-		List<Filter> filters = kriterien.getFilter();
+		Map<String, Filter> filters = kriterien.getFilter();
 		Map<String, Object> modifiedFilterValues = filters != null ? new HashMap<String, Object>() : null;
 
 		buildWhereClause(filters, modifiedFilterValues, kriterien.isExact(), kriterien.isIgnoreCase(), builder,
-				countQuery, countRoot, null, authorizer);
+				countQuery, countRoot, null, queryModifier);
 		TypedQuery<Long> cQuery = em.createQuery(countQuery);
-		setParameters(cQuery, filters, modifiedFilterValues, kriterien.isIgnoreCase(), authorizer);
+		setParameters(cQuery, filters, modifiedFilterValues, kriterien.isIgnoreCase(), queryModifier);
 		// wir gehen mal davon aus, dass keine Treffer mit count >
 		// Integer.MAX_VALUE vorkommen werden :-/
 		int totalSize = cQuery.getSingleResult().intValue();
@@ -297,11 +297,11 @@ public class PlannerDao {
 		}
 		//
 		buildWhereClause(filters, modifiedFilterValues, kriterien.isExact(), kriterien.isIgnoreCase(), builder,
-				dataQuery, dataRoot, joined, authorizer);
+				dataQuery, dataRoot, joined, queryModifier);
 		buildOrderByClause(kriterien.getSortierung(), builder, dataQuery, dataRoot);
 
 		TypedQuery<T> query = em.createQuery(dataQuery);
-		setParameters(query, filters, modifiedFilterValues, kriterien.isIgnoreCase(), authorizer);
+		setParameters(query, filters, modifiedFilterValues, kriterien.isIgnoreCase(), queryModifier);
 		query.setMaxResults(kriterien.getZeilenAnzahl());
 		query.setFirstResult(kriterien.getZeilenOffset());
 
@@ -321,7 +321,7 @@ public class PlannerDao {
 			String first = property.substring(0, index);
 			String next = property.substring(index + 1);
 			if (path != null && !joined.contains(first)) {
-				path = path.join(first, JoinType.LEFT);
+				path = path.join(first, JoinType.LEFT); // fetch
 				joined.add(first);
 			} else if (path != null) {
 				for (Join<?, ?> join : path.getJoins()) {
@@ -336,13 +336,13 @@ public class PlannerDao {
 		return new SimpleEntry<From<?, ?>, String>(path, property);
 	}
 
-	private void buildWhereClause(List<Filter> filters, Map<String, Object> modifiedFilterValues, boolean exact,
+	private void buildWhereClause(Map<String, Filter> filters, Map<String, Object> modifiedFilterValues, boolean exact,
 			boolean ignoreCase, CriteriaBuilder builder, CriteriaQuery<?> query, Root<?> root, Set<String> joined,
-			Authorizer authorizer) {
+			QueryModifier queryModifier) {
 
 		List<Predicate> wherePredicates = null;
-		if (authorizer != null) {
-			Predicate predicate = authorizer.createPredicate(root, builder);
+		if (queryModifier != null) {
+			Predicate predicate = queryModifier.createPredicate(root, builder);
 			if (wherePredicates == null)
 				wherePredicates = new ArrayList<>();
 			wherePredicates.add(predicate);
@@ -350,7 +350,7 @@ public class PlannerDao {
 		if (filters != null) {
 			if (joined == null)
 				joined = new HashSet<>();
-			for (Filter filter : filters) {
+			for (Filter filter : filters.values()) {
 
 				From<?, ?> from = root;
 				String property = filter.getName();
@@ -410,10 +410,9 @@ public class PlannerDao {
 				predicate = builder.or(predicate, builder.isNull(columnExp));
 			modifiedFilterValues.put(filter.getName(), isTrue);
 		} else if (Date.class.equals(columnExp.getJavaType())) {
-//			predicate = builder.like( // TODO klappt sicherlich nicht mit mysql
-//					builder.function("formatdatetime", String.class, columnExp, builder.literal("dd.MM.YYY")),
-//					builder.parameter(String.class, property));
-			predicate = builder.like(columnExp.as(String.class), builder.parameter(String.class, property));
+			predicate = builder.like(
+					builder.function("date_format", String.class, columnExp, builder.literal("%d.%m.%Y")),
+					builder.parameter(String.class, property));
 			modifiedFilterValues.put(filter.getName(), "%" + filter.getValue() + "%");
 		} else if (columnExp.getJavaType().isEnum()) {
 			if (filter.getValue() instanceof Enum) {
@@ -526,19 +525,19 @@ public class PlannerDao {
 	 * 
 	 * @param query
 	 *            die JPA-Query
-	 * @param args
+	 * @param filters
 	 *            die Argumentliste
 	 * @param modifiedFilterValues
 	 *            ggf. modifizierte Filter
-	 * @param authorizer
-	 *            optionaler Authorizer
+	 * @param queryModifier
+	 *            optionaler QueryModifier
 	 */
-	private void setParameters(Query query, List<Filter> args, Map<String, Object> modifiedFilterValues,
-			boolean ignoreCase, Authorizer authorizer) {
-		if (authorizer != null)
-			authorizer.setParameters(query);
-		if (args != null) {
-			for (Filter filter : args) {
+	private void setParameters(Query query, Map<String, Filter> filters, Map<String, Object> modifiedFilterValues,
+			boolean ignoreCase, QueryModifier queryModifier) {
+		if (queryModifier != null)
+			queryModifier.setParameters(query);
+		if (filters != null) {
+			for (Filter filter : filters.values()) {
 				String property = filter.getName();
 				Object arg = modifiedFilterValues.containsKey(property) ? modifiedFilterValues.get(property)
 						: filter.getValue();

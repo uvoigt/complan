@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,11 +23,11 @@ import org.planner.dao.Authorizer.AnnouncementAuthorizer;
 import org.planner.dao.Authorizer.RegistrationAuthorizer;
 import org.planner.dao.Authorizer.UserAuthorizer;
 import org.planner.dao.PlannerDao;
+import org.planner.dao.QueryModifier;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEnum;
 import org.planner.eo.AbstractEnum_;
-import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
@@ -79,8 +80,8 @@ public class CommonImpl {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends Serializable> Suchergebnis<T> internalSearch(Class<T> entityType, Suchkriterien criteria,
-			Authorizer authorizer) {
+	<T extends Serializable> Suchergebnis<T> internalSearch(Class<T> entityType, Suchkriterien criteria,
+			QueryModifier queryModifier) {
 
 		List<String> properties = criteria.getProperties();
 		if (properties != null) {
@@ -102,7 +103,7 @@ public class CommonImpl {
 				criteria.setProperties(properties);
 			}
 
-			Suchergebnis<Object[]> data = dao.search(entityType, Object[].class, criteria, authorizer);
+			Suchergebnis<Object[]> data = dao.search(entityType, Object[].class, criteria, queryModifier);
 			List<Object[]> list = data.getListe();
 			List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>(list.size());
 			Class<?> metaType = loadMetaType(entityType);
@@ -133,7 +134,7 @@ public class CommonImpl {
 			}
 			return (Suchergebnis<T>) new Suchergebnis<HashMap<String, Object>>(result, data.getGesamtgroesse());
 		} else {
-			return dao.search(entityType, criteria, authorizer);
+			return dao.search(entityType, criteria, queryModifier);
 		}
 	}
 
@@ -192,6 +193,9 @@ public class CommonImpl {
 					member.getId();
 					if (depth > 0)
 						fetch(member, depth - 1);
+				} else if (value instanceof AbstractEnum) {
+					AbstractEnum anEnum = (AbstractEnum) value;
+					anEnum.getName();
 				}
 			}
 		} catch (Exception e) {
@@ -248,6 +252,11 @@ public class CommonImpl {
 
 	public <T extends AbstractEntity> T save(T entity) {
 		return dao.save(entity, caller.getLoginName());
+	}
+
+	public void createEnum(AbstractEnum anEnum) {
+		anEnum.setCreateUser(caller.getLoginName());
+		anEnum.setCreateTime(new Date());
 	}
 
 	public void dataImport(List<AbstractEntity> entities, ImportPreprozessor preprozessor) {
@@ -313,17 +322,11 @@ public class CommonImpl {
 	@SuppressWarnings("unused")
 	private void checkWriteAccess(Club club, Operation operation, User callingUser) {
 		// Spezialfall für den neuen User
-		// TODO was ist mit der Rolle "Sportwart"?
-		if (/* !caller.isInRole("Sportwart") && */callingUser.getFirstName().length() > 0
-				&& callingUser.getLastName().length() > 0) {
-			if (club.getId() == null || !club.getId().equals(callingUser.getClub().getId()))
-				throwAccessException(club, operation);
-		}
-	}
-
-	@SuppressWarnings("unused")
-	private void checkWriteAccess(Address address, Operation operation, User callingUser) {
-		// keine Möglichkeit, das zu prüfen
+		boolean isNewUser = callingUser.getFirstName().length() == 0 && callingUser.getLastName().length() == 0;
+		if (isNewUser && caller.isInRole("Sportwart"))
+			return;
+		if (club.getId() == null || !club.getId().equals(callingUser.getClub().getId()))
+			throwAccessException(club, operation);
 	}
 
 	@SuppressWarnings("unused")
@@ -436,20 +439,4 @@ public class CommonImpl {
 		dao.speichernBenutzerEinstellungen(properties, angemeldeterBenutzter);
 		return leseBenutzerEinstellungen(angemeldeterBenutzter);
 	}
-
-	// public int speichernMitFilter(DatenSuchkriterien kriterien, Map<String,
-	// String> werte, String angemeldeterBenutzter) {
-	// return 0;//adminDZO.updateXml(kriterien, werte, angemeldeterBenutzter);
-	// }
-	//
-	// public int loeschenMitFilter(Class<? extends AbstractEO> entityType,
-	// DatenSuchkriterien kriterien) {
-	// return 0;//adminDZO.loeschenMitFilter(entityType, kriterien);
-	// }
-	//
-	// public int kopierenMitFilter(Class<AbstractEO> entityType,
-	// DatenSuchkriterien kriterien, String angemeldeterBenutzter) {
-	// return 0;//adminDZO.kopierenMitFilter(entityType, kriterien,
-	// angemeldeterBenutzter);
-	// }
 }
