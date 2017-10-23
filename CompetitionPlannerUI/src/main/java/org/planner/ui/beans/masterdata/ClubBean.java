@@ -4,8 +4,10 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 
+import org.planner.eo.Address;
 import org.planner.eo.Club;
 import org.planner.ui.beans.AbstractEditBean;
+import org.planner.ui.util.JsfUtil;
 
 @Named
 @RequestScoped
@@ -18,10 +20,16 @@ public class ClubBean extends AbstractEditBean {
 	@PostConstruct
 	public void init() {
 		Long id = getIdFromRequestParameters();
-		if (id != null)
+		if (id == null)
+			id = (Long) JsfUtil.getViewVariable("id");
+		if (id != null) {
 			club = service.getObject(Club.class, id, 1);
-		else
+			JsfUtil.setViewVariable("id", club.getId());
+		} else {
 			club = new Club();
+		}
+		if (club.getAddress() == null)
+			club.setAddress(new Address());
 	}
 
 	@Override

@@ -16,9 +16,6 @@
 
 		<ui:define name="editArea">
 
-			<h:inputHidden value="#{user.id}"/>
-			<h:inputHidden value="#{user.version}"/>
-
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.userId}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
@@ -66,7 +63,7 @@
 						disabled="#{(user.id == null or empty user.email) and facesContext.currentPhaseId.name == 'RENDER_RESPONSE'}"/>
 				</div>
 			</div>
-		<c:if test="#{roleBean.inRole('Admin') and user.id != null}">
+		<c:if test="#{authBean.inRole('Admin') and user.id != null}">
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.locked}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
@@ -78,7 +75,7 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.club}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<c:choose>
-						<c:when test="#{roleBean.inRole('Admin')}">
+						<c:when test="#{authBean.inRole('Admin')}">
 							<p:selectOneMenu value="#{userBean.clubId}" validator="#{userBean.validateClub(component)}"
 									validatorMessage="#{bundle.format('fieldValidation', bundle.club)}">
 								<f:selectItems value="#{userBean.clubs}" var="club" itemValue="#{club.id}" itemLabel="#{club.name}"/>
