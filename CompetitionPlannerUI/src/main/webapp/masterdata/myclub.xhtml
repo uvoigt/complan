@@ -14,7 +14,7 @@
 		<ui:param name="club" value="#{myClubBean.club}"/>
 
 		<ui:define name="editArea">
-			<ui:param name="canSave" value="#{roleBean.inRole('Admin', 'Sportwart')}"/>
+			<ui:param name="canSave" value="#{authBean.inRole('Admin', 'Sportwart')}"/>
 
 			<ui:include src="clubArea.xhtml"/>
 

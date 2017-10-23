@@ -12,7 +12,7 @@
 		<ui:param name="typ" value="org.planner.eo.Announcement"/>
 		<ui:param name="bearbeitenLink" value="/announcement/announcementEdit.xhtml"/>
 		<ui:param name="editBean" value="#{announcementBean}"/>
-		<ui:param name="renderCrudButtons" value="#{roleBean.inRole('Sportwart')}"/>
+		<ui:param name="renderCrudButtons" value="#{authBean.inRole('Sportwart')}"/>
 		<ui:param name="renderImportPanel" value="false"/>
 
 		<ui:define name="addRowButtons">
@@ -20,7 +20,7 @@
 					action="#{searchBean.bearbeiten('/announcement/racesEdit.xhtml', item.id, racesEditBean)}"
 					process="@this"
 					update=":mainContent"
-					rendered="#{roleBean.inRole('Sportwart')}"/>
+					rendered="#{authBean.inRole('Sportwart')}"/>
 			<p:commandButton id="pdfButton" icon="ui-icon-print" title="#{bundle.createPdf}"
 					action="#{announcementBean.createPdf(item)}" ajax="false"
 					process="@this"/>
