@@ -11,7 +11,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.commons.lang.StringUtils;
-import org.planner.eo.Address;
 import org.planner.eo.City;
 import org.planner.eo.City_;
 import org.planner.eo.Country;
@@ -28,8 +27,6 @@ public class AddressBean implements Serializable {
 	@Inject
 	private ServiceFacade service;
 
-	private Address address = new Address();
-
 	// es ist einfacher, die komplexe Handhabung von JSF hier zu steuern als im
 	// EO
 	private Country country;
@@ -41,10 +38,6 @@ public class AddressBean implements Serializable {
 	private UIInput uiCity;
 	private UIInput uiPostCode;
 	private UIInput uiStreet;
-
-	public Address getAddress() {
-		return address;
-	}
 
 	public Country getCountry() {
 		return country;
