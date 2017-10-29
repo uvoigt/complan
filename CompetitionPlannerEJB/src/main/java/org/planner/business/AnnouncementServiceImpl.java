@@ -142,8 +142,7 @@ public class AnnouncementServiceImpl {
 			announcement.setClub(common.getCallingUser().getClub());
 		}
 		Category category = announcement.getCategory();
-		if (category.getId() == null)
-			common.createEnum(category);
+		common.handleEnum(category);
 		// Location announcer = announcement.getAnnouncer();
 		// if (announcer.getClub() != null)
 		// announcer.setAddress(null);

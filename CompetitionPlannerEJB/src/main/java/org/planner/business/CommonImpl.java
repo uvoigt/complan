@@ -254,9 +254,12 @@ public class CommonImpl {
 		return dao.save(entity, caller.getLoginName());
 	}
 
-	public void createEnum(AbstractEnum anEnum) {
-		anEnum.setCreateUser(caller.getLoginName());
-		anEnum.setCreateTime(new Date());
+	public void handleEnum(AbstractEnum anEnum) {
+		if (anEnum != null && anEnum.getId() == null) {
+			anEnum.setCreateUser(caller.getLoginName());
+			anEnum.setCreateTime(new Date());
+			dao.saveEnum(anEnum, caller.getLoginName());
+		}
 	}
 
 	public void dataImport(List<AbstractEntity> entities, ImportPreprozessor preprozessor) {

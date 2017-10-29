@@ -12,10 +12,8 @@ import org.planner.dao.PlannerDao;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.Address;
-import org.planner.eo.City;
 import org.planner.eo.Club;
 import org.planner.eo.Club_;
-import org.planner.eo.Country;
 import org.planner.eo.Role;
 import org.planner.eo.Role_;
 import org.planner.eo.User;
@@ -102,12 +100,8 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		if (address.getCountry() == null || address.getCity() == null || address.getPostCode() == null
 				|| address.getStreet() == null)
 			return null;
-		Country country = address.getCountry();
-		if (country.getId() == null)
-			common.createEnum(country);
-		City city = address.getCity();
-		if (city.getId() == null)
-			common.createEnum(city);
+		common.handleEnum(address.getCountry());
+		common.handleEnum(address.getCity());
 		return address;
 	}
 
