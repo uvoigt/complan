@@ -2,7 +2,6 @@ package org.planner.eo;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
@@ -15,7 +14,7 @@ public class Location extends AbstractEntity {
 	@ManyToOne
 	private Address address = new Address();
 
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
 	private Club club;
 
 	public Address getAddress() {
