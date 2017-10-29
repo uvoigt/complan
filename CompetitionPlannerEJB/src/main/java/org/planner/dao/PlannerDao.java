@@ -46,6 +46,7 @@ import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang.StringUtils;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEntity_;
+import org.planner.eo.AbstractEnum;
 import org.planner.eo.Properties;
 import org.planner.eo.Properties_;
 import org.planner.eo.User;
@@ -167,6 +168,15 @@ public class PlannerDao {
 			entity.setUpdateUser(loggedInUser);
 			entity.setUpdateTime(new Date());
 			em.merge(entity);
+		}
+		return entity;
+	}
+
+	public <T extends AbstractEnum> T saveEnum(T entity, String loggedInUser) {
+		if (entity.getId() == null) {
+			entity.setCreateUser(loggedInUser);
+			entity.setCreateTime(new Date());
+			em.persist(entity);
 		}
 		return entity;
 	}
