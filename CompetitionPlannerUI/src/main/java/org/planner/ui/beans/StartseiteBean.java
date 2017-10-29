@@ -81,6 +81,10 @@ public class StartseiteBean implements Serializable {
 		JsfUtil.setViewVariable("id", id);
 		urlParameters.setMainContent(mainContent);
 		urlParameters.setId(id);
+
+		if (Boolean.TRUE.equals(JsfUtil.getViewVariable("helpVisible")))
+			FacesContext.getCurrentInstance().getPartialViewContext().getRenderIds().add("help");
+
 		RequestContext.getCurrentInstance().execute("setUrlParam('" + urlParameters.getEncoded() + "')");
 	}
 
@@ -90,6 +94,10 @@ public class StartseiteBean implements Serializable {
 		JsfUtil.setViewVariable("rows", null);
 		JsfUtil.setViewVariable("filters", null);
 		JsfUtil.setViewVariable("sortState", null);
+	}
+
+	public void setHelpVisible(boolean visible) {
+		JsfUtil.setViewVariable("helpVisible", visible);
 	}
 
 	public String leseBenutzerNamen(String userId) {
