@@ -65,13 +65,8 @@
 							<f:selectItem itemValue="address" itemLabel="#{bundle.address}"/>
 						</p:selectOneRadio>
 						<p:inplace widgetVar="locationEdit">
-							<f:facet name="output">
-								<h:outputLabel />
-							</f:facet>
-							<f:facet name="input">
-								<ui:param name="address" value="#{announcement.location.address}"/>
-								<ui:include src="/masterdata/addressArea.xhtml"/>
-							</f:facet>
+							<ui:param name="address" value="#{announcement.location.address}"/>
+							<ui:include src="/masterdata/addressArea.xhtml"/>
 						</p:inplace>
 					</h:panelGroup>
 				</div>
