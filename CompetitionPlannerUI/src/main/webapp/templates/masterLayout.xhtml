@@ -61,7 +61,13 @@
 	<h:panelGroup id="helpUI" layout="block" styleClass="help ui-widget ui-widget-content">
 		<h:panelGroup layout="block" styleClass="ui-layout-unit-header ui-widget-header ui-corner-all">
 			<h:panelGroup styleClass="ui-layout-unit-header-title"><h:outputText value="#{messages.help}"/></h:panelGroup>
-			<a href="#" class="ui-layout-unit-header-icon ui-state-default ui-corner-all" onclick="toggleHelp(false); return false;" title="#{messages.labelClose}"><span class="ui-icon ui-icon-close"></span></a>
+			<h:form style="float: right">
+				<p:commandLink action="#{startseiteBean.setHelpVisible(false)}"
+						oncomplete="toggleHelp(false)" title="#{messages.labelClose}"
+						styleClass="ui-layout-unit-header-icon ui-state-default ui-corner-all">
+					<span class="ui-icon ui-icon-close"></span>
+				</p:commandLink>
+			</h:form>
 		</h:panelGroup>
 		<p:fieldset id="help">
 			<h:outputText value="#{startseiteBean.help}" escape="false"/>

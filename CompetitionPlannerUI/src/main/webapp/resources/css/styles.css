@@ -81,7 +81,7 @@
 
 .help {
 	height: 100%;
-	width: 60%;
+	width: 70%;
 	left: 100%;
 	position: fixed;
 	overflow: auto;
@@ -107,6 +107,9 @@
 	}
 	#userimg {
 		/* margin-right: 30%; */
+	}
+	.help {
+		width: 100%;
 	}
 /* 	input {
 	haut nicht hin beim spinner!

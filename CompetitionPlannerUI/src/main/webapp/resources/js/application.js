@@ -13,10 +13,12 @@ function hideHelp() {
 }
 function toggleHelp(show) {
 	var helpUI = $("#helpUI");
-	if (show === false)
+	if (show === false) {
 		helpUI.animate({ "left": "100%" }, 200);
-	else
-		helpUI.animate({ "left": "40%" }, 200);
+	} else {
+		var isSmallScreen = helpUI.width() == $(document).width(); 
+		helpUI.animate({ "left": isSmallScreen ? "0" : "30%" }, 200);
+	}
 }
 function sendLogin() {
 	var dlg = PF("loginDlg");

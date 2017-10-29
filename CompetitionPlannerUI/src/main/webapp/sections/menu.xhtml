@@ -69,6 +69,7 @@
 							onclick="selectSidebarLink(this)"
 							oncomplete="navItemSelected()"/>
 					<p:menuitem value="#{bundle.help}"
+							action="#{startseiteBean.setHelpVisible(true)}"
 							process="@this"
 							update="help"
 							oncomplete="toggleHelp()"/>
