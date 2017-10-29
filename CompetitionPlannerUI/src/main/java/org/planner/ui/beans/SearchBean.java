@@ -272,12 +272,16 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		targetBean.setItem(item);
 	}
 
-	public void bearbeiten(String link, String typ, ITarget targetBean) throws Exception {
+	public void bearbeiten(String link, String typ, Object selectedItem, ITarget targetBean) throws Exception {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selectedItem, "id");
 		AbstractEntity item = service.getObject(loadTyp(typ, AbstractEntity.class), id, 1);
 		targetBean.setItem(item);
 		startseiteBean.setMainContent(link, id);
+	}
+
+	public void bearbeiten(String link, String typ, ITarget targetBean) throws Exception {
+		bearbeiten(link, typ, selectedItem, targetBean);
 	}
 
 	public void bearbeiten(String link, Long selectedItemId, ITarget targetBean) throws Exception {

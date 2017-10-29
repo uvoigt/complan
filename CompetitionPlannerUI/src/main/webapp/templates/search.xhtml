@@ -121,6 +121,13 @@
 					</p:columnToggler>
 				</f:facet>
 
+				<p:commandButton id="bearbeitenButton" icon="ui-icon-pencil" title="#{bundle.modify}"
+						action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
+						process="@form"
+						update=":mainContent"
+						styleClass="editButton"
+						rendered="#{renderCrudButtonsValue}"/>
+
 				<ui:insert name="addRowButtons"/>
 
 				<p:commandButton icon="ui-icon-copy" title="#{bundle.copy}"
