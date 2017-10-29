@@ -60,7 +60,7 @@ public class RegistryServlet extends HttpServlet {
 		if (user != null) {
 			request.getRequestDispatcher("/WEB-INF/jsp/passwordchange.jsp").forward(request, response);
 		} else {
-			request.getRequestDispatcher("/WEB-INF/jsp/error.jsp").forward(request, response);
+			request.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(request, response);
 		}
 	}
 
