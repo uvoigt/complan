@@ -21,7 +21,8 @@ public class Race extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;
 
-	private int number;
+	@Column(nullable = false)
+	private Integer number;
 
 	private Integer day; // das ist ein offset, 0 ist der erste Tag usw.
 
@@ -47,11 +48,11 @@ public class Race extends AbstractEntity {
 	@Column(name = "announcement_id", insertable = false, updatable = false)
 	private Long announcementId;
 
-	public int getNumber() {
+	public Integer getNumber() {
 		return number;
 	}
 
-	public void setNumber(int number) {
+	public void setNumber(Integer number) {
 		this.number = number;
 	}
 
