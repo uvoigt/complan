@@ -11,6 +11,9 @@ public enum Gender implements LocalizedEnum {
 	}
 
 	public String getAgeFriendlyText(AgeType ageType) {
-		return CommonMessages.getMessage(getClass().getSimpleName() + "." + name() + (ageType.isMature() ? "m" : "c"));
+		String key = getClass().getSimpleName() + "." + name();
+		if (this != mixed)
+			key += (ageType.isMature() ? "m" : "c");
+		return CommonMessages.getMessage(key);
 	}
 }
