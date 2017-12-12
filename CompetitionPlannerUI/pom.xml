@@ -12,6 +12,10 @@
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
+	<properties>
+		<maven.build.timestamp.format>dd.MM.yyyy HH:mm</maven.build.timestamp.format>
+	</properties>
+
 	<profiles>
 		<profile>
 			<id>Development</id>
@@ -128,7 +132,13 @@
 			<version>2.1.4.Final</version>
 			<scope>provided</scope>
 		</dependency>
-		
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.el-impl</artifactId>
+			<version>3.0.1-b08-jbossorg-1</version>
+			<scope>provided</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -137,11 +147,14 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<configuration>
 					<filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
-					<!--archive>
+					<archive>
 						<manifestEntries>
-							<Class-Path>model-${project.version}.jar commons-lang-2.6.jar</Class-Path>
+							<!--Class-Path>model-${project.version}.jar commons-lang-2.6.jar</Class-Path-->
+							<Implementation-Vendor>Uwe Voigt</Implementation-Vendor>
+							<Implementation-Version>1.0</Implementation-Version>
+							<Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
 						</manifestEntries>
-					</archive-->
+					</archive>
 				</configuration>
 			</plugin>
 		</plugins>
