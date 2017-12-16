@@ -1,0 +1,189 @@
+options {
+	IGNORE_CASE = true;
+	UNICODE_INPUT = true;
+	STATIC = false;
+	VISITOR = true;
+	MULTI = true;
+	NODE_DEFAULT_VOID = false;
+	NODE_PREFIX = "";
+}
+
+PARSER_BEGIN(Parser)
+
+package org.planner.util;
+
+public class Parser {
+}
+
+PARSER_END(Parser)
+
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+| <"//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")>
+| <"/*" (~["*"])* "*" (~["/"] (~["*"])* "*")* "/">
+}
+
+TOKEN : /* LITERALS */
+{
+  < INTEGER_LITERAL:
+        <DECIMAL_LITERAL>
+  >
+|
+  < #DECIMAL_LITERAL: (["0"-"9"])+ >
+}
+
+TOKEN : /* IDENTIFIERS */
+{
+	< WENN: "wenn" >
+|
+	< DANN: "dann" >
+|
+	< ANSONSTEN: "ansonsten" >
+|
+	< UND: "und" >
+|
+	< ODER: "oder" >
+|
+	< IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+|
+	< #LETTER: ["_","\u00e4","\u00f6","\u00fc","\u00df","a"-"z","A"-"Z","\u00c4","\u00d6","\u00dc"] >
+|
+	< #DIGIT: ["0"-"9"] >
+}
+
+SimpleNode Start() #Start : {}
+{
+  IfELseStatements()
+  { return jjtThis; }
+}
+
+void IfELseStatements() #void : {}
+{
+	(
+		IfStatement()
+		[
+			ElseStatement()
+			|
+			IfELseStatements()
+		]
+	) #EfElse(>1)
+}
+
+void ElseStatement() #void : {}
+{
+	"ansonsten"
+		(
+			IfELseStatements()
+			|
+			AssignmentExpressions()
+		)
+}
+
+void IfStatement() #If : {}
+{
+	"wenn" Expression() "dann" AssignmentExpressions()
+}
+
+void Expression() #void : {}
+{
+	ConditionalOrExpression()
+}
+
+void ConditionalOrExpression() #void : {}
+{
+	(
+		ConditionalAndExpression() ( "oder" ConditionalAndExpression() )* 
+	) #Or(>1)
+}
+
+void ConditionalAndExpression() #void : {}
+{
+	(
+		EqualityExpression() ( "und" EqualityExpression() )*
+	) #And(>1)
+}
+
+void EqualityExpression() #void : {
+	Token t = null;
+}
+{
+	(
+		RelationalExpression() ( ( t = "<>" | t = "=" ) { jjtThis.jjtSetValue(t.image); } RelationalExpression() )*
+	) #Equals(>1)
+}
+
+void RelationalExpression() #void : {
+	Token t = null;
+}
+{
+	(
+		AdditiveExpression() ( ( t = "<" | t = ">" | t = "<=" | t = ">=" )  { jjtThis.jjtSetValue(t.image); } AdditiveExpression() )*
+	) #Relation(>1)
+}
+
+void AdditiveExpression() #void : {
+	Token t = null;
+}
+{
+	(
+		MultiplicativeExpression() ( ( t = "+" | t = "-" ) { jjtThis.jjtSetValue(t.image); } MultiplicativeExpression() )*
+	) #Add(>1)
+}
+
+void MultiplicativeExpression() #void : {
+	Token t = null;
+}
+{
+	(
+		UnaryExpression() ( ( t =  "*" | t = "/" | t = "%" ) { jjtThis.jjtSetValue(t.image); } UnaryExpression() )*
+	) #Multiply(>1)
+}
+
+void UnaryExpression() #void : {}
+{
+	(
+		"(" Expression() ")"
+	) #Parenthesized
+	
+	| Identifier()
+	| IntegerLiteral()
+}
+
+void AssignmentExpressions() #void : {}
+{
+	(
+		AssignmentExpr() ( "," AssignmentExpr() )*
+	) #Assignments(>1)
+}
+
+void AssignmentExpr() #void : {}
+{
+	(
+		Identifier() "=" IntegerLiteral()
+	) #Assign(>1)
+}
+
+void Identifier() : {
+	Token t;
+}
+{
+	t = <IDENTIFIER>
+	{
+		jjtThis.jjtSetValue(t.image);
+	}
+}
+
+void IntegerLiteral() : {
+	Token t;
+}
+{
+	t = <INTEGER_LITERAL>
+	{
+		jjtThis.jjtSetValue(t.image);
+	}
+}
