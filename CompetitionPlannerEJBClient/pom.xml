@@ -56,11 +56,40 @@
             			<configuration>
                 			<sources>
                 				<source>${project.build.directory}/generated-sources/eclipse/</source>
+                				<source>${project.build.directory}/generated-sources/javacc/</source>
               				</sources>
             			</configuration>
             		</execution>
            		</executions>
       		</plugin>
+
+			<!-- JavaCC Parser generieren -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>javacc-maven-plugin</artifactId>
+				<version>2.6</version>
+				<executions>
+					<execution>
+						<id>jjtree</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>jjtree-javacc</goal>
+						</goals>
+						<configuration>
+							<interimDirectory>${project.build.directory}/generated-sources/javacc/</interimDirectory>
+						</configuration>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>net.java.dev.javacc</groupId>
+						<artifactId>javacc</artifactId>
+						<version>6.1.2</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+
+			<!-- Hibernate Mapping files generieren -->
 			<plugin>
 				<groupId>org.bsc.maven</groupId>
 				<artifactId>maven-processor-plugin</artifactId>
@@ -78,7 +107,10 @@
 							<includes>
 								<include>**/*.java</include>
 							</includes>
-							<outputDirectory>target/generated-sources/eclipse</outputDirectory>
+							<excludes>
+								<exclude>org/planner/util/ExpressionParser.java</exclude>
+							</excludes>
+							<outputDirectory>${project.build.directory}/generated-sources/eclipse</outputDirectory>
 						</configuration>
 					</execution>
 				</executions>
