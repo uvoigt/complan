@@ -102,6 +102,28 @@ function initEmptyBirthDate() {
 	if (birthDate.getDate() == null)
 		birthDate.setDate(new Date(new Date().getFullYear() - 15, 0, 1, 12));
 }
+function initExprText() {
+	var expr = PF("expr");
+	if (!expr)
+		return;
+	expr.jq.attr("spellcheck", false);
+	expr.jq.keydown(function(ev) {
+		console.log(ev);
+		if (ev.key == '') {
+			var popup = document.createElement("div")
+			document.body.append(p);
+			var pjq = $(popup);
+			pjq.css("background-color", "#faebd7");
+			pjq.width(144);
+			pjq.height(136);
+			pjq.css("position", "absolute");
+			pjq.css("top", "");
+			pjq.css("left", "");
+			pjq.css("border-radius", "3px");
+			pjq.css("border", "solid 1px");
+		}
+	});
+}
 function setupAjax() {
 	$.ajaxSetup({
 		dataFilter: function(data) {
