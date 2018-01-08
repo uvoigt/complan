@@ -7,6 +7,7 @@
 	xmlns:p="http://primefaces.org/ui">
 
 	<ui:decorate template="/templates/edit.xhtml">
+		<ui:param name="roles" value="Admin"/>
 		<ui:param name="bundle" value="#{messages.bundle('roles')}"/>
 		<ui:param name="bean" value="#{roleBean}"/>
 		<ui:param name="searchLink" value="/masterdata/roles.xhtml"/>
