@@ -79,6 +79,19 @@
 	width: 100%;
 }
 
+.noscript {
+	background-color: white;
+	color: red;
+	border: 1px solid;
+	border-radius: 5px;
+	margin-left: 37%;
+	width: 25%;
+	z-index: 2;
+	text-align: center;
+	font-family: Arial;
+	font-size: 20px;
+}
+
 .help {
 	height: 100%;
 	width: 70%;
@@ -127,6 +140,10 @@
 
 .ui-datatable .ui-column-filter {
 	width: 90% !important;
+}
+
+.ui-autocomplete-panel {
+	width: 400px !important;
 }
 
 .editButton {
@@ -210,6 +227,22 @@ input[readonly=readonly] {
 	text-align: left !important;	
 }
 
+.teamTable .heat {
+	color: inherit;
+}
+
+.teamTable .semiFinal {
+	color: yellow;
+}
+
+.teamTable .finalA {
+	color: red;
+}
+
+.teamTable .finalB {
+	color: orange;
+}
+
 .teamTable .ui-datatable-header {
 	float: left;
 	width: 100%;
@@ -238,6 +271,7 @@ input[readonly=readonly] {
 }
 
 .teamTable tbody, .teamTable tr, .teamTable td {
+	background: none;
 	border: none !important;
 }
 
@@ -250,5 +284,6 @@ input[readonly=readonly] {
 }
 
 .teamMembers > div {
+	background: none;
 	border: none;
 }
