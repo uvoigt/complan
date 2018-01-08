@@ -1,0 +1,8 @@
+Wenn AnzahlMeldungen <= 2 * AnzahlBahnen Dann InDenEndlauf = 4
+Ansonsten
+Wenn AnzahlMeldungen <= 3 * AnzahlBahnen Dann InDenEndlauf = 3
+Ansonsten
+Wenn AnzahlMeldungen <= 4 * AnzahlBahnen Dann InDenZwischenLauf = 4, AnzahlVorläufe = 4
+Ansonsten
+Wenn AnzahlMeldungen <= 5 * AnzahlBahnen Dann InDenZwischenLauf = 3, AnzahlVorläufe = 5
+
