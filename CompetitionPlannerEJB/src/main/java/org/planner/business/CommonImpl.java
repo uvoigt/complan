@@ -32,6 +32,7 @@ import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
+import org.planner.eo.ProgramRace;
 import org.planner.eo.Properties;
 import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
@@ -292,7 +293,7 @@ public class CommonImpl {
 	 *            die Operation
 	 * @return den angemeldeten Benutzer oder null für den Admin
 	 */
-	public User checkWriteAccess(AbstractEntity entity, Operation operation) {
+	public User checkWriteAccess(Serializable entity, Operation operation) {
 		// admin darf alles
 		if (caller.isInRole("Admin"))
 			return null;
@@ -375,12 +376,12 @@ public class CommonImpl {
 			throw new FachlicheException(messages.getResourceBundle(), "announcement.alreadyAnnounced");
 	}
 
+	@SuppressWarnings("unused")
 	private void checkWriteAccess(Race race, Operation operation, User callingUser) {
 		Announcement announcement = dao.getById(Announcement.class, race.getAnnouncementId());
 		checkWriteAccess(announcement, operation, callingUser);
 	}
 
-	@SuppressWarnings("unused")
 	private void checkWriteAccess(Registration registration, Operation operation, User callingUser) {
 		// Eine existierende Meldung darf nur von Clubmitgliedern geändert
 		// werden
@@ -401,13 +402,18 @@ public class CommonImpl {
 		checkWriteAccess(entry.getRegistration(), operation, callingUser);
 	}
 
-	@SuppressWarnings("unused")
 	private void checkWriteAccess(Program program, Operation operation, User callingUser) {
 		Announcement announcement = program.getAnnouncement();
 		// Nur ein Clubmitglied!, das die Rollen Sportwart oder Trainer hat darf speichern
 		if ((!caller.isInRole("Sportwart") && !caller.isInRole("Trainer")) || announcement.getClub() != null
 				&& !announcement.getClub().getId().equals(callingUser.getClub().getId()))
 			throwAccessException(program, operation);
+	}
+
+	@SuppressWarnings("unused")
+	private void checkWriteAccess(ProgramRace race, Operation operation, User callingUser) {
+		Program program = getById(Program.class, race.getProgramId(), 0);
+		checkWriteAccess(program, operation, callingUser);
 	}
 
 	private void throwAccessException(AbstractEntity entity, Operation operation) {

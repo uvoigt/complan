@@ -1,5 +1,9 @@
 package org.planner.business;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -13,7 +17,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
 
+import org.joda.time.Days;
+import org.joda.time.Instant;
+import org.joda.time.MutableDateTime;
 import org.planner.business.CommonImpl.Operation;
+import org.planner.business.program.Change;
+import org.planner.business.program.Checks;
+import org.planner.business.program.Problem;
 import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
 import org.planner.eo.Announcement;
@@ -21,6 +31,8 @@ import org.planner.eo.Club;
 import org.planner.eo.Participant;
 import org.planner.eo.Program;
 import org.planner.eo.ProgramOptions;
+import org.planner.eo.ProgramOptions.Break;
+import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRace.RaceType;
 import org.planner.eo.Program_;
@@ -32,6 +44,11 @@ import org.planner.eo.Registration_;
 import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
 import org.planner.model.Suchkriterien;
+import org.planner.util.ExpressionParser;
+import org.planner.util.ExpressionParser.ExpressionException;
+import org.planner.util.LogUtil.FachlicheException;
+import org.planner.util.LogUtil.TechnischeException;
+import org.planner.util.Messages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,27 +63,135 @@ public class ProgramServiceImpl {
 	}
 
 	private class EvalContext {
+		private Announcement announcement;
 		private ProgramOptions options;
 		private int day;
-		private Calendar time;
-		private boolean afterNoon;
+		private MutableDateTime time;
+		private int nextBreakIndex = -1;
 
-		private EvalContext(ProgramOptions options) {
+		private EvalContext(Announcement announcement, ProgramOptions options) {
+			this.announcement = announcement;
 			this.options = options;
 		}
 
 		public Date nextTime() {
+			List<DayTimes> dayTimes = options.getDayTimes();
 			if (time == null) {
-				time = Calendar.getInstance();
-				time.setTime(options.getBeginTimes()[day]);
+				if (dayTimes.size() > day) {
+					DayTimes times = dayTimes.get(day);
+					time = new MutableDateTime();
+					time.setDate(announcement.getStartDate().getTime());
+					Calendar c = Calendar.getInstance();
+					c.setTime(times.getStart());
+					time.setTime(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), 0, 0);
+					if (times.getBreaks().size() > 0)
+						nextBreakIndex = 0;
+				} else
+					throw new IllegalStateException();
 			} else {
-				time.add(Calendar.MINUTE, options.getTimeLag());
-				if (!afterNoon && time.getTimeInMillis() >= options.getLaunchBreak().getTime()) {
-					time.add(Calendar.MINUTE, options.getBreakDuration());
-					afterNoon = true;
+				time.addMinutes(options.getTimeLag());
+				DayTimes times = dayTimes.get(day);
+				List<Break> breaks = times.getBreaks();
+				Break nextBreak = nextBreakIndex != -1 && breaks.size() > nextBreakIndex ? breaks.get(nextBreakIndex)
+						: null;
+				if (nextBreak != null && getTimeOfDay(time) >= getTimeOfDay(nextBreak.getTime())) {
+					time.addMinutes(nextBreak.getDuration());
+					nextBreakIndex++;
+				} else if (getTimeOfDay(time) >= getTimeOfDay(times.getEnd())) {
+					day++;
+					Days days = Days.daysBetween(new Instant(announcement.getStartDate()),
+							new Instant(announcement.getEndDate()));
+					if (day > days.getDays()) {
+						throw new FachlicheException(messages.getResourceBundle(), "program.daysExceeded",
+								time.toDate(), announcement.getEndDate());
+					}
+					times = dayTimes.get(day);
+					Calendar c = Calendar.getInstance();
+					c.setTime(times.getStart());
+					time.setTime(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), 0, 0);
+					time.addDays(1);
+					nextBreakIndex = 0;
 				}
 			}
-			return time.getTime();
+			return time.toDate();
+		}
+
+		private int getTimeOfDay(Date d) {
+			Calendar c = Calendar.getInstance();
+			c.setTime(d);
+			return getTimeOfDay(c);
+		}
+
+		private int getTimeOfDay(Calendar c) {
+			return 60 * c.get(Calendar.HOUR_OF_DAY) + c.get(Calendar.MINUTE);
+		}
+
+		private int getTimeOfDay(MutableDateTime d) {
+			return 60 * d.getHourOfDay() + d.getMinuteOfHour();
+		}
+	}
+
+	private class HeatCalculator {
+		// in
+		private int numLanes;
+		private int numTeams;
+		private ProgramOptions options;
+
+		// out
+		private int numRaces;
+		private int remainder;
+		private int numLanesPerRace;
+		private int intoFinal; // 0 keiner, ansonsten die Platzierungen
+		private int intoSemiFinal; // 0 keiner, ansonsten die Platzierungen
+
+		private HeatCalculator(int numLanes, int numTeams, ProgramOptions options) {
+			this.numLanes = numLanes;
+			this.numTeams = numTeams;
+			this.options = options;
+		}
+
+		private void run() {
+			numRaces = numTeams / numLanes;
+			remainder = numTeams % numLanes;
+			if (remainder > 0)
+				numRaces++;
+			// "normale" Operation ohne weitere Optionen
+			if (numTeams <= numLanes)
+				return;
+
+			ExpressionParser parser = new ExpressionParser();
+			try {
+				parser.evaluateExpression(options.getExpr(), numTeams, numLanes);
+			} catch (ExpressionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				// throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.error", token,
+				// parser.getIPrsStream().getLine(pos), parser.getIPrsStream().getColumn(pos), expected);
+
+			}
+			intoSemiFinal = parser.getIntoSemiFinal();
+			intoFinal = parser.getIntoFinal();
+
+			// if (numTeams <= 2 * numLanes) {
+			// // 2 Vorläufe, 1-4 in Endlauf
+			// intoFinal = 4;
+			// } else if (numTeams <= 3 * numLanes) {
+			// // 3 Vorläufe, 1-3 in Endlauf
+			// intoFinal = 3;
+			// } else if (numTeams <= 4 * numLanes) {
+			// // 4 Vorläufe, 1-4 in Zwischenlauf
+			// numRaces = 4;
+			// intoSemiFinal = 4;
+			// } else if (numTeams <= 5 * numLanes) {
+			// // 5 Vorläufe
+			// numRaces = 5;
+			// intoSemiFinal = 3;
+			// // TODO was ist, wenn es noch mehr sind?
+			// }
+			numLanesPerRace = numTeams / numRaces;
+
+			// übrig bleibender Rest
+			remainder = numTeams - numLanesPerRace * numRaces;
 		}
 	}
 
@@ -77,6 +202,27 @@ public class ProgramServiceImpl {
 
 	@Inject
 	private PlannerDao dao;
+
+	@Inject
+	private Messages messages;
+
+	@Inject
+	private Checks checks;
+
+	private String getDefaultHeatModeExpression() {
+		Reader in = new InputStreamReader(getClass().getResourceAsStream("/defaultExpression"),
+				Charset.forName("UTF8"));
+		StringBuilder sb = new StringBuilder();
+		char[] buf = new char[500];
+		try {
+			for (int c; (c = in.read(buf)) != -1;)
+				sb.append(new String(buf, 0, c));
+			in.close();
+		} catch (IOException e) {
+			LOG.error("Cannot read default expression", e);
+		}
+		return sb.toString();
+	}
 
 	public Long createProgram(Program program) {
 		// gibt es bereits ein Programm für diese Ausschreibung? dann nimm dieses
@@ -90,6 +236,7 @@ public class ProgramServiceImpl {
 
 		common.checkWriteAccess(program, Operation.create);
 
+		program.getOptions().setExpr(getDefaultHeatModeExpression());
 		common.save(program);
 
 		return program.getId();
@@ -139,12 +286,15 @@ public class ProgramServiceImpl {
 		int numberOfLanes = 8; // TODO announcement.get.. tracksSprint
 		program.setRaces(new ArrayList<ProgramRace>());
 
-		EvalContext context = new EvalContext(program.getOptions());
+		EvalContext context = new EvalContext(announcement, program.getOptions());
 
 		// simples Hinzufügen eines Laufs ... das wird erweitert!
+		List<ProgramRace> allHeats = new ArrayList<>();
 		List<ProgramRace> instantFinals = new ArrayList<>();
-		List<ProgramRace> heats = new ArrayList<>();
+		List<ProgramRace> semiFinals = new ArrayList<>();
+		List<ProgramRace> finals = new ArrayList<>();
 
+		List<ProgramRace> heats = new ArrayList<>();
 		for (Race race : announcement.getRaces()) {
 			Long raceId = race.getId();
 			// das sind alle Teams, die für das Rennen gemeldet haben
@@ -156,14 +306,61 @@ public class ProgramServiceImpl {
 				continue;
 
 			calculateHeats(numberOfLanes, race, teams, context, heats, instantFinals);
-		}
-		// nun aktualisiere die Startzeiten der Finale
-		for (ProgramRace final_ : instantFinals) {
-			final_.setStartTime(context.nextTime());
+
+			// füge Semifinale hinzu und Finale hinzu
+			int teamsInSemiFinals = 0;
+			int teamsInFinals = 0;
+			for (ProgramRace heat : heats) {
+				teamsInSemiFinals += heat.getIntoSemiFinal();
+				teamsInFinals += heat.getIntoFinal();
+			}
+			int numSemiFinals = teamsInSemiFinals / numberOfLanes;
+			if (teamsInSemiFinals % numberOfLanes > 0)
+				numSemiFinals++;
+			for (int i = 0; i < numSemiFinals; i++) {
+				ProgramRace semiFinal = new ProgramRace();
+				semiFinal.setRace(race);
+				semiFinal.setRaceType(RaceType.semiFinal);
+				semiFinal.setNumber(i + 1); // TODO die Nummer muss irgendwie anders sein
+				semiFinal.setIntoFinal(1); // TODO
+				semiFinal.setIntoSemiFinal(0);
+
+				semiFinals.add(semiFinal);
+			}
+			ProgramRace theFinal = new ProgramRace();
+			theFinal.setRace(race);
+			theFinal.setRaceType(RaceType.finalA);
+			theFinal.setIntoFinal(1); // TODO
+			theFinal.setIntoSemiFinal(0);
+
+			finals.add(theFinal);
+
+			allHeats.addAll(heats);
+			heats.clear();
 		}
 
-		program.getRaces().addAll(heats);
+		// lege die Semifinale für den Anfang hinter die Vorläufe,
+		// das muss später umgeordnet werden
+		for (ProgramRace semiFinal : semiFinals) {
+			semiFinal.setStartTime(context.nextTime());
+		}
+
+		// nun aktualisiere die Startzeiten der sofortigen Finale
+		for (ProgramRace instantFinal : instantFinals) {
+			instantFinal.setStartTime(context.nextTime());
+		}
+		// und nun die Finale
+		for (ProgramRace aFinal : finals) {
+			aFinal.setStartTime(context.nextTime());
+		}
+
+		program.getRaces().addAll(allHeats);
+		program.getRaces().addAll(semiFinals);
 		program.getRaces().addAll(instantFinals);
+		program.getRaces().addAll(finals);
+
+		// jetzt haben wir alle Rennen beisammen
+		checkProgram(program.getRaces(), program);
 
 		common.save(program);
 	}
@@ -171,21 +368,22 @@ public class ProgramServiceImpl {
 	private void calculateHeats(int numberOfLanes, Race race, List<Team> teams, EvalContext context,
 			List<ProgramRace> heats, List<ProgramRace> instantFinals) {
 
-		int numberOfHeats = teams.size() / numberOfLanes;
-		int remainder = teams.size() % numberOfLanes;
-
 		if (LOG.isDebugEnabled())
 			LOG.debug("Ermittle die Vorlaeufe fuer Rennen " + race.getNumber() + " fuer " + teams.size()
 					+ " Einzelmeldungen");
 
+		HeatCalculator calc = new HeatCalculator(numberOfLanes, teams.size(), context.options);
+		calc.run();
+
 		Collections.shuffle(teams);
 		// Collections.sort(teams, new InitialOrder());
 
-		int intoFinal = context.options.getIntoFinal();
-		int intoSemiFinal = context.options.getIntoSemiFinal();
-
 		// wenn so wenige Einzelmeldungen da sind, gibt es keine Vorläufe
-		if (teams.size() <= numberOfLanes) {
+		if (calc.numRaces == 1) {
+
+			if (LOG.isDebugEnabled())
+				LOG.debug("Rennen " + race.getNumber() + " hat einen Endlauf");
+
 			ProgramRace final_ = new ProgramRace();
 			final_.setRace(race);
 			final_.setRaceType(RaceType.finalA);
@@ -199,22 +397,35 @@ public class ProgramServiceImpl {
 			instantFinals.add(final_);
 		} else {
 
-			// TODO was soll passieren, wenn weniger als ein halbes Rennen übrigbleibt?
-			int raceNumberOfLanes = numberOfLanes;
-			if (remainder > 0 && remainder < numberOfLanes / 2) {
-				raceNumberOfLanes = teams.size() / (numberOfHeats + 1) + 1;
-				if (LOG.isDebugEnabled())
-					LOG.debug(
-							"Bei Rennen " + race.getNumber() + " bleibt ein Rennen mit nur " + remainder + " Startern");
+			if (LOG.isDebugEnabled())
+				LOG.debug("Rennen " + race.getNumber() + " hat " + calc.numRaces + " Vorlaeufe, Modus ist "
+						+ (calc.intoFinal > 0
+								? (calc.intoFinal > 1 ? "1 bis " : "") + calc.intoFinal + " in den Endlauf " : " ")
+						+ (calc.intoSemiFinal > 0 ? (calc.intoFinal > 0 ? (calc.intoFinal + 1) : "1") + " bis "
+								+ calc.intoSemiFinal + " in den Zwischenlauf" : ""));
+
+			int addToSingleRace = 0;
+			if (calc.remainder > 0) {
+				if (calc.numLanesPerRace < numberOfLanes)
+					addToSingleRace = calc.remainder;
+				else
+					throw new TechnischeException("Mist!", null); // TODO
 			}
 
-			for (int i = 0, teamOffset = 0; i <= numberOfHeats && remainder > 0; i++) {
+			for (int i = 0, teamOffset = 0; i < calc.numRaces; i++) {
 				ProgramRace heat = new ProgramRace();
 				heat.setRace(race);
 				heat.setRaceType(RaceType.heat);
 				heat.setNumber(i + 1);
 				heat.setStartTime(context.nextTime());
-				int endOffset = Math.min(teamOffset + raceNumberOfLanes, teams.size());
+				heat.setIntoFinal(calc.intoFinal);
+				heat.setIntoSemiFinal(calc.intoSemiFinal);
+				int numLanesPerRace = calc.numLanesPerRace;
+				if (addToSingleRace > 0) {
+					numLanesPerRace++;
+					addToSingleRace--;
+				}
+				int endOffset = Math.min(teamOffset + numLanesPerRace, teams.size());
 				List<Team> participants = teams.subList(teamOffset, endOffset);
 				int lane = 1;
 				for (Team team : participants) {
@@ -225,24 +436,67 @@ public class ProgramServiceImpl {
 				teamOffset = endOffset;
 			}
 
-			if (LOG.isDebugEnabled())
-				LOG.debug("Rennen " + race.getNumber() + " hat " + heats.size() + " Vorlaeufe");
-			int raceIntoFinal = 0;
-			int raceIntoSemiFinal = 0;
-			// versuche zuerst, ohne Semifinale auszukommen
-			// dabei wird angenommen, dass es fair ist, der Hälfte eines Vorlaufs.. also z.B. 1-4
-			// ein Chance zum Weiterkommen zu geben
-			int fairAmount = numberOfLanes / 2;
-			int potentialLaneNumbersInFinal = heats.size() * fairAmount;
-			if (potentialLaneNumbersInFinal <= numberOfLanes) {
-				raceIntoFinal = fairAmount;
-				raceIntoSemiFinal = 0;
-			}
-			for (ProgramRace programRace : heats) {
-				programRace.setIntoFinal(raceIntoFinal);
-				programRace.setIntoSemiFinal(raceIntoSemiFinal);
-			}
+			// int raceIntoFinal = 0;
+			// int raceIntoSemiFinal = 0;
+			// // versuche zuerst, ohne Semifinale auszukommen
+			// // dabei wird angenommen, dass es fair ist, der Hälfte eines Vorlaufs.. also z.B. 1-4
+			// // ein Chance zum Weiterkommen zu geben
+			// int fairAmount = numberOfLanes / 2;
+			// int potentialLaneNumbersInFinal = heats.size() * fairAmount;
+			// if (potentialLaneNumbersInFinal <= numberOfLanes) {
+			// raceIntoFinal = fairAmount;
+			// raceIntoSemiFinal = 0;
+			// }
+			// for (ProgramRace programRace : heats) {
+			// programRace.setIntoFinal(raceIntoFinal);
+			// programRace.setIntoSemiFinal(raceIntoSemiFinal);
+			// }
 		}
+	}
+
+	public void swapRaces(final ProgramRace r1, final ProgramRace r2) {
+		common.checkWriteAccess(r1, Operation.save);
+		common.checkWriteAccess(r2, Operation.save);
+
+		Date st1 = r1.getStartTime();
+		r1.setStartTime(r2.getStartTime());
+		r2.setStartTime(st1);
+		// man könnte natürlich auch save anpassem...
+		dao.executeOperation(new IOperation<Void>() {
+			@Override
+			public Void execute(EntityManager em) {
+				em.merge(r1);
+				em.merge(r2);
+				return null;
+			}
+		});
+	}
+
+	public void checkProgram(Program program) {
+		checkProgram(program.getRaces(), program);
+	}
+
+	private List<Change> checkProgram(List<ProgramRace> races, Program program) {
+		// Altersklassen trennen, so dass die Rennen erreichbar sind!
+		// Endläufe nach hinten
+		// die einzelnen Prüfungen müssen separate Module sein.
+		// Rennen Austausch muss gemerkt und nicht wiederholt werden
+		if (LOG.isDebugEnabled())
+			LOG.debug("Prüfe das Programm " + program.getAnnouncement().getName());
+
+		List<Problem> problems = checks.execute(program, races, true);
+		for (Problem problem : problems) {
+			System.out.println(problem);
+		}
+
+		List<Change> changes = new ArrayList<>();
+		// List<ProgramRace> copies = null;
+		// if (createCopy) {
+		// copies = new ArrayList<>();
+		// copies.addAll(races);
+		// }
+
+		return changes;
 	}
 
 	private void addEntryToProgram(Club club, RegEntry entry, Map<Long, List<Team>> races) {
@@ -260,6 +514,7 @@ public class ProgramServiceImpl {
 			TeamMember member = new TeamMember();
 			member.setUser(participant.getUser());
 			member.setPos(participant.getPos());
+			member.setRemark(participant.getRemark());
 			members.add(member);
 		}
 		teams.add(team);

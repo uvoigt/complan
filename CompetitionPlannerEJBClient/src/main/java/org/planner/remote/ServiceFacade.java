@@ -11,6 +11,7 @@ import org.planner.eo.AbstractEnum;
 import org.planner.eo.Announcement;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
+import org.planner.eo.ProgramRace;
 import org.planner.eo.Properties;
 import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
@@ -90,4 +91,9 @@ public interface ServiceFacade extends IResultProvider {
 	Long createProgram(Program program);
 
 	void generateProgram(Program program);
+
+	// TODO temporär
+	void checkProgram(Program program);
+
+	void swapRaces(ProgramRace r1, ProgramRace r2);
 }

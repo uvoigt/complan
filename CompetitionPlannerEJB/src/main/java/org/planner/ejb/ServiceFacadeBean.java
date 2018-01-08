@@ -19,6 +19,7 @@ import org.planner.eo.AbstractEnum;
 import org.planner.eo.Announcement;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
+import org.planner.eo.ProgramRace;
 import org.planner.eo.Properties;
 import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
@@ -235,5 +236,15 @@ public class ServiceFacadeBean implements ServiceFacade {
 	@Override
 	public void generateProgram(Program program) {
 		this.program.generateProgram(program);
+	}
+
+	@Override
+	public void checkProgram(Program program) {
+		this.program.checkProgram(program);
+	}
+
+	@Override
+	public void swapRaces(ProgramRace r1, ProgramRace r2) {
+		this.program.swapRaces(r1, r2);
 	}
 }
