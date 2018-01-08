@@ -107,7 +107,7 @@ public class AnnouncementServiceImpl {
 				if (ageType.getText().toLowerCase().contains(filterValue))
 					matchingAgeTypes.add(ageType);
 			}
-			ages = User.getAgesForAgeType(matchingAgeTypes);
+			ages = AgeType.getAgesForAgeType(matchingAgeTypes);
 		}
 	}
 
@@ -237,6 +237,14 @@ public class AnnouncementServiceImpl {
 
 	public void saveRace(Race race) {
 		common.checkWriteAccess(race, Operation.save);
+		// Prüfung auf eindeutige Renn-Nr.
+		Suchkriterien criteria = new Suchkriterien();
+		criteria.addFilter(Race_.announcementId.getName(), race.getAnnouncementId());
+		criteria.addFilter(Race_.number.getName(), race.getNumber());
+		criteria.addFilter(new Filter(Comparison.ne, Race_.id.getName(), race.getId()));
+		if (common.search(Race.class, criteria).getGesamtgroesse() > 0)
+			throw new FachlicheException(messages.getResourceBundle(), "announcement.raceNoExists", race.getNumber());
+
 		common.save(race);
 	}
 
@@ -397,12 +405,28 @@ public class AnnouncementServiceImpl {
 	}
 
 	private void checkGender(Race race, Collection<Participant> participants) {
-		for (Participant participant : participants) {
-			User user = participant.getUser();
-			if (user.getGender() != race.getGender()) {
-				throw new FachlicheException(messages.getResourceBundle(), "registration.illegalGender",
-						race.getGender().getAgeFriendlyText(race.getAgeType()),
-						user.getGender().getAgeFriendlyText(user.getAgeType()));
+		if (race.getGender() == Gender.mixed) {
+			if (participants.size() >= race.getBoatClass().getMinimalTeamSize()) {
+				int females = 0;
+				int males = 0;
+				for (Participant participant : participants) {
+					if (participant.getUser().getGender() == Gender.f)
+						females++;
+					else if (participant.getUser().getGender() == Gender.m)
+						males++;
+				}
+				int half = race.getBoatClass().getMinimalTeamSize() / 2;
+				if (females < half || males < half)
+					throw new FachlicheException(messages.getResourceBundle(), "registration.illegalMixed");
+			}
+		} else {
+			for (Participant participant : participants) {
+				User user = participant.getUser();
+				if (user.getGender() != race.getGender()) {
+					throw new FachlicheException(messages.getResourceBundle(), "registration.illegalGender",
+							race.getGender().getAgeFriendlyText(race.getAgeType()),
+							user.getGender().getAgeFriendlyText(user.getAgeType()));
+				}
 			}
 		}
 	}
@@ -442,16 +466,13 @@ public class AnnouncementServiceImpl {
 					throw new FachlicheException(messages.getResourceBundle(), "registration.illegalAgeType",
 							participant.getUser().getName(), entry.getRace().getNumber());
 				break;
-			case ak:
-				// diesen Fall gibt es nicht, ein Sportler ist immer einer AK zugeordnet
-				break;
 			case akA:
 			case akB:
 			case akC:
 			case akD:
-			case akE:
+				// TODO diese Prüfungen anpassen!
 				// AK-Fahrer dürfen generell nicht gegen Ältere fahren
-				if (raceAgeType.compareTo(userAgeType) > 0 && raceAgeType != AgeType.ak ||
+				if (raceAgeType.compareTo(userAgeType) > 0 /* && raceAgeType != AgeType.ak */ ||
 				// aber gegen Jüngere nur nicht unterhalb LK
 						raceAgeType.compareTo(userAgeType) < 0 && raceAgeType.compareTo(AgeType.lk) < 0)
 					throw new FachlicheException(messages.getResourceBundle(), "registration.illegalAgeType",
@@ -461,7 +482,10 @@ public class AnnouncementServiceImpl {
 			switch (raceAgeType) {
 			default:
 				break;
-			case ak:
+			case akA:
+			case akB:
+			case akC:
+			case akD:
 				// Spezialfall AK, da sind alle AKs zusammengefasst
 				// Der Fahrer muss lediglich in der AK sein
 				if (userAgeType.compareTo(AgeType.akA) < 0)
