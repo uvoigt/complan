@@ -271,7 +271,7 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	}
 
 	public String renderAgeType(Map<String, Object> user) {
-		AgeType ageType = User.getAgeType((Date) user.get("birthDate"));
+		AgeType ageType = AgeType.getAgeType((Date) user.get("birthDate"));
 		return ageType != null ? ageType.getText() : null;
 	}
 
