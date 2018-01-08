@@ -1,51 +1,158 @@
 package org.planner.util;
 
 import org.junit.Test;
-import org.planner.util.ExpressionParser;
+import org.planner.util.LogUtil.FachlicheException;
 
 import junit.framework.Assert;
 
 public class ParserTests {
 
 	@Test
-	public void expressions() throws Exception {
-		String s = " Wenn AnzahlMeldungen =1 Dann InDenEndlauf=1,InDenZwischenLauf=0";
-		evaluate(s, 1, 9, 1, 0);
-		evaluate(s, 17, 9, 0, 0);
+	public void equals() throws Exception {
+		String s = " Wenn AnzahlMeldungen =1 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 1, 0, 1, 2);
+		assertEquals(s, 3, 0, 0, 0);
 
-		s = " Wenn AnzahlMeldungen =17 Dann InDenEndlauf=3,InDenZwischenLauf=5";
-		evaluate(s, 17, 9, 3, 5);
-
-		s = " Wenn AnzahlMeldungen <> 17 Dann InDenEndlauf=3,InDenZwischenLauf=5";
-		evaluate(s, 16, 9, 3, 5);
-		evaluate(s, 17, 9, 0, 0);
-
-		s = " Wenn AnzahlMeldungen % 2 = 0 Und (AnzahlMeldungen / 2 = 7 Oder AnzahlBahnen=0 ) Dann InDenEndlauf=3,InDenZwischenLauf=7 Ansonsten Wenn 0 = 0 Dann InDenEndlauf=99";
-		evaluate(s, 16, 0, 3, 7);
-
-		s = " Wenn AnzahlMeldungen % 2 = 0 Und (AnzahlMeldungen / 2 = 7 Oder AnzahlBahnen=1 ) Dann InDenEndlauf=3,InDenZwischenLauf=7 Ansonsten Wenn 0 = 0 Dann InDenEndlauf=99, InDenZwischenLauf=100";
-		evaluate(s, 16, 0, 99, 100);
-
-		s = " Wenn AnzahlMeldungen> AnzahlBahnen + 2 Dann InDenEndlauf=3,InDenZwischenLauf=7";
-		evaluate(s, 17, 9, 3, 7);
-
-		s = " Wenn AnzahlMeldungen<=2*AnzahlBahnen Dann InDenEndlauf=3,InDenZwischenLauf=7";
-		evaluate(s, 17, 9, 3, 7);
-
-		s = " Wenn AnzahlMeldungen > AnzahlBahnen/2 Dann InDenEndlauf=3,InDenZwischenLauf=7 ansonsten InDenEndlauf=99";
-		evaluate(s, 17, 9, 3, 7);
-
-		s = " Wenn AnzahlMeldungen > AnzahlBahnen / 2 Dann InDenEndlauf=3,InDenZwischenLauf=7 ansonsten InDenEndlauf=99, InDenZwischenLauf=98";
-		evaluate(s, 3, 9, 99, 98);
-
-		s = "Wenn AnzahlMeldungen < 3 * AnzahlBahnen und AnzahlMeldungen - 7 > 1 Dann InDenEndlauf = 2, InDenZwischenLauf = 5 ";
-		evaluate(s, 19, 9, 2, 5);
+		s = "Wenn 1 = 1 <> (1 = 0) Dann InDenEndlauf = 7";
+		assertEquals(s, 0, 0, 7, 0);
 	}
 
-	private void evaluate(String s, int numTeams, int numLanes, int intoFinal, int intoSemiFinal) throws Exception {
+	@Test
+	public void equalsElse() throws Exception {
+		String s = " Wenn AnzahlMeldungen =1 Dann InDenEndlauf=1, InDenZwischenLauf=2 ansonsten InDenEndlauf=5, InDenZwischenLauf=6 ";
+		assertEquals(s, 1, 0, 1, 2);
+		assertEquals(s, 3, 0, 5, 6);
+	}
+
+	@Test
+	public void noEquals() throws Exception {
+		String s = " Wenn AnzahlMeldungen <> 1 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 2, 0, 1, 2);
+	}
+
+	@Test
+	public void lessThan() throws Exception {
+		String s = " Wenn AnzahlMeldungen < 3 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 2, 0, 1, 2);
+	}
+
+	@Test
+	public void lessThanEquals() throws Exception {
+		String s = " Wenn AnzahlMeldungen <= 3 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 3, 0, 1, 2);
+		assertEquals(s, 2, 0, 1, 2);
+	}
+
+	@Test
+	public void lessThanFail() throws Exception {
+		String s = " Wenn (AnzahlMeldungen und 1) <1 Dann InDenEndlauf=1, InDenZwischenLauf=2 ansonsten InDenEndlauf=5, InDenZwischenLauf=6 ";
+		assertFail(s, 1, 0);
+	}
+
+	@Test
+	public void greaterThan() throws Exception {
+		String s = " Wenn AnzahlMeldungen > 3 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 4, 0, 1, 2);
+	}
+
+	@Test
+	public void greaterThanEquals() throws Exception {
+		String s = " Wenn AnzahlMeldungen >= 5 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 5, 0, 1, 2);
+		assertEquals(s, 6, 0, 1, 2);
+	}
+
+	@Test
+	public void addition() throws Exception {
+		String s = " Wenn AnzahlMeldungen <= 2 + AnzahlBahnen Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 5, 9, 1, 2);
+
+		s = " Wenn 2 - 3 + 7 + 5 = 11 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 5, 9, 1, 2);
+	}
+
+	@Test
+	public void substraction() throws Exception {
+		String s = " Wenn AnzahlMeldungen > 2 - AnzahlBahnen Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 5, 9, 1, 2);
+	}
+
+	@Test
+	public void multiplication() throws Exception {
+		String s = " Wenn AnzahlMeldungen = 3 * AnzahlBahnen Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 27, 9, 1, 2);
+
+		s = " Wenn 3 * 7 / 3 * 3 = 21 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 27, 9, 1, 2);
+	}
+
+	@Test
+	public void division() throws Exception {
+		String s = " Wenn AnzahlMeldungen <= AnzahlBahnen / 3 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 2, 9, 1, 2);
+	}
+
+	@Test
+	public void modulus() throws Exception {
+		String s = " Wenn AnzahlMeldungen = AnzahlBahnen%2 Dann InDenEndlauf=1, InDenZwischenLauf=2";
+		assertEquals(s, 1, 9, 1, 2);
+	}
+
+	@Test
+	public void parenthesized() throws Exception {
+		String s = " Wenn 1 + 8 + 9 = 18 Dann InDenEndlauf=1,InDenZwischenLauf=3";
+		assertEquals(s, 27, 7, 1, 3);
+	}
+
+	@Test
+	public void relation() throws Exception {
+		String s = "Wenn 5 > 3 und (2 < 10)  Dann InDenEndlauf=1";
+		assertEquals(s, 0, 0, 1, 0);
+
+		s = "Wenn 5 > 3 > 2 < 10  Dann InDenEndlauf=1";
+		assertFail(s, 1, 1);
+	}
+
+	@Test
+	public void wrongVariable() throws Exception {
+		String s = "Wenn test = 7 Dann InDenEndlauf=1";
+		assertFail(s, 1, 1);
+	}
+
+	@Test
+	public void tooLargeNumber() throws Exception {
+		String s = "Wenn test = 7 Dann InDenEndlauf = " + Long.MAX_VALUE;
+		assertFail(s, 1, 1);
+	}
+
+	@Test
+	public void elseStatement() throws Exception {
+		String s = "Wenn 1 > 2 Dann InDenEndlauf=1 ansonsten InDenEndlauf=7, InDenZwischenLauf=6";
+		assertEquals(s, 0, 0, 7, 6);
+
+		s = "Wenn 1 < 2 Dann InDenEndlauf=1 ansonsten InDenEndlauf=7, InDenZwischenLauf=6 wenn 2 < 3 dann InDenZwischenLauf=2";
+		assertEquals(s, 0, 0, 1, 2);
+	}
+
+	@Test
+	public void elseIfStatement() throws Exception {
+		String s = "Wenn 1 > 2 Dann InDenEndlauf=1 ansonsten wenn 2 < 3 dann InDenEndlauf=7, InDenZwischenLauf=6";
+		assertEquals(s, 0, 0, 7, 6);
+	}
+
+	private void assertEquals(String s, int numTeams, int numLanes, int intoFinal, int intoSemiFinal) throws Exception {
 		ExpressionParser parser = new ExpressionParser();
 		parser.evaluateExpression(s, numTeams, numLanes);
 		Assert.assertEquals(intoFinal, parser.getIntoFinal());
 		Assert.assertEquals(intoSemiFinal, parser.getIntoSemiFinal());
+	}
+
+	private void assertFail(String s, int numTeams, int numLanes) throws Exception {
+		ExpressionParser parser = new ExpressionParser();
+		try {
+			parser.evaluateExpression(s, numTeams, numLanes);
+			Assert.fail("keine exception");
+		} catch (FachlicheException e) {
+		}
 	}
 }

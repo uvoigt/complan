@@ -6,6 +6,7 @@ options {
 	MULTI = true;
 	NODE_DEFAULT_VOID = false;
 	NODE_PREFIX = "";
+	NODE_CLASS = "org.planner.util.ExpressionParser.ExNode";
 }
 
 PARSER_BEGIN(Parser)
@@ -13,6 +14,7 @@ PARSER_BEGIN(Parser)
 package org.planner.util;
 
 public class Parser {
+	protected boolean inAssignment;
 }
 
 PARSER_END(Parser)
@@ -28,7 +30,7 @@ SKIP :
 | <"/*" (~["*"])* "*" (~["/"] (~["*"])* "*")* "/">
 }
 
-TOKEN : /* LITERALS */
+TOKEN :
 {
   < INTEGER_LITERAL:
         <DECIMAL_LITERAL>
@@ -37,7 +39,7 @@ TOKEN : /* LITERALS */
   < #DECIMAL_LITERAL: (["0"-"9"])+ >
 }
 
-TOKEN : /* IDENTIFIERS */
+TOKEN :
 {
 	< WENN: "wenn" >
 |
@@ -56,37 +58,51 @@ TOKEN : /* IDENTIFIERS */
 	< #DIGIT: ["0"-"9"] >
 }
 
+void Completion() #void : {}
+{
+	IfELseStatements()
+}
+
 SimpleNode Start() #Start : {}
 {
-  IfELseStatements()
-  { return jjtThis; }
+	IfELseStatements()
+	<EOF>
+
+	{ return jjtThis; }
 }
 
 void IfELseStatements() #void : {}
+{
+	( IfELseStatement() )+
+}
+
+void IfELseStatement() #void : {}
 {
 	(
 		IfStatement()
 		[
 			ElseStatement()
-			|
-			IfELseStatements()
 		]
-	) #EfElse(>1)
+	) #IfElse(>1)
 }
 
 void ElseStatement() #void : {}
 {
 	"ansonsten"
+	{ inAssignment = true; }
 		(
-			IfELseStatements()
+			IfELseStatement()
 			|
 			AssignmentExpressions()
 		)
+	{ inAssignment = false; }
 }
 
-void IfStatement() #If : {}
+void IfStatement() #void : {}
 {
-	"wenn" Expression() "dann" AssignmentExpressions()
+	(
+		"wenn" { inAssignment = false; } Expression() "dann" { inAssignment = true; } AssignmentExpressions() { inAssignment = false; }
+	) #If(>1)
 }
 
 void Expression() #void : {}
@@ -113,7 +129,7 @@ void EqualityExpression() #void : {
 }
 {
 	(
-		RelationalExpression() ( ( t = "<>" | t = "=" ) { jjtThis.jjtSetValue(t.image); } RelationalExpression() )*
+		RelationalExpression() ( ( t = "<>" | t = "=" ) { jjtThis.addOp(t.image); } RelationalExpression() )*
 	) #Equals(>1)
 }
 
@@ -122,7 +138,7 @@ void RelationalExpression() #void : {
 }
 {
 	(
-		AdditiveExpression() ( ( t = "<" | t = ">" | t = "<=" | t = ">=" )  { jjtThis.jjtSetValue(t.image); } AdditiveExpression() )*
+		AdditiveExpression() ( ( t = "<" | t = ">" | t = "<=" | t = ">=" )  { jjtThis.addOp(t.image); } AdditiveExpression() )*
 	) #Relation(>1)
 }
 
@@ -131,7 +147,7 @@ void AdditiveExpression() #void : {
 }
 {
 	(
-		MultiplicativeExpression() ( ( t = "+" | t = "-" ) { jjtThis.jjtSetValue(t.image); } MultiplicativeExpression() )*
+		MultiplicativeExpression() ( ( t = "+" | t = "-" ) { jjtThis.addOp(t.image); } MultiplicativeExpression() )*
 	) #Add(>1)
 }
 
@@ -140,7 +156,7 @@ void MultiplicativeExpression() #void : {
 }
 {
 	(
-		UnaryExpression() ( ( t =  "*" | t = "/" | t = "%" ) { jjtThis.jjtSetValue(t.image); } UnaryExpression() )*
+		UnaryExpression() ( ( t =  "*" | t = "/" | t = "%" ) { jjtThis.addOp(t.image); } UnaryExpression() )*
 	) #Multiply(>1)
 }
 

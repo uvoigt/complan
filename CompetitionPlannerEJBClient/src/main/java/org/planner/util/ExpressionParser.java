@@ -2,18 +2,46 @@ package org.planner.util;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
+
+import org.planner.util.LogUtil.FachlicheException;
+import org.planner.util.LogUtil.TechnischeException;
 
 public class ExpressionParser {
+	public static class ExNode extends SimpleNode {
+		protected Deque<String> ops;
+
+		public ExNode(Parser p, int i) {
+			super(p, i);
+		}
+
+		public ExNode(int i) {
+			super(i);
+		}
+
+		public void addOp(String s) {
+			if (ops == null)
+				ops = new ArrayDeque<>();
+			ops.add(s);
+		}
+
+		public String operator() {
+			return ops != null ? ops.pop() : null;
+		}
+	}
+
 	private static class Visitor extends ParserDefaultVisitor {
 		private IntegerProperty doGetProperty(String name, Object data) {
 			@SuppressWarnings("unchecked")
 			IntegerProperty property = ((Map<String, IntegerProperty>) data).get(name);
 			if (property == null)
-				throw new IllegalArgumentException("Keine bekannte Variable: " + name); // TODO fachliche
+				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.unknownVariable", name);
 			return property;
 		}
 
@@ -25,7 +53,7 @@ public class ExpressionParser {
 		private void setProperty(String name, int value, Object data) {
 			IntegerProperty property = doGetProperty(name, data);
 			if (property.readonly)
-				throw new IllegalArgumentException("Die Variable " + name + " ist nicht änderbar"); // TODO
+				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.readonlyVariable", name);
 			property.value = value;
 		}
 
@@ -41,42 +69,61 @@ public class ExpressionParser {
 		}
 
 		@Override
-		public Object visit(EfElse node, Object data) {
-			Boolean ifWasTrue = (Boolean) node.jjtGetChild(0).jjtAccept(this, data);
-			if (!ifWasTrue)
-				node.jjtGetChild(1).jjtAccept(this, data);
-			return ifWasTrue;
+		public Object visit(IfElse node, Object data) {
+			Object resultFromIf = node.children[0].jjtAccept(this, data);
+			if (Boolean.FALSE.equals(resultFromIf) && node.jjtGetNumChildren() > 1)
+				node.children[1].jjtAccept(this, data);
+			return resultFromIf;
 		}
 
 		@Override
 		public Object visit(If node, Object data) {
-			Object result = node.jjtGetChild(0).jjtAccept(this, data);
-			if (Boolean.TRUE.equals(result))
-				node.jjtGetChild(1).jjtAccept(this, data);
+			Object result = node.children[0].jjtAccept(this, data);
+			if (!(result instanceof Boolean))
+				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleBoolean",
+						getNodeValue(node.children[0]));
+			if ((Boolean) result)
+				node.children[1].jjtAccept(this, data);
 			return result;
 		}
 
 		@Override
 		public Object visit(Or node, Object data) {
-			Object o1 = node.jjtGetChild(0).jjtAccept(this, data);
-			Object o2 = node.jjtGetChild(1).jjtAccept(this, data);
-			return o1 instanceof Boolean && o2 instanceof Boolean && ((Boolean) o1).booleanValue()
-					|| ((Boolean) o2).booleanValue();
+			boolean result = false;
+			for (int i = 0; i < node.jjtGetNumChildren(); i++) {
+				Object o = node.children[i].jjtAccept(this, data);
+				result |= o instanceof Boolean && ((Boolean) o).booleanValue();
+			}
+			return result;
 		}
 
 		@Override
 		public Object visit(And node, Object data) {
-			Object o1 = node.jjtGetChild(0).jjtAccept(this, data);
-			Object o2 = node.jjtGetChild(1).jjtAccept(this, data);
-			return o1 instanceof Boolean && o2 instanceof Boolean && ((Boolean) o1).booleanValue()
-					&& ((Boolean) o2).booleanValue();
+			boolean result = true;
+			for (int i = 0; i < node.jjtGetNumChildren(); i++) {
+				Object o = node.children[i].jjtAccept(this, data);
+				result &= o instanceof Boolean && ((Boolean) o).booleanValue();
+			}
+			return result;
 		}
 
 		@Override
 		public Object visit(Equals node, Object data) {
-			Object o1 = node.jjtGetChild(0).jjtAccept(this, data);
-			Object o2 = node.jjtGetChild(1).jjtAccept(this, data);
-			switch ((String) node.jjtGetValue()) {
+			Object o1 = node.children[0].jjtAccept(this, data);
+			Object o2 = node.children[1].jjtAccept(this, data);
+			boolean result = equality(o1, o2, node.operator());
+			for (int i = 2; i < node.jjtGetNumChildren(); i++) {
+				Object o = node.children[i].jjtAccept(this, data);
+				result = equality(result, o, node.operator());
+			}
+			return result;
+		}
+
+		private boolean equality(Object o1, Object o2, String op) {
+			if (o1.getClass() != o2.getClass())
+				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleRelation", o1,
+						o2);
+			switch (op) {
 			default:
 				throw new IllegalArgumentException();
 			case "=":
@@ -88,11 +135,21 @@ public class ExpressionParser {
 
 		@Override
 		public Object visit(Relation node, Object data) {
-			Object o1 = node.jjtGetChild(0).jjtAccept(this, data);
-			Object o2 = node.jjtGetChild(1).jjtAccept(this, data);
+			Object o1 = node.children[0].jjtAccept(this, data);
+			Object o2 = node.children[1].jjtAccept(this, data);
+			boolean result = comparison(o1, o2, node.operator());
+			for (int i = 2; i < node.jjtGetNumChildren(); i++) {
+				Object o = node.children[i].jjtAccept(this, data);
+				result = comparison(result, o, node.operator());
+			}
+			return result;
+		}
+
+		private boolean comparison(Object o1, Object o2, String op) {
 			if (!(o1 instanceof Integer && o2 instanceof Integer))
-				throw new IllegalArgumentException();
-			switch ((String) node.jjtGetValue()) {
+				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleRelation", o1,
+						o2);
+			switch (op) {
 			default:
 				throw new IllegalArgumentException();
 			case "<":
@@ -108,27 +165,46 @@ public class ExpressionParser {
 
 		@Override
 		public Object visit(Add node, Object data) {
-			Object o1 = node.jjtGetChild(0).jjtAccept(this, data);
-			Object o2 = node.jjtGetChild(1).jjtAccept(this, data);
-			if (!(o1 instanceof Integer && o2 instanceof Integer))
-				throw new IllegalArgumentException();
-			switch ((String) node.jjtGetValue()) {
+			Object o1 = node.children[0].jjtAccept(this, data);
+			Object o2 = node.children[1].jjtAccept(this, data);
+			int result = addition(o1, o2, node.operator());
+			for (int i = 2; i < node.jjtGetNumChildren(); i++) {
+				Object o = node.children[i].jjtAccept(this, data);
+				result = addition(result, o, node.operator());
+			}
+			return result;
+		}
+
+		private int addition(Object o1, Object o2, String op) {
+			if (!(o1 instanceof Integer) || !(o2 instanceof Integer))
+				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleAdd", o1, o2);
+			switch (op) {
 			default:
 				throw new IllegalArgumentException();
 			case "+":
-				return ((Integer) o1).intValue() + ((Integer) o2).intValue();
+				return ((Integer) o1) + ((Integer) o2);
 			case "-":
-				return ((Integer) o1).intValue() - ((Integer) o2).intValue();
+				return ((Integer) o1) - ((Integer) o2);
 			}
 		}
 
 		@Override
 		public Object visit(Multiply node, Object data) {
-			Object o1 = node.jjtGetChild(0).jjtAccept(this, data);
-			Object o2 = node.jjtGetChild(1).jjtAccept(this, data);
+			Object o1 = node.children[0].jjtAccept(this, data);
+			Object o2 = node.children[1].jjtAccept(this, data);
+			int result = multiplication(o1, o2, node.operator());
+			for (int i = 2; i < node.jjtGetNumChildren(); i++) {
+				Object o = node.children[i].jjtAccept(this, data);
+				result = multiplication(result, o, node.operator());
+			}
+			return result;
+		}
+
+		private int multiplication(Object o1, Object o2, String op) {
 			if (!(o1 instanceof Integer && o2 instanceof Integer))
-				throw new IllegalArgumentException();
-			switch ((String) node.jjtGetValue()) {
+				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleMultiply", o1,
+						o2);
+			switch (op) {
 			default:
 				throw new IllegalArgumentException();
 			case "*":
@@ -142,7 +218,7 @@ public class ExpressionParser {
 
 		@Override
 		public Object visit(Parenthesized node, Object data) {
-			return node.jjtGetChild(0).jjtAccept(this, data);
+			return node.children[0].jjtAccept(this, data);
 		}
 
 		@Override
@@ -152,8 +228,8 @@ public class ExpressionParser {
 
 		@Override
 		public Object visit(Assign node, Object data) {
-			String name = getNodeValue(node.jjtGetChild(0)).toString();
-			Integer value = Integer.valueOf(getNodeValue(node.jjtGetChild(1)).toString());
+			String name = getNodeValue(node.children[0]).toString();
+			Integer value = (Integer) node.children[1].jjtAccept(this, data);
 			setProperty(name, value, data);
 			return value;
 		}
@@ -165,7 +241,12 @@ public class ExpressionParser {
 
 		@Override
 		public Object visit(IntegerLiteral node, Object data) {
-			return Integer.valueOf(node.jjtGetValue().toString());
+			try {
+				return Integer.valueOf(node.jjtGetValue().toString());
+			} catch (NumberFormatException e) {
+				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.invalidNumber",
+						node.jjtGetValue());
+			}
 		}
 
 		private Object getNodeValue(Node node) {
@@ -188,13 +269,13 @@ public class ExpressionParser {
 		}
 	}
 
-	public static class ExpressionException extends Exception {
+	public static class ExpressionException extends FachlicheException {
 		private static final long serialVersionUID = 1L;
 
 		private List<String> expectings;
 
-		public ExpressionException(String message, List<String> expectings) {
-			super(message);
+		public ExpressionException(ResourceBundle bundle, String key, List<String> expectings, Object... args) {
+			super(bundle, key, args);
 			this.expectings = expectings;
 		}
 
@@ -225,32 +306,38 @@ public class ExpressionParser {
 		Parser parser = new Parser(new java.io.StringReader(expr));
 		List<String> expectings = new ArrayList<>();
 		try {
-			parser.Start();
+			parser.Completion();
 			throw parser.generateParseException();
 		} catch (ParseException e) {
-			createExpectings(expectings, e, false);
+			createExpectings(expectings, e, false, parser.inAssignment);
 		} catch (TokenMgrError e) {
 		}
 		return expectings;
 	}
 
-	private static void createExpectings(List<String> expectings, ParseException e, boolean withInteger) {
+	private static void createExpectings(List<String> expectings, ParseException e, boolean withSpecialTokens,
+			boolean inAssignment) {
 		for (int[] is : e.expectedTokenSequences) {
 			int tok = is[0];
 			if (tok == ParserConstants.INTEGER_LITERAL) {
-				if (withInteger)
-					expectings.add("eine Zahl");
+				if (withSpecialTokens)
+					expectings.add(CommonMessages.getMessage("exprParser.aNumber"));
 			} else if (tok == ParserConstants.IDENTIFIER) {
-				if (e.currentToken.kind == ParserConstants.DANN) {
+				if (inAssignment) {
 					expectings.add("InDenEndlauf");
 					expectings.add("InDenZwischenLauf");
 				} else {
 					expectings.add("AnzahlBahnen");
 					expectings.add("AnzahlMeldungen");
 				}
+			} else if (tok == ParserConstants.EOF) {
+				if (withSpecialTokens)
+					expectings.add(CommonMessages.getMessage("exprParser.eof"));
 			} else {
 				String s = e.tokenImage[tok];
 				s = s.substring(1, s.length() - 1);
+				if (withSpecialTokens)
+					s = "\"" + s + "\"";
 				expectings.add(s);
 			}
 		}
@@ -274,11 +361,7 @@ public class ExpressionParser {
 	private int intoSemiFinal;
 	private int intoFinal;
 
-	public static void evaluateExpression(String expr) throws ExpressionException {
-		new ExpressionParser().evaluateExpression(expr, 0, 0);
-	}
-
-	public void evaluateExpression(String expr, int numTeams, int numLanes) throws ExpressionException {
+	public void evaluateExpression(String expr, int numTeams, int numLanes) {
 		Parser parser = new Parser(new java.io.StringReader(expr));
 		try {
 			SimpleNode ast = parser.Start();
@@ -296,19 +379,20 @@ public class ExpressionParser {
 			intoSemiFinal = InDenZwischenLauf.value;
 		} catch (ParseException e) {
 			List<String> expectings = new ArrayList<>();
-			createExpectings(expectings, e, true);
+			createExpectings(expectings, e, true, parser.inAssignment);
 			Token token = e.currentToken.next;
-			String msg = "Unerwartetes Symbol \"" + token + "\" in Zeile " + token.beginLine + ", Spalte "
-					+ token.beginColumn;
+			String detailMsg = CommonMessages.getFormattedMessage("exprParser.unexpectedSymbol", token);
 			if (token.kind == ParserConstants.EOF)
-				msg = "Unerwartetes Ende der Eingabe";
-			throw new ExpressionException(
-					msg + ". An dieser Stelle wird " + createExpectingsMessage(expectings) + " erwartet.", expectings); // TODO
+				detailMsg = CommonMessages.getMessage("exprParser.unexpectedEof");
+			throw new ExpressionException(CommonMessages.getResourceBundle(), "exprParser.parseError", expectings,
+					detailMsg, token.beginLine, token.beginColumn, createExpectingsMessage(expectings));
 		} catch (TokenMgrError e) {
-			throw new ExpressionException(
-					"Zeichen wird nicht unterstützt: \"" + (char) parser.token_source.curChar + "\"", null); // TODO
+			throw new ExpressionException(CommonMessages.getResourceBundle(), "exprParser.unexpectedChar", null,
+					(char) parser.token_source.curChar);
 		} catch (Exception e) {
-			throw new ExpressionException(e.getMessage(), null); // TODO
+			if (e instanceof FachlicheException)
+				throw e;
+			throw new TechnischeException(e.getMessage(), e);
 		}
 	}
 
