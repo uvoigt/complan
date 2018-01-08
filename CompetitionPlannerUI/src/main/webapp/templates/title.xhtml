@@ -3,18 +3,24 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
 
-<head />
-<body>
 	<ui:composition>
-		<script>
+		<h:outputScript>
 			var title = '#{title}';
 			if (title == '')
 				title = '#{bundle.title}';
 			document.title=title;
-		</script>
-		<ui:insert name="content"/>
+		</h:outputScript>
+		<c:choose>
+			<c:when test="#{authBean.inRoles(roles)}">
+				<ui:insert name="content"/>
+			</c:when>
+			<c:otherwise>
+				<h:outputText value="#{messages.illegalAccessPage}"/>
+			</c:otherwise>
+		</c:choose>
 	</ui:composition>
-</body>
+
 </html>
