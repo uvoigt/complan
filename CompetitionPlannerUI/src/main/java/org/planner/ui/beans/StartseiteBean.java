@@ -3,7 +3,10 @@ package org.planner.ui.beans;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.Locale;
+import java.util.jar.Manifest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
@@ -155,8 +158,57 @@ public class StartseiteBean implements Serializable {
 				} finally {
 					in.close();
 				}
+				// entferne die komplette erste Zeile mit dem Meta-Element
+				if (help.startsWith("<meta"))
+					help = help.substring(help.indexOf("\r\n") + 2);
+				help = substitute(help, "Implementation-Version", "Build-Timestamp");
 			}
 		}
 		return help;
+	}
+
+	private String substitute(String text, String... attributes) {
+		Manifest manifest = null;
+		for (String attribute : attributes) {
+			String pattern = "${" + attribute + "}";
+			int index = text.indexOf(pattern);
+			if (index == -1)
+				continue;
+			if (manifest == null) {
+				try {
+					manifest = getManifest("Implementation-Vendor", "Uwe Voigt");
+				} catch (Exception e) {
+				}
+				if (manifest == null)
+					return text;
+			}
+			String replacement = manifest.getMainAttributes().getValue(attribute);
+			if (replacement == null)
+				continue;
+			text = text.substring(0, index) + replacement + text.substring(index + pattern.length());
+		}
+		return text;
+	}
+
+	private Manifest getManifest(String name, String value) throws IOException {
+		Manifest manifest = lookupManifest(getClass().getClassLoader().getResources("META-INF/MANIFEST.MF"), name, //$NON-NLS-1$
+				value);
+		if (manifest != null)
+			return manifest;
+		manifest = lookupManifest(Thread.currentThread().getContextClassLoader().getResources("META-INF/MANIFEST.MF"), //$NON-NLS-1$
+				name, value);
+		if (manifest != null)
+			return manifest;
+		return lookupManifest(ClassLoader.getSystemResources("META-INF/MANIFEST.MF"), name, value); //$NON-NLS-1$
+	}
+
+	private static Manifest lookupManifest(Enumeration<URL> en, String attributeName, String value) throws IOException {
+		while (en.hasMoreElements()) {
+			Manifest manifest = new Manifest(en.nextElement().openStream());
+			String attributeValue = manifest.getMainAttributes().getValue(attributeName);
+			if (value.equals(attributeValue))
+				return manifest;
+		}
+		return null;
 	}
 }
