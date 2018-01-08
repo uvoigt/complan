@@ -7,14 +7,13 @@ import java.util.List;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 
 import org.planner.model.LocalizedEnum;
 import org.planner.util.CommonMessages;
@@ -45,7 +44,7 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	@OneToOne
 	private Race race;
 
-	@Temporal(TemporalType.TIME)
+	// ist ein DateTime, um den Tag zu identifizieren
 	private Date startTime;
 
 	private RaceType raceType;
@@ -56,6 +55,9 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "programrace_id")
 	private List<Team> participants;
+
+	@Column(name = "program_id", insertable = false, updatable = false)
+	private Long programId;
 
 	public Long getId() {
 		return id;
@@ -99,5 +101,9 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 
 	public void setParticipants(List<Team> participants) {
 		this.participants = participants;
+	}
+
+	public Long getProgramId() {
+		return programId;
 	}
 }
