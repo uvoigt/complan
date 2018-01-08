@@ -19,7 +19,6 @@ import org.apache.commons.lang.mutable.MutableInt;
  * <ol>
  * <li>den mainContent-Pfad</li>
  * <li>die ID des aktuell bearbeiteten Objekts</li>
- * <li>die Version des aktuell bearbeiteten Objekts</li>
  * </ol>
  */
 @Named
@@ -27,7 +26,7 @@ import org.apache.commons.lang.mutable.MutableInt;
 public class UrlParameters {
 
 	private Object[] content = new Object[3];
-	private Class<?>[] types = { String.class, Long.class, Integer.class };
+	private Class<?>[] types = { String.class, Long.class };
 	private boolean initialized;
 
 	private static final byte[] RAND;
@@ -93,8 +92,6 @@ public class UrlParameters {
 	private byte[] getBytes(Object object) {
 		if (object instanceof Long)
 			object = Long.toString((Long) object, Character.MAX_RADIX);
-		else if (object instanceof Integer)
-			object = Integer.toString((Integer) object, Character.MAX_RADIX);
 
 		if (object instanceof String)
 			return ((String) object).getBytes(Charset.forName("UTF-8"));
@@ -109,8 +106,6 @@ public class UrlParameters {
 		offset.add(length + 1);
 		if (Long.class.equals(type))
 			return Long.parseLong(string, Character.MAX_RADIX);
-		if (Integer.class.equals(type))
-			return Integer.parseInt(string, Character.MAX_RADIX);
 		return string;
 	}
 
@@ -136,13 +131,5 @@ public class UrlParameters {
 
 	public void setId(Long id) {
 		content[1] = id;
-	}
-
-	public Integer getVersion() {
-		return (Integer) content[2];
-	}
-
-	public void setId(Integer version) {
-		content[2] = version;
 	}
 }
