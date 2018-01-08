@@ -24,6 +24,8 @@ public class TeamMember implements Serializable {
 
 	private int pos;
 
+	private String remark;
+
 	public void setUser(User user) {
 		this.user = user;
 	}
@@ -38,5 +40,13 @@ public class TeamMember implements Serializable {
 
 	public void setPos(int pos) {
 		this.pos = pos;
+	}
+
+	public String getRemark() {
+		return remark;
+	}
+
+	public void setRemark(String remark) {
+		this.remark = remark;
 	}
 }
