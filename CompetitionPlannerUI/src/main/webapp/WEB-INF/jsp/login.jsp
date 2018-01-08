@@ -15,6 +15,10 @@
 <body onload="document.loginform.j_username.focus();">
 	<div class="vertical">
 		<div class="horizontal main">
+			<noscript>
+				<div class="modal"></div>
+				<div class="noscript"><f:message key="noscript"/></div>
+			</noscript>
 			<div class="message">
 				<div id="message"></div>
 			</div>

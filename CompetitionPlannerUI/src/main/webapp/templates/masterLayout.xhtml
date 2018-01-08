@@ -14,12 +14,13 @@
 	<title>#{messages['header.title']}</title>
 	<link rel="icon" type="image/x-icon" href="favicon.ico" />
 	<h:outputStylesheet library="css" name="styles.css" />
+	<h:outputStylesheet library="css" name="help.css"/>
 	<h:outputScript library="js" name="application.js" />
 </h:head>
 
+<pl:stateSaver id="stateSaver"/>
 <h:body id="body">
 	<p:layout fullPage="true" widgetVar="layout">
-		<pl:stateSaver id="stateSaver"/>
 		<p:layoutUnit position="north">
 			<ui:insert name="heading">
 				<ui:include src="/sections/header.xhtml" />
@@ -74,5 +75,8 @@
 		</p:fieldset>
 	</h:panelGroup>
 	<ui:debug rendered="#{facesContext.application.projectStage == 'Development'}"/>
+	<noscript>
+		<div class="noscript">#{messages.noscript}</div>
+	</noscript>
 </h:body>
 </html>
