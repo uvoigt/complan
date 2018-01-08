@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition>
+	<p:dataTable id="programTable"
+			var="race"
+			value="#{programBean.program.races}"
+			emptyMessage="#{bundle.noProgram}"
+			widgetVar="programTable"
+			selectionMode="multiple" rowKey="#{race.id}" selection="#{programBean.selectedRaces}">
+		<p:column>
+		<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable">
+			<f:facet name="header">
+				<h:panelGroup styleClass="#{race.raceType}">
+					<h:panelGroup layout="block" styleClass="raceTitle">
+						<p:selectBooleanCheckbox style="margin-right: 5px" onchange="toggleRaceSelection($(this))"/>
+						<h:outputText value="#{bundle.race} "/>
+						<h:outputText value="#{race.race.number}"/>
+						<h:outputText value="#{race.number != null ? '-'.concat(race.number) : null}"/><br/><h:outputText value="#{race.race.boatClass.text} "/>
+						<h:outputText value="#{race.race.gender.getAgeFriendlyText(race.race.ageType)} "/>
+						<h:outputText value="#{race.race.ageType.text} "/>
+						<h:outputText value="#{race.race.distance} m"/>
+					</h:panelGroup>
+					<h:panelGroup layout="block" styleClass="raceInfo">
+						<h:outputText value="#{race.number}#{not empty race.number ? '. ' : ''}#{race.raceType.text}"/><br /><h:outputText
+								value="#{programBean.renderRaceMode(race)}"/>
+					</h:panelGroup>
+					<h:panelGroup layout="block" style="text-align: right">#{programBean.renderStartTime(race.startTime)}</h:panelGroup>
+				</h:panelGroup>
+			</f:facet>
+			<p:column styleClass="numberCol" rendered="#{programBean.showTeams}">
+				<h:outputText value="#{team.lane}"/>
+			</p:column>
+	
+			<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
+				<p:dataGrid columns="2" var="member" value="#{team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
+					<h:panelGroup style="text-align: left">
+						<h:outputText value="#{member.remark != null ? member.remark : member.user.firstName} "/>
+						<h:outputText value="#{member.user.lastName} "/>
+						<h:outputText value="#{programBean.renderAgeGroup(member.user)}"/>
+					</h:panelGroup>
+				</p:dataGrid>
+			</p:column>
+			<p:column rendered="#{programBean.showTeams}">
+				<h:outputText value="#{not empty team.club.shortName ? team.club.shortName : team.club.name}"/>
+			</p:column>
+	
+		</p:dataTable>
+		</p:column>
+
+	</p:dataTable>
+
+	<h:outputScript>
+		function toggleRaceSelection(checkbox) {
+			var pt = PF("programTable");
+			try {
+				checkbox.prop("checked") ? pt.selectRowWithCheckbox(checkbox, true) : pt.unselectRowWithCheckbox(checkbox, true);
+			} catch (ex) {}
+			var numChecked = pt.tbody.find("> tr > td >* :checkbox.ui-state-active").length;
+			if (numChecked > 2) {
+				checkbox.prop("checked", false);
+				numChecked--;
+				try {
+					pt.unselectRowWithCheckbox(checkbox, true);
+				} catch (ex) {}
+			}
+			numChecked == 2 ? PF("swapRaces").enable() : PF("swapRaces").disable();
+		}
+	</h:outputScript>
+
+</ui:composition>
+
+</html>

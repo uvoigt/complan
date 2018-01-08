@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition>
+	<p:dataScroller id="programTable"
+			var="race"
+			value="#{programBean.program.races}"
+			selection="#{programBean.selectedRace}"
+			lazy="false" chunkSize="5" rows="5" mode="inline" scrollHeight="5">
+	
+		<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable">
+			<f:facet name="header">
+				<h:panelGroup layout="block" styleClass="raceTitle">
+					<h:outputText value="#{bundle.race} "/>
+					<h:outputText value="#{race.race.number}"/>
+					<h:outputText value="#{race.number != null ? '-'.concat(race.number) : null}"/><br/><h:outputText value="#{race.race.boatClass.text} "/>
+					<h:outputText value="#{race.race.gender.getAgeFriendlyText(race.race.ageType)} "/>
+					<h:outputText value="#{race.race.ageType.text} "/>
+					<h:outputText value="#{race.race.distance} m"/>
+				</h:panelGroup>
+				<h:panelGroup layout="block" styleClass="raceInfo">
+					<h:outputText value="#{race.number}#{not empty race.number ? '. ' : ''}#{race.raceType.text}"/>
+				</h:panelGroup>
+				<h:panelGroup layout="block" style="text-align: right">#{race.startTime}</h:panelGroup>
+			</f:facet>
+			<p:column styleClass="numberCol">
+				<h:outputText value="#{team.lane}"/>
+			</p:column>
+	
+			<p:column styleClass="teamCol">
+				<p:dataGrid columns="2" var="member" value="#{team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
+					<h:panelGroup style="text-align: left">
+						<h:outputText value="#{member.user.firstName} "/>
+						<h:outputText value="#{member.user.lastName} "/>
+						<h:outputText value="#{programBean.renderAgeGroup(member.user)}"/>
+					</h:panelGroup>
+				</p:dataGrid>
+			</p:column>
+			<p:column>
+				<h:outputText value="#{not empty team.club.shortName ? team.club.shortName : team.club.name}"/>
+			</p:column>
+	
+		</p:dataTable>
+	
+	</p:dataScroller>
+</ui:composition>
+
+</html>

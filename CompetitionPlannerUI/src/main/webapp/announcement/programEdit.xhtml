@@ -16,9 +16,16 @@
 
 			<h:form>
 
+				<p:remoteCommand global="false" name="checkExpr" action="#{programBean.checkExpr()}"
+					process="@this expr" update="exprStatus" partialSubmit="true"/>
 				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0" legend="#{bundle.options}" widgetVar="optionsSet">
-					<p:ajax event="toggle" oncomplete="resizeDsc()"/>
+					<p:ajax event="toggle" oncomplete="resizeDsc(); initExpr()" partialSubmit="true" process="@none"/>
 					<h:panelGroup styleClass="ui-g" layout="block">
+						<h:panelGroup layout="block" style="width: 100%">
+							<p:inputTextarea id="expr" value="#{programBean.program.options.expr}" style="width: 100%" rows="10" widgetVar="expr"
+								completeMethod="#{programBean.suggestExpr}" minQueryLength="100" onkeyup="checkExpr()"/>
+							<p:inputText id="exprStatus" readonly="true" style="width: 100%; color: red" value="#{programBean.exprStatus}"/>
+						</h:panelGroup>
 						<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.heatMode}"/></div>
 						<h:panelGroup styleClass="ui-g-12 ui-md-6 ui-lg-4">
 							<div class="ui-g">
@@ -34,7 +41,7 @@
 						<h:panelGroup id="childProtection" styleClass="ui-g-12 ui-md-6 ui-lg-4">
 							<div style="width: 15em; margin-right: 1em">
 								<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}">
-									<p:ajax update="childProtection"/>
+									<p:ajax update="childProtection" partialSubmit="true"/>
 								</p:selectBooleanCheckbox>
 							</div>
 							<div class="ui-g">
@@ -54,26 +61,23 @@
 						</h:panelGroup>
 						<h:panelGroup styleClass="ui-g-12 ui-md-6 ui-lg-4">
 							<div class="ui-g">
-								<p:dataList var="beginTime" value="#{programBean.program.options.beginTimes}" varStatus="status">
-									<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.day} #{status.index + 1}"/></div>
-									<p:calendar value="#{beginTime}" pattern="HH:mm" timeOnly="true" size="8"/>
+								<p:dataList var="dayTime" rowIndexVar="rowIndex" value="#{programBean.program.options.dayTimes}">
+									<h:outputText value="#{bundle.day} #{rowIndex + 1}"/>
+									<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].start}" pattern="HH:mm" timeOnly="true"
+										size="8" style="margin-left: 1em"/>
+									<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].end}" pattern="HH:mm" timeOnly="true"
+										size="8" style="margin-left: 1em"/>
+									<h:outputText value="#{bundle.breaks}"/>
+									<p:dataList var="break" rowIndexVar="breakIndex" value="#{programBean.program.options.dayTimes[rowIndex].breaks}">
+										<h:outputText value="#{bundle.breakBegin}"/>
+										<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].time}" pattern="HH:mm" timeOnly="true" size="8"/>
+										<h:outputText value="#{bundle.breakDuration}"/>
+										<p:spinner value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].duration}" min="0" size="1"/>
+									</p:dataList>
 								</p:dataList>
 							</div>
 						</h:panelGroup>
 
-						<h:panelGroup styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em">
-							<h:outputText value="#{bundle.launchBreak}"/>
-						</h:panelGroup>
-						<h:panelGroup styleClass="ui-g-12 ui-md-6 ui-lg-4">
-							<div class="ui-g">
-								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.breakBegin}"/></div>
-								<p:calendar value="#{programBean.program.options.launchBreak}" pattern="HH:mm" timeOnly="true" size="8"/>
-							</div>
-							<div class="ui-g">
-								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.breakDuration}"/></div>
-								<p:spinner value="#{programBean.program.options.breakDuration}" min="0" size="1"/>
-							</div>
-						</h:panelGroup>
 						<div class="ui-g">
 							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.timeLag}"/></div>
 							<div><p:spinner value="#{programBean.program.options.timeLag}" min="0" size="1"/></div>
@@ -81,55 +85,26 @@
 					</h:panelGroup>
 				</p:fieldset>
 
-				<p:panelGrid columns="3" styleClass="ui-panelgrid-blank">
+				<p:panelGrid columns="5" styleClass="ui-panelgrid-blank">
 					<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
 							process="@form" update="programTable" oncomplete="resizeDsc()"/>
+					<p:commandButton value="#{bundle.checkProgram}" action="#{programBean.checkProgram()}"
+							process="@form" update="programTable" oncomplete="resizeDsc()"/>
+					<h:panelGroup>
+						<h:outputText value="#{bundle.showTeams}"/>
+						<p:selectBooleanCheckbox value="#{programBean.showTeams}" style="margin-left: 5px">
+							<p:ajax partialSubmit="true" update="@form"/>
+						</p:selectBooleanCheckbox>
+					</h:panelGroup>
+					<p:commandButton widgetVar="swapRaces" value="#{bundle.swapRaces}" action="#{programBean.swapRaces()}"
+							process="@this programTable" update="programTable" partialSubmit="true"
+							onsuccess="PF('swapRaces').disable();"/>
 					<p:commandButton value="#{messages.backToOverview}"
 							action="#{startseiteBean.setMainContent('/announcement/programs.xhtml')}"
 							process="@this" update="mainContent"/>
 				</p:panelGrid>
 
-				<p:dataScroller id="programTable"
-						var="race"
-						value="#{programBean.program.races}"
-						selection="#{programBean.selectedRace}"
-						lazy="false" chunkSize="5" rows="5" mode="inline" scrollHeight="5">
-
-					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable">
-						<f:facet name="header">
-							<h:panelGroup layout="block" styleClass="raceTitle">
-								<h:outputText value="#{bundle.race} "/>
-								<h:outputText value="#{race.race.number}"/>
-								<h:outputText value="#{race.number != null ? '-'.concat(race.number) : null}"/><br/><h:outputText value="#{race.race.boatClass.text} "/>
-								<h:outputText value="#{race.race.gender.getAgeFriendlyText(race.race.ageType)} "/>
-								<h:outputText value="#{race.race.ageType.text} "/>
-								<h:outputText value="#{race.race.distance} m"/>
-							</h:panelGroup>
-							<h:panelGroup layout="block" styleClass="raceInfo">
-								<h:outputText value="#{race.number}. #{race.raceType.text}"/>
-							</h:panelGroup>
-							<h:panelGroup layout="block" style="text-align: right">#{race.startTime}</h:panelGroup>
-						</f:facet>
-						<p:column styleClass="numberCol">
-							<h:outputText value="#{team.lane}"/>
-						</p:column>
-
-						<p:column styleClass="teamCol">
-							<p:dataGrid columns="2" var="member" value="#{team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
-								<h:panelGroup style="text-align: left">
-									<h:outputText value="#{member.user.firstName} "/>
-									<h:outputText value="#{member.user.lastName} "/>
-									<h:outputText value="#{programBean.getAgeGroup(member.user)}"/>
-								</h:panelGroup>
-							</p:dataGrid>
-						</p:column>
-						<p:column>
-							<h:outputText value="#{not empty team.club.shortName ? team.club.shortName : team.club.name}"/>
-						</p:column>
-
-					</p:dataTable>
-	
-				</p:dataScroller>
+				<ui:include src="programOutputTable.xhtml"/>
 
 			</h:form>
 
@@ -138,6 +113,7 @@
 					
 				}
 				function resizeDsc() {
+					console.log("resizeDsc");
 					var dsc = $(".ui-datascroller-content");
 					var ph = dsc.parents(".ui-layout-unit-content").height();
 					dsc.parents().eq(1).children().each(function() {
@@ -145,10 +121,39 @@
 					});
 					dsc.height(dsc.height() + ph - 30);
 				}
-				$(window).resize(function() {
-					setTimeout(resizeDsc, 300);
-				});
-				setTimeout(resizeDsc, 100);
+				function initExpr() {
+					console.log("initExpr");
+					var expr = PF("expr");
+					expr.jq.attr("spellcheck", false);
+					if (expr.jq.initialized)
+						return;
+					expr.jq.initialized = true;
+					expr.jq.keydown(function(evt) {
+						if (evt.keyCode == 9) {
+							var start = expr.jq.getSelection().start;
+							var text = expr.jq.val();
+							expr.jq.val(text.substring(0, start) + "\t" + text.substring(start, text.length));
+							expr.jq.setSelection(start + 1);
+							evt.preventDefault();
+							evt.stopPropagation();
+						}
+					});
+					expr.jq.keypress(function(evt) {
+						if (evt.charCode != 32 || !evt.ctrlKey)
+							return;
+						var text = expr.jq.val();
+						text = text.substring(0, expr.jq.getCursorPosition());
+						console.log("search: " + text)
+						expr.search(text);
+						console.log("searched");
+						expr.query = "";
+					});
+				}
+//				$(window).resize(function() {
+//					setTimeout(resizeDsc, 300);
+//				});
+//				setTimeout(resizeDsc, 100);
+				PF("swapRaces").disable();
 			</h:outputScript>
 
 		</ui:define>
