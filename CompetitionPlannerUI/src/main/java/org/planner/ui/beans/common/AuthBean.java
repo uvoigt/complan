@@ -5,6 +5,8 @@ import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.inject.Named;
 
+import org.apache.commons.lang.StringUtils;
+
 @Named
 @ApplicationScoped
 public class AuthBean {
@@ -22,6 +24,18 @@ public class AuthBean {
 	public boolean inRole(String role1, String role2, String role3) {
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 		return ctx.isUserInRole(role1) || ctx.isUserInRole(role2) || ctx.isUserInRole(role3);
+	}
+
+	public boolean inRoles(String roles) {
+		// dann wird die implizite Rolle "User" angenommen
+		if (StringUtils.isEmpty(roles))
+			return true;
+		String[] split = roles.split(",");
+		for (String s : split) {
+			if (inRole(s))
+				return true;
+		}
+		return false;
 	}
 
 	public boolean notInRole(String role) {
