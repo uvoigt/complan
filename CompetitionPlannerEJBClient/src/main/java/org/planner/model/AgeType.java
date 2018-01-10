@@ -17,23 +17,23 @@ public enum AgeType implements LocalizedEnum {
 		cal.setTime(birthDate);
 		// hier ist nicht das exakte Alter gefragt, sondern, ob jemand in diesem Jahr das Alter erreicht
 		int age = Calendar.getInstance().get(Calendar.YEAR) - cal.get(Calendar.YEAR);
-		if (age <= 9)
+		if (age <= schuelerC.upperBound)
 			return AgeType.schuelerC;
-		if (age <= 12)
+		if (age <= schuelerB.upperBound)
 			return AgeType.schuelerB;
-		if (age <= 14)
+		if (age <= schuelerA.upperBound)
 			return AgeType.schuelerA;
-		if (age <= 16)
+		if (age <= jugend.upperBound)
 			return AgeType.jugend;
-		if (age <= 18)
+		if (age <= junioren.upperBound)
 			return AgeType.junioren;
-		if (age < 32)
+		if (age <= lk.upperBound)
 			return AgeType.lk;
-		if (age < 40)
+		if (age <= akA.upperBound)
 			return AgeType.akA;
-		if (age < 50)
+		if (age <= akB.upperBound)
 			return AgeType.akB;
-		if (age < 60)
+		if (age <= akC.upperBound)
 			return AgeType.akC;
 		return AgeType.akD;
 	}
@@ -41,47 +41,8 @@ public enum AgeType implements LocalizedEnum {
 	public static int[] getAgesForAgeType(List<AgeType> ageTypes) {
 		int[] result = { 99, 0 };
 		for (AgeType ageType : ageTypes) {
-			int low = 0;
-			int high = 0;
-			switch (ageType) {
-			case schuelerC:
-				low = high = 11;
-				break;
-			case schuelerB:
-				low = high = 12;
-				break;
-			case schuelerA:
-				low = high = 13;
-				break;
-			case jugend:
-				low = 14;
-				high = 15;
-				break;
-			case junioren:
-				low = 16;
-				high = 17;
-				break;
-			case lk:
-				low = 18;
-				high = 31;
-				break;
-			case akA:
-				low = 32;
-				high = 39;
-				break;
-			case akB:
-				low = 40;
-				high = 49;
-				break;
-			case akC:
-				low = 50;
-				high = 59;
-				break;
-			case akD:
-				low = 60;
-				high = 120;
-				break;
-			}
+			int low = ageType.lowerBound;
+			int high = ageType.upperBound;
 			if (low < result[0])
 				result[0] = low;
 			if (high > result[1])
