@@ -6,7 +6,7 @@
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:p="http://primefaces.org/ui">
 
-	<ui:decorate template="/templates/title.xhtml">
+	<ui:composition template="/templates/title.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('registrations')}"/>
 		<ui:param name="bean" value="#{registrationBean}"/>
 		<ui:param name="searchLink" value="/announcement/registrations.xhtml"/>
@@ -69,10 +69,10 @@
 								<p:column headerText="#{bundle.boatClass}" sortBy="#{race.boatClass.text}" filterBy="#{race.boatClass.text}" filterMatchMode="contains">
 									<h:outputText value="#{race.boatClass.text}"/>
 								</p:column>
-								<p:column headerText="#{bundle.ageType}" sortBy="#{race.ageType}" filterBy="#{race.ageType.text}" filterMatchMode="contains">
+								<p:column id="ageType" headerText="#{bundle.ageType}" sortBy="#{race.ageType}" filterBy="#{race.ageType.text}" filterMatchMode="contains">
 									<h:outputText value="#{race.ageType.text}"/>
 								</p:column>
-								<p:column headerText="#{bundle.gender}" sortBy="#{race.gender.text}" filterBy="#{race.gender.text}" filterMatchMode="contains">
+								<p:column id="gender" headerText="#{bundle.gender}" sortBy="#{race.gender.text}" filterBy="#{race.gender.text}" filterMatchMode="contains">
 									<h:outputText value="#{race.gender.text}"/>
 								</p:column>
 								<p:column headerText="#{bundle.distance}" sortBy="#{race.distance}" filterBy="#{race.distance}" filterMatchMode="contains">
@@ -81,14 +81,17 @@
 							</p:dataTable>
 						</td>
 						<td style="vertical-align: middle;">
-							<p:commandButton  icon="ui-icon-person" title="#{bundle.addRequest}"
+							<p:button icon="ui-icon-circle-arrow-e" title="#{bundle.copyFilter}"
+								onclick="copyFilters(); return false;"
+								style="margin-bottom: 1em"/>
+							<p:commandButton icon="ui-icon-person" title="#{bundle.addRequest}"
 								widgetVar="btnAddRequest"
 								action="#{registrationBean.addRequest(bundle)}"
 								process="@form"
 								update="registrationTable"
 								oncomplete="PF('registrationTable').filter()"
 								style="margin-bottom: 1em"/>
-							<p:commandButton  icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
+							<p:commandButton icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
 								widgetVar="btnAddAthlete"
 								action="#{registrationBean.addToRegistration()}"
 								process="@form"
@@ -137,10 +140,10 @@
 								<p:column headerText="#{bundle.lastName}" sortBy="#{user.lastName}" filterBy="#{user.lastName}" filterMatchMode="contains">
 									<h:outputText value="#{user.lastName}"/>
 								</p:column>
-								<p:column headerText="#{bundle.ageType}" sortBy="#{user.birthDate}" filterBy="#{user.ageType}" filterMatchMode="contains">
+								<p:column id="ageType" headerText="#{bundle.ageType}" sortBy="#{user.birthDate}" filterBy="#{user.ageType}" filterMatchMode="contains">
 									<h:outputText value="#{registrationBean.renderAgeType(user)}"/>
 								</p:column>
-								<p:column headerText="#{bundle.gender}" sortBy="#{user.gender}" filterBy="#{user.gender}" filterMatchMode="contains">
+								<p:column id="gender" headerText="#{bundle.gender}" sortBy="#{user.gender}" filterBy="#{user.gender}" filterMatchMode="contains">
 									<h:outputText value="#{user.gender.text}"/>
 								<h:outputScript rendered="#{rowIndex == 0}">
 									updateResultCount(#{registrationBean.athletes.rowCount});
@@ -203,5 +206,5 @@
 			</h:outputScript>
 
 		</ui:define>
-	</ui:decorate>
+	</ui:composition>
 </html>

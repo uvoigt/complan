@@ -92,6 +92,15 @@ function registrationEdit_enableButtons() {
 	else
 		PF("btnAddRequest").disable();
 }
+function copyFilters() {
+	var racesTable = PF("racesTable");
+	var athletesTable = PF("athletesTable");
+	var ageType = racesTable.jq.find("[name$=ageType\\:filter]").val();
+	athletesTable.jq.find("[name$=ageType\\:filter]").val(ageType);
+	var gender = racesTable.jq.find("[name$=gender\\:filter]").val();
+	athletesTable.jq.find("[name$=gender\\:filter]").val(gender);
+	athletesTable.filter();
+}
 function toggleColumn(table, index) {
 	var columnHeader = table.thead.children("tr").find("th:nth-child(" + index + ")");
 	columnHeader.toggleClass("ui-helper-hidden");
