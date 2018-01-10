@@ -7,7 +7,7 @@
 	xmlns:p="http://primefaces.org/ui"
 	xmlns:c="http://java.sun.com/jsp/jstl/core">
 
-	<ui:decorate template="/templates/edit.xhtml">
+	<ui:composition template="/templates/edit.xhtml">
 		<ui:param name="roles" value="Admin,Sportwart"/>
 		<ui:param name="bundle" value="#{messages.bundle('users')}"/>
 		<ui:param name="bean" value="#{userBean}"/>
@@ -103,5 +103,5 @@
 			</div>
 
 		</ui:define>
-	</ui:decorate>
+	</ui:composition>
 </html>

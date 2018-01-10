@@ -6,7 +6,7 @@
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:p="http://primefaces.org/ui">
 
-	<ui:decorate template="/templates/edit.xhtml">
+	<ui:composition template="/templates/edit.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('announcements')}"/>
 		<ui:param name="bean" value="#{announcementBean}"/>
 		<ui:param name="searchLink" value="/announcement/announcements.xhtml"/>
@@ -18,5 +18,5 @@
 
 			</h:panelGrid>
 		</ui:define>
-	</ui:decorate>
+	</ui:composition>
 </html>

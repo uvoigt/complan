@@ -6,7 +6,7 @@
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:p="http://primefaces.org/ui">
 
-	<ui:decorate template="/templates/edit.xhtml">
+	<ui:composition template="/templates/edit.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('clubs')}"/>
 		<ui:param name="bean" value="#{clubBean}"/>
 		<ui:param name="searchLink" value="/masterdata/clubs.xhtml"/>
@@ -17,5 +17,5 @@
 			<ui:include src="clubArea.xhtml"/>
 
 		</ui:define>
-	</ui:decorate>
+	</ui:composition>
 </html>

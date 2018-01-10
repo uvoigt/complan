@@ -6,7 +6,7 @@
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:p="http://primefaces.org/ui">
 
-	<ui:decorate template="/templates/edit.xhtml">
+	<ui:composition template="/templates/edit.xhtml">
 		<ui:param name="roles" value="Admin"/>
 		<ui:param name="bundle" value="#{messages.bundle('roles')}"/>
 		<ui:param name="bean" value="#{roleBean}"/>
@@ -32,5 +32,5 @@
 			</div>
 			
 		</ui:define>
-	</ui:decorate>
+	</ui:composition>
 </html>

@@ -7,7 +7,7 @@
 	xmlns:p="http://primefaces.org/ui"
 	xmlns:pe="http://primefaces.org/ui/extensions">
 
-	<ui:decorate template="/templates/edit.xhtml">
+	<ui:composition template="/templates/edit.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('announcements')}"/>
 		<ui:param name="bean" value="#{announcementBean}"/>
 		<ui:param name="searchLink" value="/announcement/announcements.xhtml"/>
@@ -89,5 +89,5 @@
 				width="90%"/>
 
 		</ui:define>
-	</ui:decorate>
+	</ui:composition>
 </html>

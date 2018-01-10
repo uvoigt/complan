@@ -6,7 +6,7 @@
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:p="http://primefaces.org/ui">
 
-	<ui:decorate template="/templates/search.xhtml">
+	<ui:composition template="/templates/search.xhtml">
 		<ui:param name="uploadBean" value="#{searchBean.uploadBean}"/>
 		<ui:param name="bundle" value="#{messages.bundle('programs')}"/>
 		<ui:param name="typ" value="org.planner.eo.Program"/>
@@ -15,5 +15,5 @@
 		<ui:param name="renderNewButton" value="false"/>
 		<ui:param name="renderCopyButton" value="false"/>
 		<ui:param name="renderImportPanel" value="false"/>
-	</ui:decorate>
+	</ui:composition>
 </html>
