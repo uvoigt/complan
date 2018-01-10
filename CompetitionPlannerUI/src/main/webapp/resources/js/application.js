@@ -97,11 +97,6 @@ function toggleColumn(table, index) {
 	columnHeader.toggleClass("ui-helper-hidden");
 	table.tbody.children("tr").find("td:nth-child(" + index + ")").toggleClass("ui-helper-hidden");
 }
-function initEmptyBirthDate() {
-	var birthDate = PF("birthDate");
-	if (birthDate.getDate() == null)
-		birthDate.setDate(new Date(new Date().getFullYear() - 15, 0, 1, 12));
-}
 function initExprText() {
 	var expr = PF("expr");
 	if (!expr)
