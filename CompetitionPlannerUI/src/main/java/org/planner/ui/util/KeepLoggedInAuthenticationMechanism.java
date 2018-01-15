@@ -56,8 +56,8 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 	@Override
 	@SuppressWarnings("deprecation")
 	public AuthenticationMechanismOutcome authenticate(HttpServerExchange exchange, SecurityContext securityContext) {
-		if (!exchange.getRequestMethod().equals(Methods.POST)
-				&& exchange.getRequestPath().endsWith(DEFAULT_POST_LOCATION)) {
+		if (!(exchange.getRequestMethod().equals(Methods.POST)
+				&& exchange.getRequestPath().endsWith(DEFAULT_POST_LOCATION))) {
 			Map<String, Cookie> cookies = exchange.getRequestCookies();
 			Cookie cookie = cookies.get(COOKIE_TOKEN);
 			if (cookie != null) {
