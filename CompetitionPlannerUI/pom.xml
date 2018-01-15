@@ -138,6 +138,24 @@
 			<version>3.0.1-b08-jbossorg-1</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>io.undertow</groupId>
+			<artifactId>undertow-servlet</artifactId>
+			<version>1.4.0.Final</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.wildfly</groupId>
+			<artifactId>wildfly-undertow</artifactId>
+			<version>10.1.0.Final</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.picketbox</groupId>
+			<artifactId>picketbox</artifactId>
+			<version>4.9.6.Final</version>
+			<scope>provided</scope>
+		</dependency>
 
 	</dependencies>
 
