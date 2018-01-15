@@ -130,7 +130,12 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			List<RegEntry> entries = new ArrayList<>(1);
 			entries.add(selectedEntry);
 			setAthletesToEntry(selectedEntry);
+
 			service.saveRegEntries(registration.getId(), entries);
+			// wurde etwas hinzugefügt. Um das im UI sichtbar zu machen
+			// kommt ein Effekt im Header der Tabelle in Frage
+			showEffect = true;
+
 		} else if (selectedRaces != null && !selectedRaces.isEmpty()) {
 			// es wird ein neuer RegEntry angelegt!
 
@@ -160,10 +165,8 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 				}
 			}
 			service.saveRegEntries(registration.getId(), entries);
+			showEffect = true;
 		}
-		// wurde etwas hinzugefügt. Um das im UI sichtbar zu machen
-		// kommt ein Effekt im Header der Tabelle in Frage
-		showEffect = true;
 		loadRegistration(registration.getId());
 	}
 
