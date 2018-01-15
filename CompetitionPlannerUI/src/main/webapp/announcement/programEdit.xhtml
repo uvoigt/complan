@@ -93,7 +93,7 @@
 					<h:panelGroup>
 						<h:outputText value="#{bundle.showTeams}"/>
 						<p:selectBooleanCheckbox value="#{programBean.showTeams}" style="margin-left: 5px">
-							<p:ajax partialSubmit="true" update="@form"/>
+							<p:ajax partialSubmit="true" update="programTable"/>
 						</p:selectBooleanCheckbox>
 					</h:panelGroup>
 					<p:commandButton widgetVar="swapRaces" value="#{bundle.swapRaces}" action="#{programBean.swapRaces()}"
