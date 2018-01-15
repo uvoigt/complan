@@ -42,7 +42,7 @@ public class RegistryBean implements Serializable {
 		String token = getToken(request);
 		if (token == null)
 			return null;
-		return service.authenticate(token);
+		return service.authenticate(token, true);
 	}
 
 	private String getToken(HttpServletRequest request) {

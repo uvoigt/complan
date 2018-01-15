@@ -41,9 +41,13 @@ public interface ServiceFacade extends IResultProvider {
 
 	String sendPasswortReset(Long userId, String resetUrl);
 
-	User authenticate(String token);
+	User authenticate(String token, boolean email);
 
 	String resetPassword(String token, String password);
+
+	String rememberMe(String currentToken);
+
+	void forgetMe(String currentToken);
 
 	<T extends AbstractEnum> T getEnumByName(String name, Class<T> enumType);
 

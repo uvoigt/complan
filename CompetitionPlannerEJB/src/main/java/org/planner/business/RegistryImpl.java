@@ -6,14 +6,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.text.DateFormat;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.Resource;
@@ -32,6 +36,8 @@ import org.apache.commons.lang.StringUtils;
 import org.planner.dao.PlannerDao;
 import org.planner.eo.Role;
 import org.planner.eo.Role_;
+import org.planner.eo.Token;
+import org.planner.eo.Token.TokenType;
 import org.planner.eo.User;
 import org.planner.model.Suchkriterien;
 import org.planner.util.CommonMessages;
@@ -68,16 +74,19 @@ public class RegistryImpl {
 	@Inject
 	private MasterDataServiceImpl masterData;
 
+	@Inject
+	private CommonImpl common;
+
 	@Resource(lookup = "java:jboss/mail/Default")
 	private Session session;
 
 	public String resetPassword(String token, String password) throws TechnischeException {
-		User user = authenticate(token);
+		User user = authenticate(token, true);
 		if (user == null)
 			return null;
 		user.setPassword(encodePw(password));
-		user.setToken(null);
-		user.setTokenExpires(null);
+		// lösche alle Tokens
+		user.getTokens().clear();
 		if (LOG.isInfoEnabled())
 			LOG.info("Neues Passwort für " + user + " gesetzt.");
 		// der Caller ist "anonymous", deshalb hier der Benutzer
@@ -91,9 +100,40 @@ public class RegistryImpl {
 		return user.getUserId();
 	}
 
-	public User authenticate(String token) {
-		if (token == null)
+	public User authenticate(String token, boolean email) {
+		byte[] hashFromToken = new byte[64]; // digest length sha-512
+		String userId = extractHashFromToken(token, hashFromToken);
+
+		User user = plannerDao.getUserByUserId(userId);
+		if (user == null)
 			return null;
+		Token storedToken = null;
+		if (email) {
+			storedToken = getStoredEmailToken(user);
+			if (!isTokenValid(user.getUserId(), storedToken, hashFromToken))
+				return null;
+		} else {
+			for (Token t : getStoredLoginTokens(user)) {
+				if (!isTokenValid(user.getUserId(), t, hashFromToken))
+					continue;
+				storedToken = t;
+				break;
+			}
+		}
+		if (storedToken == null)
+			return null;
+
+		if (System.currentTimeMillis() > storedToken.getTokenExpires()) {
+			if (LOG.isInfoEnabled())
+				LOG.info("Die Gültigkeit des Login- oder E-Mail-Tokens für " + user + " ist abgelaufen.");
+			user.getTokens().remove(storedToken);
+			plannerDao.saveToken(user);
+			return null;
+		}
+		return user;
+	}
+
+	private String extractHashFromToken(String token, byte[] hashFromToken) {
 		byte[] decoded = null;
 		try {
 			decoded = Base64.getDecoder().decode(token.getBytes("UTF8"));
@@ -101,27 +141,45 @@ public class RegistryImpl {
 			LOG.error("Fehler beim Dekodieren des Sicherheitstokens", e);
 			return null;
 		}
+
 		int paddingLength = decoded[0];
 		int idLength = decoded[paddingLength + 1];
-		long id = readLong(decoded, paddingLength + 2, idLength);
-		User user = plannerDao.getById(User.class, id);
-		if (user == null || user.getToken() == null || user.getTokenExpires() == null)
-			return null;
-
-		byte[] hash = shaHash(user.getUserId(), user.getToken(), user.getTokenExpires());
-		byte[] hashFromToken = new byte[64]; // digest length sha-512
 		System.arraycopy(decoded, paddingLength + idLength + 2, hashFromToken, 0, hashFromToken.length);
-		if (!Arrays.equals(hash, hashFromToken))
-			return null;
+		return new String(decoded, paddingLength + 2, idLength, Charset.forName("UTF8"));
+	}
 
-		if (System.currentTimeMillis() > user.getTokenExpires()) {
-			if (LOG.isInfoEnabled())
-				LOG.info("Die Gültigkeit des Passwort-Reset- bzw. Registrations-Links für " //
-						+ user + " ist abgelaufen.");
-			plannerDao.saveToken(user.getId(), null, null);
-			return null;
+	private boolean isTokenValid(String userId, Token token, byte[] hashFromToken) {
+		byte[] hash = shaHash(userId, token);
+		return Arrays.equals(hash, hashFromToken);
+	}
+
+	public String rememberMe(String currentToken) {
+		User user = common.getCallingUser();
+		removeToken(user, currentToken);
+		Token token = createAndStoreToken(user, TokenType.login, 60 * 24 * 31); // ein Monat
+		return createEncodedToken(user, token);
+	}
+
+	public void forgetMe(String currentToken) {
+		User user = common.getCallingUser();
+		removeToken(user, currentToken);
+		plannerDao.saveToken(user);
+	}
+
+	private void removeToken(User user, String encodedToken) {
+		if (encodedToken == null)
+			return;
+		List<Token> storedTokens = getStoredLoginTokens(user);
+		byte[] hashFromToken = new byte[64]; // digest length sha-512
+		String userId = extractHashFromToken(encodedToken, hashFromToken);
+		for (Token token : storedTokens) {
+			if (isTokenValid(userId, token, hashFromToken)) {
+				user.getTokens().remove(token);
+				if (LOG.isDebugEnabled())
+					LOG.debug("Removed authentication token: " + token);
+				break;
+			}
 		}
-		return user;
 	}
 
 	public String sendRegister(String email, String resetUrl) {
@@ -132,12 +190,11 @@ public class RegistryImpl {
 			if (user.getPassword() != null)
 				return getFormattedMessage("user.exists", email);
 
-			if (user.getToken() != null) {
-				Long expires = user.getTokenExpires();
-				long millisLeft = expires != null ? expires.longValue() - System.currentTimeMillis() : 0;
-				if (millisLeft > 0)
-					return getFormattedMessage("email.register.alreadysent",
-							CommonMessages.niceTimeString((int) (millisLeft / 1000 / 60)));
+			Token emailToken = getStoredEmailToken(user);
+			if (emailToken != null) {
+				if (emailToken.getTokenExpires() - System.currentTimeMillis() > 0)
+					return getFormattedMessage("email.register.alreadysent", CommonMessages.niceTimeString(
+							(int) ((emailToken.getTokenExpires() - System.currentTimeMillis()) / 1000 / 60)));
 			}
 		} else {
 			user = new User();
@@ -162,13 +219,12 @@ public class RegistryImpl {
 			plannerDao.save(user, email);
 		}
 
-		String token = UUID.randomUUID().toString();
-		Long expiryDate = storeToken(user.getId(), token, 120);
-		String emailToken = createEmailToken(user, token, expiryDate);
+		Token emailToken = createAndStoreToken(user, TokenType.email, 120);
+		String encodedToken = createEncodedToken(user, emailToken);
 
 		String subject = messages.getMessage("email.register.subject");
 		String emailText = getFormattedMessage("email.register.html",
-				DateFormat.getDateTimeInstance().format(expiryDate), resetUrl + "?t=" + emailToken);
+				DateFormat.getDateTimeInstance().format(emailToken.getTokenExpires()), resetUrl + "?t=" + encodedToken);
 
 		sendEmail(user, subject, emailText);
 		return getFormattedMessage("email.register.sent", email);
@@ -189,66 +245,69 @@ public class RegistryImpl {
 	}
 
 	private String internalSendPasswordReset(User user, String resetUrl) {
-		if (user.getToken() != null) {
+		Token emailToken = getStoredEmailToken(user);
+		if (emailToken != null) {
 			// es existiert bereits ein noch gültiges Sicherheitstoken.
-			Long expires = user.getTokenExpires();
-			long millisLeft = expires != null ? expires.longValue() - System.currentTimeMillis() : 0;
-			if (millisLeft > 0)
-				return getFormattedMessage("email.passwordreset.alreadysent",
-						CommonMessages.niceTimeString((int) (millisLeft / 1000 / 60)));
+			if (emailToken.getTokenExpires() - System.currentTimeMillis() > 0)
+				return getFormattedMessage("email.passwordreset.alreadysent", CommonMessages.niceTimeString(
+						(int) ((emailToken.getTokenExpires() - System.currentTimeMillis()) / 1000 / 60)));
 		}
-		String token = UUID.randomUUID().toString();
-		Long expiryDate = storeToken(user.getId(), token, 120);
-		String emailToken = createEmailToken(user, token, expiryDate);
+		emailToken = createAndStoreToken(user, TokenType.email, 120);
+		String encodedToken = createEncodedToken(user, emailToken);
 
 		String emailText = getFormattedMessage("email.passwordreset.html", user.getFirstName(), user.getLastName(),
-				DateFormat.getDateTimeInstance().format(expiryDate), resetUrl + "?t=" + emailToken);
+				DateFormat.getDateTimeInstance().format(emailToken.getTokenExpires()), resetUrl + "?t=" + encodedToken);
 
 		String subject = messages.getMessage("email.passwordreset.subject");
 		sendEmail(user, subject, emailText);
 		return getFormattedMessage("email.passwordreset.sent", user.getEmail());
 	}
 
-	private Long storeToken(Long userId, String token, int expiryMinutes) {
-		// aktualisiere den User
+	private Token createAndStoreToken(User user, TokenType type, int expiryMinutes) {
+		Token token = new Token();
+		token.setType(type);
+		token.setValue(UUID.randomUUID().toString());
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MINUTE, expiryMinutes);
-		Long tokenExpires = cal.getTime().getTime();
-		plannerDao.saveToken(userId, token, tokenExpires);
-		return tokenExpires;
+		token.setTokenExpires(cal.getTime().getTime());
+		user.getTokens().add(token);
+		plannerDao.saveToken(user);
+		if (LOG.isDebugEnabled())
+			LOG.debug("Saved authentication token: " + token);
+		return token;
 	}
 
-	private String createEmailToken(User user, String token, Long expiryDate) {
-		String emailToken = null;
+	private String createEncodedToken(User user, Token token) {
+		String encodedToken = null;
 		try {
 			/*
 			 * Das Token hat folgende Zusammensetzung: - Länge der Random-Padding-Section (1 byte) - Random-Padding
-			 * Section - Länge der User-ID in Bytes (1 byte) - User-ID - SHA-Hash (64 byte)
+			 * Section - Länge der User-ID in Bytes (1 byte) - UserId (bis hierhin war es nur obfuscation) - SHA-Hash
+			 * (64 byte)
 			 */
-			byte[] id = new byte[8];
+			byte[] id = user.getUserId().getBytes(Charset.forName("UTF8"));
 			// hänge die User-ID an das Token, um eine Identifikation zu
 			// erleichtern
 			// man könnte sonst auch alle gespeicherten Tokens durchprobieren
-			int idLength = writeLong(id, user.getId());
-			byte[] hash = shaHash(user.getUserId(), token, expiryDate);
+			byte[] hash = shaHash(user.getUserId(), token);
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			int paddingLength = (int) (50 * Math.random());
 			for (int i = 0; i < paddingLength; i++) {
 				out.write((byte) (256 * Math.random()));
 			}
 			byte[] padding = out.toByteArray();
-			byte[] tokenBytes = new byte[1 + padding.length + 1 + idLength + hash.length];
+			byte[] tokenBytes = new byte[1 + padding.length + 1 + id.length + hash.length];
 			tokenBytes[0] = (byte) paddingLength;
 			System.arraycopy(padding, 0, tokenBytes, 1, padding.length);
-			tokenBytes[padding.length + 1] = (byte) idLength;
-			System.arraycopy(id, id.length - idLength, tokenBytes, padding.length + 2, idLength);
-			System.arraycopy(hash, 0, tokenBytes, padding.length + 2 + idLength, hash.length);
-			emailToken = new String(Base64.getEncoder().encode(tokenBytes), "UTF8");
-			emailToken = URLEncoder.encode(emailToken, "UTF8");
+			tokenBytes[padding.length + 1] = (byte) id.length;
+			System.arraycopy(id, 0, tokenBytes, padding.length + 2, id.length);
+			System.arraycopy(hash, 0, tokenBytes, padding.length + 2 + id.length, hash.length);
+			encodedToken = new String(Base64.getEncoder().encode(tokenBytes), "UTF8");
+			encodedToken = URLEncoder.encode(encodedToken, "UTF8");
 		} catch (Exception e) {
 			LogUtil.handleException(e, LOG, "Fehler beim Erzeugen des Sicherheitstokens", user);
 		}
-		return emailToken;
+		return encodedToken;
 	}
 
 	private String getFormattedMessage(String key, Object... arguments) {
@@ -303,38 +362,38 @@ public class RegistryImpl {
 		}
 	}
 
-	private byte[] shaHash(String userId, String token, long tokenExpires) {
+	private Token getStoredEmailToken(User user) {
+		Set<Token> tokens = user.getTokens();
+		if (tokens.isEmpty())
+			return null;
+		for (Token t : tokens) {
+			if (t.getType() == TokenType.email)
+				return t;
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<Token> getStoredLoginTokens(User user) {
+		Set<Token> tokens = user.getTokens();
+		if (tokens.isEmpty())
+			return Collections.EMPTY_LIST;
+		List<Token> result = new ArrayList<>();
+		for (Token t : tokens) {
+			if (t.getType() == TokenType.login)
+				result.add(t);
+		}
+		return result;
+	}
+
+	private byte[] shaHash(String userId, Token token) {
 		try {
 			MessageDigest sha = MessageDigest.getInstance("SHA-512");
 			// erzeuge eine Hashwert über ein Random-Token, den Anmeldenamen
 			// sowie den Ablaufzeitpunkt
-			return sha.digest((token + userId + tokenExpires).getBytes("UTF8"));
+			return sha.digest((token.getValue() + userId + token.getTokenExpires()).getBytes("UTF8"));
 		} catch (Exception e) {
 			throw new TechnischeException("Fehler beim Erstellen des SHA-Digest", e);
 		}
-	}
-
-	private int writeLong(byte[] buf, long v) {
-		buf[0] = (byte) (v >>> 56);
-		buf[1] = (byte) (v >>> 48);
-		buf[2] = (byte) (v >>> 40);
-		buf[3] = (byte) (v >>> 32);
-		buf[4] = (byte) (v >>> 24);
-		buf[5] = (byte) (v >>> 16);
-		buf[6] = (byte) (v >>> 8);
-		buf[7] = (byte) (v >>> 0);
-		for (int i = 0; i < buf.length; i++) {
-			if (buf[i] > 0)
-				return buf.length - i;
-		}
-		return buf.length;
-	}
-
-	private long readLong(byte[] buf, int offset, int length) {
-		long result = 0;
-		for (int i = offset + length - 1, x = 0; i >= offset; i--, x += 8) {
-			result += (buf[i] & 255) << x;
-		}
-		return result;
 	}
 }

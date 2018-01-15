@@ -229,11 +229,9 @@ public class PlannerDao {
 				.setParameter("current_timestamp", new Date()).setParameter("userId", userId).executeUpdate();
 	}
 
-	public void saveToken(Long id, String token, Long expiry) {
+	public void saveToken(User user) {
 		// verhindert das Eintragen des anonymous update users
-		em.createQuery("update User u set u.token = :token, u.tokenExpires = :tokenExpires where u.id = :id")
-				.setParameter("token", token).setParameter("tokenExpires", expiry).setParameter("id", id)
-				.executeUpdate();
+		em.merge(user);
 	}
 
 	/**

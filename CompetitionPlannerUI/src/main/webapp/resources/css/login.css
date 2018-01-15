@@ -63,17 +63,24 @@ input.submit {
 	width: 6em;
 }
 .recovery {
-	height: 20px;
-}
-.recovery a {
+	height: 35px;
 	color: #9fa6ad;
 	font-size: 11px;
-	text-decoration: none;
+}
+.recovery input {
+	width: auto;
+	position: relative;
+	top: -5px;
+}
+.recovery label {
 	position: relative;
 	top: -8px;
 }
-.recovery .register {
-	top: -15px;
+.recovery a {
+	color: #9fa6ad;
+	text-decoration: none;
+	position: relative;
+	top: -10px;
 }
 .modal {
 	background-color: black;

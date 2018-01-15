@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -14,6 +15,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -55,8 +57,6 @@ public class User extends AbstractEntity {
 	private Gender gender;
 
 	private String password;
-	private String token;
-	private Long tokenExpires;
 
 	@ManyToMany
 	@JoinTable(inverseJoinColumns = @JoinColumn(name = "role_id"))
@@ -76,6 +76,10 @@ public class User extends AbstractEntity {
 	@Visible(initial = false, order = 6)
 	private Boolean locked;
 
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@JoinColumn(name = "user_id")
+	private Set<Token> tokens;
+
 	public String getUserId() {
 		return userId;
 	}
@@ -90,22 +94,6 @@ public class User extends AbstractEntity {
 
 	public void setPassword(String password) {
 		this.password = password;
-	}
-
-	public String getToken() {
-		return token;
-	}
-
-	public void setToken(String token) {
-		this.token = token;
-	}
-
-	public Long getTokenExpires() {
-		return tokenExpires;
-	}
-
-	public void setTokenExpires(Long tokenExpires) {
-		this.tokenExpires = tokenExpires;
 	}
 
 	public Set<Role> getRoles() {
@@ -190,5 +178,9 @@ public class User extends AbstractEntity {
 
 	public AgeType getAgeType() {
 		return AgeType.getAgeType(birthDate);
+	}
+
+	public Set<Token> getTokens() {
+		return tokens;
 	}
 }

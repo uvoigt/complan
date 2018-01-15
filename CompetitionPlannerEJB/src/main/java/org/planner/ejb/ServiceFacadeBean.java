@@ -114,14 +114,24 @@ public class ServiceFacadeBean implements ServiceFacade {
 
 	@Override
 	@PermitAll
-	public User authenticate(String token) {
-		return registry.authenticate(token);
+	public User authenticate(String token, boolean email) {
+		return registry.authenticate(token, email);
 	}
 
 	@Override
 	@PermitAll
 	public String resetPassword(String token, String password) {
 		return registry.resetPassword(token, password);
+	}
+
+	@Override
+	public String rememberMe(String currentToken) {
+		return registry.rememberMe(currentToken);
+	}
+
+	@Override
+	public void forgetMe(String currentToken) {
+		registry.forgetMe(currentToken);
 	}
 
 	@Override

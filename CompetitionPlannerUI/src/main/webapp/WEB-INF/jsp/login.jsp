@@ -26,19 +26,21 @@
 				<table>
 					<tbody>
 						<tr>
-							<td><input type="text" name="j_username" placeholder="<f:message key="loginName"/>" autocomplete="off"/></td>
+							<td colspan="2"><input type="text" name="j_username" placeholder="<f:message key="loginName"/>" autocomplete="off"/></td>
 						</tr>
 						<tr>
-							<td><input type="password" name="j_password" placeholder="<f:message key="loginPass"/>" /></td>
+							<td colspan="2"><input type="password" name="j_password" placeholder="<f:message key="loginPass"/>" /></td>
 						</tr>
 						<tr>
-							<td colspan="2" align="right">
+							<td align="right">
 								<div class="recovery">
+									<input type="checkbox" id="stayLoggedIn" checked="checked"/><label for="stayLoggedIn"><f:message key="loginStayLoggedIn"/></label>
+									<br />
 									<a href="" onclick="sendRecovery('<f:message key="loginUserMsg"/>', '<f:message key="loginUserError"/>'); return false;">
 										<f:message key="loginRecovery"/>
 									</a>
 									<br />
-									<a href="" class="register" onclick="register('<f:message key="loginRegisterMsg"/>'); return false;">
+									<a href="" onclick="register('<f:message key="loginRegisterMsg"/>'); return false;">
 										<f:message key="loginRegister"/>
 									</a>
 								</div>

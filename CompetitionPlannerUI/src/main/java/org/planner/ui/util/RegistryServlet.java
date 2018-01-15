@@ -1,6 +1,7 @@
 package org.planner.ui.util;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import java.util.ResourceBundle;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -157,6 +159,19 @@ public class RegistryServlet extends HttpServlet {
 	}
 
 	private void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		Cookie[] cookies = request.getCookies();
+		for (Cookie cookie : cookies) {
+			if (KeepLoggedInAuthenticationMechanism.COOKIE_TOKEN.equals(cookie.getName())) {
+				service.forgetMe(URLDecoder.decode(cookie.getValue(), "UTF8"));
+				if (LOG.isDebugEnabled())
+					LOG.debug("Deleting authentication cookie: " + cookie.getValue());
+				cookie = new Cookie(KeepLoggedInAuthenticationMechanism.COOKIE_TOKEN, null);
+				cookie.setPath(request.getContextPath());
+				cookie.setMaxAge(0);
+				response.addCookie(cookie);
+				break;
+			}
+		}
 		request.logout();
 		request.getSession().invalidate();
 		writeResult(response, "ok");

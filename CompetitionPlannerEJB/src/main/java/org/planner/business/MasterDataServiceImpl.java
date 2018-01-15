@@ -83,8 +83,6 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 			else
 				user.setPassword(existing.getPassword());
 			// sichere extra Properties vor dem Überschreiben
-			user.setToken(existing.getToken());
-			user.setTokenExpires(existing.getTokenExpires());
 			if (loggedInUser != null) // nicht Admin
 				user.setLocked(existing.isLocked());
 		}

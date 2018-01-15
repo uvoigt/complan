@@ -23,6 +23,7 @@
 		<class>org.planner.eo.Role</class>
 		<class>org.planner.eo.Team</class>
 		<class>org.planner.eo.TeamMember</class>
+		<class>org.planner.eo.Token</class>
 		<class>org.planner.eo.User</class>
 
 		<properties>

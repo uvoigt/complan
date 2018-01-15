@@ -109,7 +109,7 @@
     <url-pattern>/userimg</url-pattern>
   </servlet-mapping>
   <login-config>
-    <auth-method>FORM</auth-method>
+    <auth-method>KEEP</auth-method>
     <form-login-config>
       <form-login-page>/login</form-login-page>
       <form-error-page>/login</form-error-page>

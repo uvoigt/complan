@@ -45,6 +45,8 @@ function sendLogin(title, msgError) {
 	var req = createXMLHttpRequest();
 	req.open("POST", "j_security_check");
 	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+	if (document.loginform.stayLoggedIn.checked)
+		req.setRequestHeader("Stay-Logged-In", "true");
 	req.onreadystatechange = function() {
 		if (req.readyState == 4) {
 			if (req.status == 200 && req.responseText.indexOf(title) == -1)
