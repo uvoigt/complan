@@ -34,7 +34,6 @@
 					</h:selectOneMenu>
 				</h:form>
 				<h:panelGroup id="currentUser">
-					#{startseiteBean.saveLastLogonTime()}
 					<p:graphicImage id="userimg" value="userimg" alt="" cache="false" stream="false" width="32" height="32"
 						title="#{bundle.format('loggedin', startseiteBean.leseBenutzerNamen(request.remoteUser))}"/>
 					<p:overlayPanel id="currentUserMenu" my="middle top" for="userimg" styleClass="profileMenu" widgetVar="profileMenu" appendToBody="true">

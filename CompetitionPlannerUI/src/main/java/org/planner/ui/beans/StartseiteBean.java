@@ -97,6 +97,7 @@ public class StartseiteBean implements Serializable {
 		JsfUtil.setViewVariable("rows", null);
 		JsfUtil.setViewVariable("filters", null);
 		JsfUtil.setViewVariable("sortState", null);
+		JsfUtil.setViewVariable("selectedItem", null);
 	}
 
 	public void setHelpVisible(boolean visible) {
@@ -131,14 +132,6 @@ public class StartseiteBean implements Serializable {
 		// Download nicht klappt
 		if (StringUtils.isNotEmpty(theme)) {
 			benutzerEinstellungen.setValue("theme", theme);
-		}
-	}
-
-	public void saveLastLogonTime() {
-		Object object = FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get("logonSaved");
-		if (!Boolean.TRUE.equals(object)) {
-			FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("logonSaved", Boolean.TRUE);
-			service.saveLastLogonTime();
 		}
 	}
 

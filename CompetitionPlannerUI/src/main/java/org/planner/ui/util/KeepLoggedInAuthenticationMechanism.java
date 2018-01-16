@@ -44,7 +44,7 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 
 	private static final ThreadLocal<User> authenticatedUser = new ThreadLocal<>();
 
-	public static User getAuthenticatedUser() {
+	static User getAuthenticatedUser() {
 		return authenticatedUser.get();
 	}
 
@@ -79,6 +79,13 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 					if (account != null) {
 						securityContext.authenticationComplete(account, securityContext.getMechanismName(), true);
 						outcome = AuthenticationMechanismOutcome.AUTHENTICATED;
+						// im Moment keine Idee, wie der mehrfache Aufruf beim Hereinkommen mehrerer
+						// nicht authentisierter Requests verhindert werden kann:
+						// die HTTP-Session existiert noch nicht (aber auch wenn man sie neu erzeugt, hilft das nichts,
+						// da alle Requests ohne Session-Cookie kommen)
+						// und an den Security-Context, der in den Attachments steckt,
+						// kommt man aus Classloading-Gründen nicht heran
+						saveLastLogonTime();
 					} else {
 						securityContext.authenticationFailed(MESSAGES.authenticationFailed(user.getUserId()),
 								securityContext.getMechanismName());
@@ -105,6 +112,7 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 			if (LOG.isDebugEnabled())
 				LOG.debug("Added new authentication cookie " + newCookieValue);
 		}
+		saveLastLogonTime();
 		super.handleRedirectBack(exchange);
 	}
 
@@ -116,6 +124,10 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 		calendar.add(Calendar.MONTH, 1);
 		cookie.setExpires(calendar.getTime());
 		exchange.setResponseCookie(cookie);
+	}
+
+	private void saveLastLogonTime() {
+		getService().saveLastLogonTime();
 	}
 
 	private ServiceFacade getService() {
