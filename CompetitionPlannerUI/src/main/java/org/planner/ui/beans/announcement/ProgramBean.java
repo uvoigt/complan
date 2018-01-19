@@ -1,5 +1,6 @@
 package org.planner.ui.beans.announcement;
 
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -24,13 +25,16 @@ import org.planner.eo.User;
 import org.planner.model.AgeType;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.Messages;
+import org.planner.ui.beans.UploadBean;
+import org.planner.ui.beans.UploadBean.DownloadHandler;
+import org.planner.ui.util.BerichtGenerator;
 import org.planner.ui.util.JsfUtil;
 import org.planner.util.ExpressionParser;
 import org.planner.util.LogUtil.FachlicheException;
 
 @Named
 @RequestScoped
-public class ProgramBean extends AbstractEditBean {
+public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	private static final long serialVersionUID = 1L;
 
@@ -38,6 +42,8 @@ public class ProgramBean extends AbstractEditBean {
 
 	@Inject
 	private Messages messages;
+
+	private UploadBean uploadBean;
 
 	private Program program;
 
@@ -49,6 +55,8 @@ public class ProgramBean extends AbstractEditBean {
 
 	@PostConstruct
 	public void init() {
+		uploadBean = new UploadBean(this, null, null);
+
 		Long id = getIdFromRequestParameters();
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
@@ -73,6 +81,24 @@ public class ProgramBean extends AbstractEditBean {
 
 	@Override
 	protected void doSave() {
+	}
+
+	@Override
+	public String getDownloadFileName(Object selection) {
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selection, "id");
+		loadProgram(id);
+		Announcement announcement = program.getAnnouncement();
+		return JsfUtil.getScopedBundle().format("pdfName", announcement.getName(), announcement.getStartDate());
+	}
+
+	@Override
+	public void handleDownload(OutputStream out, String typ, Object selection) throws Exception {
+		new BerichtGenerator().generate(program, out);
+	}
+
+	public UploadBean getUploadBean() {
+		return uploadBean;
 	}
 
 	public Program getProgram() {
