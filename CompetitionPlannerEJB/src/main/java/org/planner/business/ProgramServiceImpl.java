@@ -327,13 +327,16 @@ public class ProgramServiceImpl {
 
 				semiFinals.add(semiFinal);
 			}
-			ProgramRace theFinal = new ProgramRace();
-			theFinal.setRace(race);
-			theFinal.setRaceType(RaceType.finalA);
-			theFinal.setIntoFinal(1); // TODO
-			theFinal.setIntoSemiFinal(0);
+			// falls instant final.. dann braucht es kein weiteres Finale
+			if (!heats.isEmpty()) {
+				ProgramRace theFinal = new ProgramRace();
+				theFinal.setRace(race);
+				theFinal.setRaceType(RaceType.finalA);
+				theFinal.setIntoFinal(1); // TODO
+				theFinal.setIntoSemiFinal(0);
 
-			finals.add(theFinal);
+				finals.add(theFinal);
+			}
 
 			allHeats.addAll(heats);
 			heats.clear();
