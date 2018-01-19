@@ -2,14 +2,17 @@ package org.planner.ui.beans;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.StringUtils;
 import org.planner.model.IResultProvider;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.SearchBean.ColumnModel;
+import org.planner.ui.util.JsfUtil;
 import org.primefaces.component.column.Column;
 import org.primefaces.model.LazyDataModel;
 import org.primefaces.model.SortMeta;
@@ -36,12 +39,47 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 	private List<ColumnModel> columns;
 	private List<ColumnModel> mandatory;
 
+	private HashMap<String, Object> filterPreset;
+
 	public RemoteDataModel(IResultProvider provider, Class<T> type, List<ColumnModel> columns,
 			List<ColumnModel> mandatoryColumns) {
 		dataProvider = provider;
 		zeilentyp = type;
 		this.columns = columns;
 		this.mandatory = mandatoryColumns;
+	}
+
+	/*
+	 * überschrieben, um den RequestScope des Beans zu ermöglichen
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public boolean isRowAvailable() {
+		if (getWrappedData() != null)
+			return super.isRowAvailable();
+
+		Integer first = (Integer) JsfUtil.getViewVariable("first");
+		Integer rows = (Integer) JsfUtil.getViewVariable("rows");
+		List<SortMeta> sortState = (List<SortMeta>) JsfUtil.getViewVariable("sortState");
+		Map<String, Object> filters = (Map<String, Object>) JsfUtil.getViewVariable("filters");
+
+		List<T> data = load(first != null ? first : 0, rows != null ? rows : getPageSize(), sortState, filters);
+		setWrappedData(data);
+		return getRowIndex() >= 0 && getRowIndex() < data.size();
+	}
+
+	/*
+	 * überschrieben, um den RequestScope des Beans zu ermöglichen
+	 */
+	@Override
+	public void setRowIndex(int rowIndex) {
+		if (getPageSize() == 0)
+			setPageSize(50);
+		super.setRowIndex(rowIndex);
+	}
+
+	public void setFilterPreset(HashMap<String, Object> filters) {
+		filterPreset = filters;
 	}
 
 	@Override
@@ -52,6 +90,14 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 	@Override
 	public List<T> load(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters) {
 
+		if (filterPreset != null) {
+			if (filters == null)
+				filters = new HashMap<>();
+			for (String name : filterPreset.keySet()) {
+				if (!filters.containsKey(name))
+					filters.put(name, filterPreset.get(name));
+			}
+		}
 		Suchergebnis<T> ergebnis = dataProvider.search(zeilentyp,
 				createKriterien(first, pageSize, multiSortMeta, filters, columns));
 		setRowCount(ergebnis.getGesamtgroesse());
@@ -108,7 +154,7 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 		// mit leeren Strings geliefert
 		if (filters != null) {
 			for (Entry<String, Object> e : filters.entrySet()) {
-				if (!"".equals(e.getKey()) && !"".equals(e.getValue()))
+				if (StringUtils.isNotEmpty(e.getKey()) && e.getValue() != null && !"".equals(e.getValue()))
 					krit.addFilter(e.getKey(), e.getValue());
 			}
 		}

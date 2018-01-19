@@ -48,7 +48,7 @@
 			<h:panelGroup layout="block" style="margin: 5px; float: right" rendered="#{renderDownloadPanel}">
 				<p:commandButton value="#{bundle.download}"
 						ajax="false"
-						action="#{uploadBean.download(typ)}"
+						action="#{uploadBean.download(typ, 'application/csv', 'iso-8859-1', null)}"
 						style="float: left; margin-top: 3px">
 				</p:commandButton>
 				<h:panelGroup layout="block" style="float: left">
@@ -80,7 +80,6 @@
 				lazy="true" paginator="true" paginatorAlwaysVisible="false"
 				emptyMessage="#{bundle.noResult}" filterEvent="enter"
 				sortMode="multiple" selectionMode="single" selection="#{searchBean.selectedItem}"
-				binding="#{searchBean.datatable[null]}"
 				rows="#{searchBean.numberOfRows}" rowsPerPageTemplate="50,100,500,1000"
 				reflow="true">
 
@@ -149,10 +148,24 @@
 					updateResultCount(#{searchBean.getDataModel(typ).rowCount});
 				</h:outputScript>
 				<h:outputScript rendered="#{rowIndex == (searchBean.getDataModel(typ).rowCount - 1)}">
-					updateColumnWidth(#{searchBean.getMaxButtonCount(component)});
+					updateColumnWidth(#{searchBean.getMaxButtonCount()});
 				</h:outputScript>
 			</p:column>
 		</p:dataTable>
+
+		<h:panelGroup rendered="#{renderDownloadSupport}">
+			<p:commandButton widgetVar="pdfButton" style="display: none"
+					action="#{uploadBean.download(null, 'application/pdf', null, null)}"
+					ajax="false" process="@this"/>
+	
+			<h:outputScript>
+				$(datenForm).submit(function(e) {
+					setTimeout(function() {
+						$(datenForm).find(".ui-submit-param").remove();
+					}, 10);
+				});
+			</h:outputScript>
+		</h:panelGroup>
 
 	</h:form>
 

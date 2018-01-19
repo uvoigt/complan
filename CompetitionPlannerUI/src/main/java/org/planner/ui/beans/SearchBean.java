@@ -14,14 +14,13 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.el.ELResolver;
+import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
-import javax.faces.component.UIOutput;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ComponentSystemEvent;
 import javax.faces.event.PhaseId;
-import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -58,7 +57,7 @@ import org.primefaces.model.Visibility;
  */
 // @Logged
 @Named
-@ViewScoped
+@RequestScoped
 public class SearchBean implements DownloadHandler, UploadHandler, Serializable {
 	public static class ColumnModel implements Serializable {
 		private static final long serialVersionUID = 1L;
@@ -97,15 +96,11 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 	private static final long serialVersionUID = 1L;
 
-	private Map<String, RemoteDataModel<? extends Serializable>> dataModels = new HashMap<String, RemoteDataModel<? extends Serializable>>();
+	private RemoteDataModel<Serializable> dataModel;
 
 	private Map<String, List<ColumnModel>> columns = new HashMap<String, List<ColumnModel>>();
 
-	private Map<String, DataTable> datatables = new HashMap<String, DataTable>();
-
 	private UploadBean uploadBean;
-
-	private Object selectedItem;
 
 	@Inject
 	private CsvBean csvBean;
@@ -135,13 +130,10 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	@Override
-	public void handleDownload(OutputStream out, String typ) throws Exception {
+	public void handleDownload(OutputStream out, String typ, Object selection) throws Exception {
 		List<ColumnModel> exportColumns = createExportColumns(typ);
 		RemoteDataModel<Serializable> model = createDataModel(typ, exportColumns, null);
-		// TODO das war schemaName
-		Map<String, Object> filter = datatables.get(null).getFilters();
-
-		List<Serializable> list = model.load(0, Integer.MAX_VALUE, null, filter);
+		List<Serializable> list = model.load(0, Integer.MAX_VALUE, null, null);
 		csvBean.writeEntities(exportColumns, out, list, FacesContext.getCurrentInstance().getELContext());
 	}
 
@@ -155,7 +147,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	@Override
-	public String getDownloadFileName() {
+	public String getDownloadFileName(Object selection) {
 		String typ = (String) JsfUtil.getContextVariable("typ");
 		String timestamp = DateFormat.getDateTimeInstance().format(new Date());
 		timestamp = timestamp.replace(' ', '_');
@@ -232,23 +224,16 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	public Object getSelectedItem() {
-		return selectedItem;
+		return JsfUtil.getViewVariable("selectedItem");
 	}
 
 	public void setSelectedItem(Object selectedItem) {
-		this.selectedItem = selectedItem;
-	}
-
-	public Map<String, DataTable> getDatatable() {
-		return datatables;
+		JsfUtil.setViewVariable("selectedItem", selectedItem);
 	}
 
 	public RemoteDataModel<? extends Serializable> getDataModel(String typ) throws Exception {
-		RemoteDataModel<? extends Serializable> dataModel = dataModels.get(typ);
-		if (dataModel == null) {
+		if (dataModel == null)
 			dataModel = createDataModel(typ, getColumns(typ), getMandatoryColumns(typ));
-			dataModels.put(typ, dataModel);
-		}
 		return dataModel;
 	}
 
@@ -281,7 +266,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	public void bearbeiten(String link, String typ, ITarget targetBean) throws Exception {
-		bearbeiten(link, typ, selectedItem, targetBean);
+		bearbeiten(link, typ, getSelectedItem(), targetBean);
 	}
 
 	public void bearbeiten(String link, Long selectedItemId, ITarget targetBean) throws Exception {
@@ -299,72 +284,10 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, messages.get("copyHint")));
 	}
 
-	public void alleKopieren(String link, String typ, String schemaName, Object targetBean) throws Exception {
-		// ((UIInput)
-		// FacesContext.getCurrentInstance().getViewRoot().findComponent("copyForm:selectedAttribute")).resetValue();
-		// ((UIInput)
-		// FacesContext.getCurrentInstance().getViewRoot().findComponent("copyForm:attributeValue")).resetValue();
-		// Map<String, Object> filter = datatables.get(schemaName).getFilters();
-		// DatenSuchkriterien kriterien = new DatenSuchkriterien();
-		// kriterien.setFilter(filter);
-		// kriterien.setKonfigSetId(startseiteVerwaltenBean.getAusgewaehlteKonfiguration().getId());
-		// SchemaTyp schemaTyp =
-		// startseiteVerwaltenBean.getSchema().getSchemaEntry(schemaName);
-		// String selectedAttribute =
-		// FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("copyForm:selectedAttribute");
-		// if (selectedAttribute == null)
-		// return;
-		// String attributeValue =
-		// FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("copyForm:attributeValue");
-		// kriterien.setSchemaId(schemaTyp.getId());
-		// SchemaAttribut attr = schemaTyp.byName(selectedAttribute);
-		// kriterien.setProperties(Arrays.asList(attr.getXpath(),
-		// attributeValue));
-		// int count = adminService.kopieren(loadTyp(typ, AbstraktEO.class),
-		// kriterien);
-		// FacesContext.getCurrentInstance().addMessage(null, new
-		// FacesMessage(null,
-		// JsfUtil.getScopedBundle().format("massCopySuccess", count,
-		// schemaName, selectedAttribute, attributeValue)));
-	}
-
 	public void loeschen(String typ, Object id) throws Exception {
 		service.delete(loadTyp(typ, AbstractEntity.class), (Long) id);
 		String msg = JsfUtil.getScopedBundle().get("deleteSuccess");
 		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, msg));
-	}
-
-	public void alleLoeschen(String link, String typ, Object targetBean) throws Exception {
-		// Map<String, Object> filter = datatables.get(schemaName).getFilters();
-		// DatenSuchkriterien kriterien = new DatenSuchkriterien();
-		// kriterien.setFilter(filter);
-		// KonfigsetEO konfigSet =
-		// startseiteVerwaltenBean.getAusgewaehlteKonfiguration();
-		// kriterien.setKonfigSetId(konfigSet.getId());
-		// SchemaTyp schemaTyp =
-		// startseiteVerwaltenBean.getSchema().getSchemaEntry(schemaName);
-		// if (schemaTyp != null)
-		// kriterien.setSchemaId(schemaTyp.getId());
-		// int count = adminService.loeschen(loadTyp(typ, AbstraktEO.class),
-		// kriterien);
-		// FacesContext.getCurrentInstance().addMessage(null, new
-		// FacesMessage(null,
-		// JsfUtil.getScopedBundle().format("massDeleteSuccess", count,
-		// schemaName)));
-		// if ("Konfigschema".equals(schemaName)) {
-		// startseiteVerwaltenBean.setAusgewaehlteKonfiguration(null);
-		// startseiteVerwaltenBean.setAusgewaehlteKonfiguration(konfigSet);
-		// }
-	}
-
-	public void alleBearbeiten(String link, String typ, String schemaName, Object targetBean) throws Exception {
-		// anlegen(link, typ, schemaName, targetBean);
-		// PropertyUtils.setProperty(targetBean, "filters",
-		// datatables.get(schemaName).getFilters());
-		// FacesContext.getCurrentInstance().addMessage(null, new
-		// FacesMessage(null,
-		// bundle.format("sucheDaten.massModifyHint", getDataModel(typ,
-		// schemaName).getRowCount())));
 	}
 
 	public String render(Object o, ColumnModel column) {
@@ -397,10 +320,6 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		return doRender(v, column);
 	}
 
-	public void clearDataModels() {
-		dataModels.clear();
-	}
-
 	public void onPrerenderTable(ComponentSystemEvent event) {
 		DataTable table = (DataTable) event.getComponent();
 		Integer first = (Integer) JsfUtil.getViewVariable("first");
@@ -423,7 +342,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		String typ = (String) JsfUtil.getContextVariable("typ");
 		columnHandler.persistToggleState(loadTyp(typ, AbstractEntity.class), (int) event.getData(),
 				event.getVisibility() == Visibility.VISIBLE);
-		dataModels.remove(typ);
+		dataModel = null;
 		columns.remove(typ);
 	}
 
@@ -444,7 +363,9 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		return buttonCount;
 	}
 
-	public int getMaxButtonCount(UIOutput output) {
-		return ((MutableInt) datatables.get(null).getAttributes().get("maxButtons")).intValue();
+	public int getMaxButtonCount() {
+		UIComponent datatable = FacesContext.getCurrentInstance().getViewRoot()
+				.findComponent("datenForm:suchErgebnisTable");
+		return ((MutableInt) datatable.getAttributes().get("maxButtons")).intValue();
 	}
 }
