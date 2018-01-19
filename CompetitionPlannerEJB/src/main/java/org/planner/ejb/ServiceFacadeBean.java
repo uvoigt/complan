@@ -17,6 +17,7 @@ import org.planner.business.RegistryImpl;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEnum;
 import org.planner.eo.Announcement;
+import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
 import org.planner.eo.ProgramRace;
@@ -24,6 +25,7 @@ import org.planner.eo.Properties;
 import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
+import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.Suchergebnis;
@@ -213,8 +215,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public void announce(Long announcementId) {
-		announcement.announce(announcementId);
+	public void setAnnouncementStatus(Long announcementId, AnnouncementStatus status) {
+		announcement.setAnnouncementStatus(announcementId, status);
 	}
 
 	@Override
@@ -234,8 +236,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public void submitRegistration(Long registrationId) {
-		announcement.submitRegistration(registrationId);
+	public void setRegistrationStatus(Long registrationId, RegistrationStatus status) {
+		announcement.setRegistrationStatus(registrationId, status);
 	}
 
 	@Override

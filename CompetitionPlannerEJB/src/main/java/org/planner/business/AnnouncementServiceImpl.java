@@ -291,10 +291,12 @@ public class AnnouncementServiceImpl {
 		}
 	}
 
-	public void announce(Long announcementId) {
+	public void setAnnouncementStatus(Long announcementId, AnnouncementStatus status) {
 		Announcement announcement = common.getById(Announcement.class, announcementId, 0);
 		common.checkWriteAccess(announcement, Operation.save);
-		announcement.setStatus(AnnouncementStatus.announced);
+		if (!caller.isInRole("Tester") && status != AnnouncementStatus.announced)
+			throw new FachlicheException(messages.getResourceBundle(), "accessSetStatus");
+		announcement.setStatus(status);
 		common.save(announcement);
 	}
 
@@ -496,23 +498,30 @@ public class AnnouncementServiceImpl {
 		}
 	}
 
-	public void submitRegistration(Long registrationId) {
+	public void setRegistrationStatus(Long registrationId, RegistrationStatus status) {
 		Registration registration = common.getById(Registration.class, registrationId, 0);
 		common.checkWriteAccess(registration, Operation.save);
-		List<RegEntry> entries = registration.getEntries();
-		if (entries.isEmpty())
-			throw new FachlicheException(messages.getResourceBundle(), "registration.empty");
 
-		Set<Integer> erroredRaces = new TreeSet<>();
-		for (RegEntry entry : entries) {
-			int minimalTeamSize = entry.getRace().getBoatClass().getMinimalTeamSize();
-			if (entry.getParticipants().size() < minimalTeamSize)
-				erroredRaces.add(entry.getRace().getNumber());
-			checkRaceAgeTypeAgainstParticipant(entry);
+		if (!caller.isInRole("Tester") && status != RegistrationStatus.submitted)
+			throw new FachlicheException(messages.getResourceBundle(), "accessSetStatus");
+
+		if (status == RegistrationStatus.submitted) {
+			List<RegEntry> entries = registration.getEntries();
+			if (entries.isEmpty())
+				throw new FachlicheException(messages.getResourceBundle(), "registration.empty");
+
+			Set<Integer> erroredRaces = new TreeSet<>();
+			for (RegEntry entry : entries) {
+				int minimalTeamSize = entry.getRace().getBoatClass().getMinimalTeamSize();
+				if (entry.getParticipants().size() < minimalTeamSize)
+					erroredRaces.add(entry.getRace().getNumber());
+				checkRaceAgeTypeAgainstParticipant(entry);
+			}
+			if (!erroredRaces.isEmpty())
+				throw new FachlicheException(messages.getResourceBundle(), "registration.incompleteEntries",
+						erroredRaces);
 		}
-		if (!erroredRaces.isEmpty())
-			throw new FachlicheException(messages.getResourceBundle(), "registration.incompleteEntries", erroredRaces);
-		registration.setStatus(RegistrationStatus.submitted);
+		registration.setStatus(status);
 		common.save(registration);
 	}
 }

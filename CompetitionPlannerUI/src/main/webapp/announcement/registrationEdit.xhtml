@@ -97,6 +97,11 @@
 								process="@form"
 								update="registrationTable"
 								oncomplete="PF('registrationTable').filter()"/>
+							<p:commandButton icon="ui-icon-arrowthick-1-w" title="#{messages.backToOverview}"
+								action="#{startseiteBean.setMainContent('/announcement/registrations.xhtml')}"
+								process="@this"
+								update="mainContent"
+								style="margin-top: 10em"/>
 						</td>
 						<td style="width: 49%">
 							<h:inputHidden id="clubVisible" value="#{registrationBean.clubVisible}"/>
@@ -201,8 +206,7 @@
 			<h:outputScript>
 				setTimeout(function() {
 					registrationEdit_enableButtons();
-					PF("athletesTable").filter();
-				}, 100);
+				}, 50);
 			</h:outputScript>
 
 		</ui:define>

@@ -348,9 +348,9 @@ public class CommonImpl {
 			if (!callingUser.getUserId().equals(user.getUserId()))
 				throwAccessException(user, operation);
 		}
-		// niemand außer einem Admin darf einen Admin anlegen
+		// niemand außer einem Admin darf einen Admin oder Tester anlegen
 		for (Role role : user.getRoles()) {
-			if ("Admin".equals(role.getRole()))
+			if ("Admin".equals(role.getRole()) || "Tester".equals(role.getRole()))
 				throwAccessException(user, operation);
 		}
 		// sich selbst zu löschen erlauben wir auch nicht
@@ -372,7 +372,7 @@ public class CommonImpl {
 
 		// Eine bereits veröffentlichte Ausschreibung darf nicht mehr geändert werden
 		AnnouncementStatus status = announcement.getStatus();
-		if (status != null && status != AnnouncementStatus.created)
+		if (!caller.isInRole("Tester") && status != null && status != AnnouncementStatus.created)
 			throw new FachlicheException(messages.getResourceBundle(), "announcement.alreadyAnnounced");
 	}
 
@@ -393,7 +393,7 @@ public class CommonImpl {
 			throw new FachlicheException(messages.getResourceBundle(), "registration.cannot.save");
 
 		// Eine bereits übermittelte Meldung darf nicht mehr geändert werden
-		if (registration.getStatus() == RegistrationStatus.submitted)
+		if (!caller.isInRole("Tester") && registration.getStatus() == RegistrationStatus.submitted)
 			throw new FachlicheException(messages.getResourceBundle(), "registration.alreadySubmitted");
 	}
 

@@ -7,13 +7,14 @@
 	xmlns:p="http://primefaces.org/ui">
 
 	<ui:composition template="/templates/search.xhtml">
-		<ui:param name="uploadBean" value="#{searchBean.uploadBean}"/>
 		<ui:param name="bundle" value="#{messages.bundle('announcements')}"/>
 		<ui:param name="typ" value="org.planner.eo.Announcement"/>
 		<ui:param name="bearbeitenLink" value="/announcement/announcementEdit.xhtml"/>
 		<ui:param name="editBean" value="#{announcementBean}"/>
 		<ui:param name="renderCrudButtons" value="#{authBean.inRole('Sportwart')}"/>
-		<ui:param name="renderImportPanel" value="false"/>
+		<ui:param name="renderDownloadSupport" value="true"/>
+		<ui:param name="uploadBean" value="#{announcementBean.uploadBean}"/>
+		<ui:param name="doubleClickDisabled" value="#{not (authBean.inRole('Sportwart'))}"/>
 
 		<ui:define name="addRowButtons">
 			<p:commandButton id="racesButton" icon="ui-icon-flag" title="#{bundle.races}"
@@ -21,20 +22,24 @@
 					process="@this"
 					update=":mainContent"
 					rendered="#{authBean.inRole('Sportwart')}"/>
-			<p:commandButton id="pdfButton" icon="ui-icon-print" title="#{bundle.createPdf}"
-					action="#{announcementBean.createPdf(item)}" ajax="false"
-					process="@this"/>
+			<p:commandButton icon="ui-icon-print" title="#{bundle.createPdf}"
+					action="#{announcementBean.uploadBean.create(null, item)}"
+					process="@this"
+					oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('datenForm',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
 			<p:commandButton icon="ui-icon-comment" title="#{bundle.register}"
 					action="#{registrationBean.createRegistration(item)}"
 					process="@this"
 					update="mainContent"
-					rendered="#{item.status == 'announced'}"/>
+					rendered="#{authBean.inRole('Sportwart', 'Trainer', 'Mastersportler')}"
+					disabled="#{item.status != 'announced'}"/>
 			<p:commandButton icon="ui-icon-calculator" title="#{bundle.createProgram}"
 					action="#{programBean.createProgram(item)}"
 					process="@this"
 					update="mainContent"
-					rendered="#{item.status == 'announced' and item['club.name'] == announcementBean.loggedInUser.club.name}"/>
+					rendered="#{authBean.inRole('Sportwart')}"
+					disabled="#{not (item.status == 'announced' and item['club.name'] == announcementBean.loggedInUser.club.name)}"/>
 		</ui:define>
 
 	</ui:composition>
+	
 </html>

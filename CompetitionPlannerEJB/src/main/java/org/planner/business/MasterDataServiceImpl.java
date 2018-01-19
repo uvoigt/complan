@@ -5,10 +5,14 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.transaction.RollbackException;
 
 import org.planner.business.CommonImpl.Operation;
 import org.planner.dao.PlannerDao;
+import org.planner.dao.QueryModifier;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.Address;
@@ -20,8 +24,6 @@ import org.planner.eo.User;
 import org.planner.eo.User_;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
-import org.planner.model.Suchkriterien.Filter;
-import org.planner.model.Suchkriterien.Filter.Comparison;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
@@ -85,6 +87,11 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 			// sichere extra Properties vor dem Überschreiben
 			if (loggedInUser != null) // nicht Admin
 				user.setLocked(existing.isLocked());
+			// sichere ggf. bestehende Rollen, die nur der Admin speichern darf
+			for (Role role : existing.getRoles()) {
+				if ("Tester".equals(role.getRole()))
+					user.getRoles().add(role);
+			}
 		}
 
 		return common.save(user);
@@ -133,15 +140,21 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 	public List<Role> getRoles() {
 		Suchkriterien krit = new Suchkriterien();
 		krit.addSortierung(Role_.role.getName(), true);
-		// filtere den Admin heraus, so dass niemand
-		// außer einem Admin einen Admin anlegen kann.
+		// filtere Admin und Tester heraus, so dass niemand
+		// außer einem Admin einen Admin bzw. Tester anlegen kann.
 		// Beim checkWriteAccess wird das aber auch geprüft
+		QueryModifier modifier = null;
 		if (!caller.isInRole("Admin")) {
-			krit.setExact(true);
-			krit.setIgnoreCase(false);
-			krit.addFilter(new Filter(Comparison.ne, Role_.role.getName(), "Admin"));
+			modifier = new QueryModifier() {
+				@Override
+				@SuppressWarnings({ "rawtypes", "unchecked" })
+				public Predicate createPredicate(Root root, CriteriaBuilder builder) {
+					return builder.and(builder.notEqual(root.get(Role_.role), "Admin"),
+							builder.notEqual(root.get(Role_.role), "Tester"));
+				}
+			};
 		}
-		Suchergebnis<Role> entities = dao.search(Role.class, krit, null);
+		Suchergebnis<Role> entities = dao.search(Role.class, krit, modifier);
 		return entities.getListe();
 	}
 

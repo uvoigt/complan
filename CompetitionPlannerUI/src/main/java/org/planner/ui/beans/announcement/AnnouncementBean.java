@@ -5,20 +5,20 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.ResourceBundle;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
-import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.NullOutputStream;
 import org.planner.eo.Address;
 import org.planner.eo.Announcement;
+import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Category;
 import org.planner.eo.Category_;
 import org.planner.eo.Club;
@@ -28,22 +28,25 @@ import org.planner.model.BoatClass;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.Messages;
 import org.planner.ui.beans.SearchBean.ColumnModel;
+import org.planner.ui.beans.UploadBean;
+import org.planner.ui.beans.UploadBean.DownloadHandler;
 import org.planner.ui.util.BerichtGenerator;
+import org.planner.ui.util.JsfUtil;
+import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.primefaces.component.calendar.Calendar;
-import org.primefaces.context.RequestContext;
 import org.primefaces.event.SelectEvent;
-
-import com.itextpdf.text.DocumentException;
 
 @Named
 @RequestScoped
-public class AnnouncementBean extends AbstractEditBean {
+public class AnnouncementBean extends AbstractEditBean implements DownloadHandler {
 
 	private static final long serialVersionUID = 1L;
 
 	@Inject
 	private Messages messages;
+
+	private UploadBean uploadBean;
 
 	private Announcement announcement;
 
@@ -57,12 +60,22 @@ public class AnnouncementBean extends AbstractEditBean {
 
 	@PostConstruct
 	public void init() {
+		uploadBean = new UploadBean(this, null, null);
+
 		Long id = getIdFromRequestParameters();
-		if (id != null)
+		if (id == null)
+			id = (Long) JsfUtil.getViewVariable("id");
+		if (id != null) {
 			announcement = service.getObject(Announcement.class, id, 1);
-		else
+			JsfUtil.setViewVariable("id", announcement.getId());
+		} else {
 			announcement = new Announcement();
+		}
 		populateLocation();
+		// TODO zentral
+		// damit
+		if (announcement.getLocation().getClub() != null)
+			announcement.getLocation().setAddress(new Address());
 	}
 
 	@Override
@@ -71,6 +84,8 @@ public class AnnouncementBean extends AbstractEditBean {
 		populateLocation();
 		if (announcement.getId() == null) {
 			announcement.setText(getTemplate());
+		} else {
+			JsfUtil.setViewVariable("id", announcement.getId());
 		}
 	}
 
@@ -135,6 +150,18 @@ public class AnnouncementBean extends AbstractEditBean {
 		// club);
 		// handleLocation(announcer, announcement.getAnnouncer(), club); TODO
 		// die Meldestelle
+
+		// vorher sollte der Ausschreibungstext geprüft werden
+		try {
+			new BerichtGenerator().generate(announcement, new NullOutputStream());
+		} catch (Exception e) {
+			if (e instanceof FachlicheException)
+				throw (FachlicheException) e;
+			if (e instanceof TechnischeException)
+				throw (TechnischeException) e;
+			throw new FachlicheException(ResourceBundle.getBundle("MessagesBundle"), "announcements.textError", e);
+		}
+
 		service.saveAnnouncement(announcement);
 	}
 
@@ -178,44 +205,33 @@ public class AnnouncementBean extends AbstractEditBean {
 		return columns;
 	}
 
-	public void announce() {
-		service.announce(announcement.getId());
+	public void setStatus(AnnouncementStatus status) {
+		service.setAnnouncementStatus(announcement.getId(), status);
 		FacesContext.getCurrentInstance().addMessage(null,
-				new FacesMessage(null, messages.get("announcements.statusSet")));
+				new FacesMessage(null, messages.get("announcements.statusSet_" + status)));
 	}
 
-	public void createPdf(Map<String, Object> row) throws DocumentException, IOException {
+	public UploadBean getUploadBean() {
+		return uploadBean;
+	}
 
-		FacesContext facesContext = FacesContext.getCurrentInstance();
-		ExternalContext externalContext = facesContext.getExternalContext();
-		Announcement announcement = service.getObject(Announcement.class, (Long) row.get("id"), 1);
-
-		String contentDispositionValue = "attachment";
-
-		externalContext.setResponseContentType("application/pdf");
-		// externalContext.setResponseCharacterEncoding("iso-8859-1");
-		externalContext.setResponseHeader("Content-Disposition",
-				contentDispositionValue + ";filename=\"" + announcement.getName() + ".pdf\"");
-
-		if (RequestContext.getCurrentInstance().isSecure()) {
-			externalContext.setResponseHeader("Cache-Control", "public");
-			externalContext.setResponseHeader("Pragma", "public");
+	@Override
+	public String getDownloadFileName(Object selection) {
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		// unterscheide die beiden Use-Cases Aufruf von der Suchseite und Aufruf von der Edit-Seite
+		if (ctx.getExternalContext().getRequestParameterMap().containsKey("editForm")) {
+			Club club = service.getLoggedInUser().getClub();
+			announcement.setClub(club);
+			handleLocation(location, announcement.getLocation(), club);
+		} else {
+			Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selection, "id");
+			announcement = service.getObject(Announcement.class, id, 1);
 		}
+		return JsfUtil.getScopedBundle().format("pdfName", announcement.getName(), announcement.getStartDate());
+	}
 
-		OutputStream out = externalContext.getResponseOutputStream();
-
-		try {
-			new BerichtGenerator().generate(announcement, out);
-
-			externalContext.setResponseStatus(HttpServletResponse.SC_OK);
-			externalContext.responseFlushBuffer();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			externalContext.setResponseStatus(HttpServletResponse.SC_NO_CONTENT);
-		} finally {
-			facesContext.responseComplete();
-		}
-
+	@Override
+	public void handleDownload(OutputStream out, String typ, Object selection) throws Exception {
+		new BerichtGenerator().generate(announcement, out);
 	}
 }

@@ -14,14 +14,18 @@
 		<ui:param name="editBean" value="#{registrationBean}"/>
 		<ui:param name="renderNewButton" value="false"/>
 		<ui:param name="renderCopyButton" value="false"/>
-		<ui:param name="renderImportPanel" value="false"/>
 
 		<ui:define name="addRowButtons">
-			<p:commandButton icon="ui-icon-mail-closed" title="#{bundle.submit}"
-					action="#{registrationBean.submitRegistration(item)}"
+			<p:commandButton icon="ui-icon-mail-closed" title="#{bundle.setStatus}"
+					action="#{registrationBean.setStatus(item, 'submitted')}"
 					process="@this"
 					update="suchErgebnisTable"
 					rendered="#{item.status == 'created' and item['club.name'] == registrationBean.loggedInUser.club.name}"/>
+			<p:commandButton icon="ui-icon-circle-arrow-w" title="#{bundle.revokeStatus}"
+					action="#{registrationBean.setStatus(item, 'created')}"
+					process="@this"
+					update="suchErgebnisTable"
+					rendered="#{authBean.inRole('Tester') and item.status == 'submitted' and item['club.name'] == registrationBean.loggedInUser.club.name}"/>
 		</ui:define>
 	</ui:composition>
 </html>

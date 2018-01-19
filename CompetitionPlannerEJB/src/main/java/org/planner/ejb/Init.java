@@ -39,7 +39,8 @@ public class Init {
 		insertRoleIfNotExists(em, "Trainer", "Trainer (Kann Sportler melden aber keine zusätzlichen Trainer anlegen)");
 		insertRoleIfNotExists(em, "Mastersportler", "Mastersportler (Kann sich selbst melden)");
 		insertRoleIfNotExists(em, "Sportler", "Sportler (Kann nur Meldungen und Ausschreibungen ansehen)");
-
+		insertRoleIfNotExists(em, "Tester",
+				"Tester (Kann den Status von Ausschreibungen, Meldungen und Programmen zurücksetzen)");
 	}
 
 	private void insertRoleIfNotExists(EntityManager em, String role, String description) {

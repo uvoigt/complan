@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import org.planner.eo.Participant;
 import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
+import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.User;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
@@ -219,6 +221,9 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			columns.add(new ColumnModel(null, userColumns[4].getName(), true));
 			columns.add(new ColumnModel(null, userColumns[5].getName(), true));
 			athletes = new RemoteDataModel<>(this, User.class, columns, null);
+			HashMap<String, Object> filters = new HashMap<>();
+			filters.put("club.name", getLoggedInUser().getClub().getName());
+			athletes.setFilterPreset(filters);
 		}
 		return athletes;
 	}
@@ -240,13 +245,13 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		return sb.toString();
 	}
 
-	public void submitRegistration(Object registration) {
+	public void setStatus(Object registration, RegistrationStatus status) {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long registrationId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), registration,
 				AbstractEntity_.id.getName());
-		service.submitRegistration(registrationId);
+		service.setRegistrationStatus(registrationId, status);
 		FacesContext.getCurrentInstance().addMessage(null,
-				new FacesMessage(null, JsfUtil.getScopedBundle().get("registrations.statusSet")));
+				new FacesMessage(null, JsfUtil.getScopedBundle().get("registrations.statusSet_" + status)));
 	}
 
 	public boolean isClubVisible() {

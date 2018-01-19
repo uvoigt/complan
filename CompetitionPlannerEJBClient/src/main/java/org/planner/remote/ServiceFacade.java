@@ -9,6 +9,7 @@ import javax.ejb.Remote;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEnum;
 import org.planner.eo.Announcement;
+import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
 import org.planner.eo.ProgramRace;
@@ -16,6 +17,7 @@ import org.planner.eo.Properties;
 import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
+import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.IResultProvider;
@@ -82,7 +84,7 @@ public interface ServiceFacade extends IResultProvider {
 
 	Long createRegistration(Registration registration);
 
-	void announce(Long announcementId);
+	void setAnnouncementStatus(Long announcementId, AnnouncementStatus status);
 
 	<T extends Serializable> Suchergebnis<T> getAthletes(Suchkriterien criteria);
 
@@ -90,7 +92,7 @@ public interface ServiceFacade extends IResultProvider {
 
 	void deleteFromRegEntry(Long registrationId, RegEntry entry);
 
-	void submitRegistration(Long registrationId);
+	void setRegistrationStatus(Long registrationId, RegistrationStatus status);
 
 	Long createProgram(Program program);
 
