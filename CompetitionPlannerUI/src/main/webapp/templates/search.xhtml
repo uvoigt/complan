@@ -92,7 +92,8 @@
 			<p:ajax event="page" listener="#{searchBean.onPagination}"/>
 			<p:ajax event="filter" listener="#{searchBean.onFilter}" oncomplete="checkEmpty()"/>
 			<p:ajax event="sort" listener="#{searchBean.onSort}"/>
-			<p:ajax event="rowDblselect" listener="#{searchBean.bearbeiten(bearbeitenLink, typ, editBean)}" process="@form" update="mainContent"/>
+			<p:ajax event="rowDblselect" listener="#{searchBean.bearbeiten(bearbeitenLink, typ, editBean)}"
+					process="@form" update="mainContent" disabled="#{doubleClickDisabled != null ? doubleClickDisabled : false}"/>
 			<f:event type="preRenderComponent" listener="#{searchBean.onPrerenderTable}"/>
 
 			<p:columns var="column" value="#{searchBean.getColumns(typ)}"
