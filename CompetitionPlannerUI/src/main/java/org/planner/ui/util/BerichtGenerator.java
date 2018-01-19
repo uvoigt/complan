@@ -1,33 +1,38 @@
 package org.planner.ui.util;
 
 import java.awt.Color;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.io.StringReader;
+import java.text.DateFormat;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Stack;
 
+import javax.inject.Named;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.planner.eo.Address;
 import org.planner.eo.Announcement;
+import org.planner.eo.Program;
+import org.planner.eo.ProgramRace;
+import org.planner.eo.Race;
+import org.planner.eo.Team;
+import org.planner.eo.TeamMember;
+import org.planner.eo.User;
 import org.planner.ui.util.text.TextFormat.Keyword;
 import org.planner.util.LogUtil.FachlicheException;
-import org.planner.util.LogUtil.TechnischeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.tidy.Lexer;
-import org.w3c.tidy.Node;
-import org.w3c.tidy.Out;
-import org.w3c.tidy.OutJavaImpl;
-import org.w3c.tidy.PPrint;
-import org.w3c.tidy.Tidy;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -60,6 +65,7 @@ import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.draw.LineSeparator;
 
 /**
  * Erzeugt einen Bericht, der aus Textbestandteilen sowie Übersichtsdiagrammen besteht. Die Klasse ist nicht
@@ -67,38 +73,25 @@ import com.itextpdf.text.pdf.PdfWriter;
  * 
  * @author Uwe Voigt, IBM
  */
+@Named
 public class BerichtGenerator {
-	private class HeaderLogo extends PdfPageEventHelper {
-		private Image kundenLogo;
 
-		private Image hdiLogo;
+	private class HeaderWriter extends PdfPageEventHelper {
+		private Image logo;
+		private PdfPTable header;
 
-		private HeaderLogo(byte[] imageData) throws Exception {
+		private HeaderWriter(byte[] imageData, String title) throws Exception {
 			final int dim = 50;
 			if (imageData != null) {
-				kundenLogo = Image.getInstance(imageData);
-				kundenLogo.scaleToFit(dim, dim);
-				kundenLogo.setAbsolutePosition(20, PageSize.A4.getTop() - kundenLogo.getScaledHeight() - 20);
+				logo = Image.getInstance(imageData);
+				logo.scaleToFit(dim, dim);
+				logo.setAbsolutePosition(20, PageSize.A4.getTop() - logo.getScaledHeight() - 20);
 			}
-			hdiLogo = Image.getInstance(getClass().getResource("/images/hdi_logo.png"));
-			hdiLogo.scaleToFit(dim, dim);
-			hdiLogo.setAbsolutePosition(PageSize.A4.getRight() - hdiLogo.getScaledWidth() - 20,
-					PageSize.A4.getTop() - hdiLogo.getScaledHeight() - 20);
-		}
-
-		@Override
-		public void onStartPage(PdfWriter writer, Document document) {
-			if (isToc)
-				return;
-			try {
-				// Rücke den gesamten Inhalt etwas weiter nach unten, damit es
-				// zu keiner Kollision mit den Logos kommt
-				document.add(Chunk.NEWLINE);
-				document.add(Chunk.NEWLINE);
-				document.add(Chunk.NEWLINE);
-			} catch (DocumentException e) {
-				throw new IllegalArgumentException(e);
-			}
+			header = new PdfPTable(1);
+			header.setTotalWidth(555);
+			PdfPCell cell = new PdfPCell(new Phrase(title, defaultFont));
+			cell.setBorder(Rectangle.BOTTOM);
+			header.addCell(cell);
 		}
 
 		@Override
@@ -106,9 +99,11 @@ public class BerichtGenerator {
 			if (isToc)
 				return;
 			try {
-				if (kundenLogo != null)
-					writer.getDirectContent().addImage(kundenLogo);
-				writer.getDirectContent().addImage(hdiLogo);
+				if (logo != null)
+					writer.getDirectContent().addImage(logo);
+				header.writeSelectedRows(0, -1, 20,
+						document.top() + ((document.topMargin() + header.getTotalHeight()) / 2),
+						writer.getDirectContent());
 			} catch (DocumentException e) {
 				throw new IllegalArgumentException(e);
 			}
@@ -118,14 +113,33 @@ public class BerichtGenerator {
 	private enum Action {
 		html, head, title, body, //
 		h1, h2, h3, //
-		br, //
+		br, hr, //
 		blockquote, //
 		div, span, //
 		table, tbody, tr, td, //
 		ul, ol, li, //
 		font, //
-		strong, b, em, i, u, //
+		strong, b, em, i, u, s, sub, sup, //
 		p, img
+	}
+
+	private interface KeywordHandler {
+		/**
+		 * @return null, wenn nicht behandelt
+		 */
+		String replace(StringBuilder text, Match match) throws Exception;
+	}
+
+	private class Match {
+		private Keyword keyword;
+		private int start;
+		private int end;
+
+		private Match(Keyword keyword, int start, int end) {
+			this.keyword = keyword;
+			this.start = start;
+			this.end = end;
+		}
 	}
 
 	private class SaxHandler extends DefaultHandler {
@@ -138,6 +152,8 @@ public class BerichtGenerator {
 
 			private Font font = defaultFont;
 
+			private int textRise;
+
 			private Context(Action action, Attributes attributes) {
 				this.action = action;
 				this.attributes = new AttributesImpl(attributes);
@@ -148,11 +164,19 @@ public class BerichtGenerator {
 				}
 			}
 
-			String getAttValueIgnoreCase(String name) {
+			<T> T getAttValueIgnoreCase(String name, Class<T> type) {
 				for (int i = 0, n = attributes.getLength(); i < n; i++) {
 					String qn = attributes.getQName(i);
-					if (name.equalsIgnoreCase(qn))
-						return attributes.getValue(i);
+					if (name.equalsIgnoreCase(qn)) {
+						String s = attributes.getValue(i);
+						if (s == null)
+							return null;
+						try {
+							return type.getConstructor(String.class).newInstance(s);
+						} catch (Exception e) {
+							throw new IllegalArgumentException("Fehler beim Lesen des Attributs " + name, e);
+						}
+					}
 				}
 				return null;
 			}
@@ -168,9 +192,101 @@ public class BerichtGenerator {
 			}
 		}
 
+		private final class AnnouncementKeywordHandler implements KeywordHandler {
+			private final Announcement announcement;
+
+			private AnnouncementKeywordHandler(Announcement announcement) {
+				this.announcement = announcement;
+			}
+
+			@Override
+			public String replace(StringBuilder text, Match match) throws Exception {
+				switch (match.keyword) {
+				case name:
+					return announcement.getName();
+				case category:
+					return announcement.getCategory().getName();
+				case location:
+					Address address = announcement.getLocation().getClub() != null
+							? announcement.getLocation().getClub().getAddress()
+							: announcement.getLocation().getAddress();
+					return address.getCity().getName()
+							+ (address.getAddition() != null ? " " + address.getAddition() : "");
+				case address:
+					address = announcement.getLocation().getClub() != null
+							? announcement.getLocation().getClub().getAddress()
+							: announcement.getLocation().getAddress();
+					return address.getPostCode() + " " + address.getCity().getName() + " " + address.getStreet();
+				case homepage:
+					return announcement.getClub().getAddress().getHomepage() != null
+							? announcement.getClub().getAddress().getHomepage() : "";
+				case startDate:
+					return DateFormat.getDateInstance().format(announcement.getStartDate());
+				case endDate:
+					return DateFormat.getDateInstance().format(announcement.getEndDate());
+				case races:
+					PdfPTable table = new PdfPTable(new float[] { .15f, .1f, .05f, .4f, .15f, .15f });
+					table.setWidthPercentage(100);
+					table.getDefaultCell().disableBorderSide(Rectangle.BOX);
+
+					Font headerFont = new Font(defaultFont);
+					headerFont.setStyle(defaultFont.getStyle() | Font.BOLD);
+					table.addCell(new Phrase("Tag", headerFont));
+					table.addCell(new Phrase("Zeit", headerFont));
+					table.addCell(new Phrase("Nr.", headerFont));
+					table.addCell(new Phrase("Bezeichnung", headerFont));
+					table.addCell(new Phrase("Distanz", headerFont));
+					table.addCell(new Phrase("Zusatz", headerFont));
+
+					java.util.List<Race> races = new ArrayList<>(announcement.getRaces());
+					Collections.sort(races, new Comparator<Race>() {
+						@Override
+						public int compare(Race r1, Race r2) {
+							return r1.getNumber().compareTo(r2.getNumber());
+						}
+					});
+					DateFormat FORMAT_DAY = new SimpleDateFormat("EEEE");
+					DateFormat FORMAT_TIME = new SimpleDateFormat("HH:mm");
+					for (Race race : races) {
+						String day = "";
+						if (race.getDay() != null) {
+							Calendar cal = Calendar.getInstance();
+							cal.setTime(announcement.getStartDate());
+							cal.add(Calendar.DAY_OF_YEAR, race.getDay());
+							day = FORMAT_DAY.format(cal.getTime());
+						}
+						String time = "";
+						if (race.getStartTime() != null) {
+							time = FORMAT_TIME.format(race.getStartTime());
+						}
+						table.addCell(new Phrase(day, defaultFont));
+						table.addCell(new Phrase(time, defaultFont));
+						table.addCell(new Phrase(Integer.toString(race.getNumber()), defaultFont));
+						table.addCell(new Phrase(race.getBoatClass().getText() + " " + race.getGender().getText() + " "
+								+ race.getAgeType().getText(), defaultFont));
+						table.addCell(new Phrase(race.getDistance() + " m", defaultFont));
+						table.addCell(new Phrase());
+					}
+					addToDocument(table);
+					return "";
+				default:
+					return null;
+				}
+			}
+		}
+
 		private Stack<Context> currentContext = new Stack<Context>();
 
 		private StringBuilder currentText = new StringBuilder();
+
+		private final KeywordHandler replacer;
+
+		private SaxHandler(Object object) {
+			if (object instanceof Announcement)
+				replacer = new AnnouncementKeywordHandler((Announcement) object);
+			else
+				throw new IllegalArgumentException(object != null ? object.toString() : null);
+		}
 
 		@Override
 		public InputSource resolveEntity(String s, String s1) throws IOException, SAXException {
@@ -184,6 +300,12 @@ public class BerichtGenerator {
 			Context context = new Context(action, attributes);
 			currentContext.push(context);
 			switch (action) {
+			default:
+				break;
+			case p:
+				closeCurrentParagraph();
+				currentParagraph = new Paragraph();
+				break;
 			case font:
 				flushText(context);
 				context.font = getFont(attributes.getValue("face"), context.font);
@@ -207,11 +329,29 @@ public class BerichtGenerator {
 				context.font = new Font(context.font);
 				context.font.setStyle(context.font.getStyle() | Font.UNDERLINE);
 				break;
+			case s:
+				flushText(context);
+				context.font = new Font(context.font);
+				context.font.setStyle(context.font.getStyle() | Font.STRIKETHRU);
+				break;
+			case sub:
+				flushText(context);
+				context.textRise = -7;
+				break;
+			case sup:
+				flushText(context);
+				context.textRise = 7;
+				break;
 			case span:
 				flushText(context);
 				BaseColor bgColor = getColor(getStyle(attributes, "background-color"));
 				if (bgColor != null)
 					context.bgColor = bgColor;
+				BaseColor color = getColor(getStyle(attributes, "color"));
+				if (color != null) {
+					context.font = new Font(context.font);
+					context.font.setColor(color);
+				}
 				break;
 			case div:
 				closeCurrentParagraph();
@@ -238,7 +378,14 @@ public class BerichtGenerator {
 				currentTable.push(new Table());
 				break;
 			case td:
-				currentTable.peek().cells.add(new PdfPCell());
+				PdfPCell cell = new PdfPCell();
+				Integer colspan = context.getAttValueIgnoreCase("colspan", Integer.class);
+				if (colspan != null)
+					cell.setColspan(colspan);
+				Integer rowspan = context.getAttValueIgnoreCase("rowspan", Integer.class);
+				if (rowspan != null)
+					cell.setRowspan(rowspan);
+				currentTable.peek().cells.add(cell);
 				break;
 			case img:
 				// https://localhost:8443/planner/javax.faces.resource/ckeditor/plugins/smiley/images/regular_smile.png.xhtml?ln=primefaces-extensions&amp;v=6.1.1
@@ -364,6 +511,9 @@ public class BerichtGenerator {
 			case b:
 			case i:
 			case u:
+			case s:
+			case sub:
+			case sup:
 			case font:
 				addText(text, context);
 				break;
@@ -379,6 +529,11 @@ public class BerichtGenerator {
 			case br:
 				addText(text, context);
 				getCurrentParagraph().add(Chunk.NEWLINE);
+				break;
+			case hr:
+				LineSeparator separator = new LineSeparator();
+				separator.setPercentage(100);
+				getCurrentParagraph().add(new Chunk(separator));
 				break;
 			case li:
 				Phrase phrase = currentParagraph != null ? currentParagraph : new Phrase();
@@ -400,7 +555,7 @@ public class BerichtGenerator {
 			case td:
 				Table table = currentTable.peek();
 				PdfPCell cell = table.getCurrentCell();
-				cell.setBackgroundColor(getColor(context.getAttValueIgnoreCase("bgcolor")));
+				cell.setBackgroundColor(getColor(context.getAttValueIgnoreCase("bgcolor", String.class)));
 				cell.setHorizontalAlignment(getAlign(context.attributes));
 				if (currentParagraph != null && currentParagraph.getAlignment() != Element.ALIGN_UNDEFINED)
 					cell.setHorizontalAlignment(currentParagraph.getAlignment());
@@ -411,13 +566,34 @@ public class BerichtGenerator {
 				break;
 			case tr:
 				table = currentTable.peek();
-				if (table.columnNumber == null)
-					table.columnNumber = table.cells.size();
+				if (table.columnNumber == null) {
+					int num = 0;
+					for (PdfPCell c : table.cells) {
+						num += c.getColspan();
+					}
+					table.columnNumber = num;
+				}
 				break;
 			case table:
 				table = currentTable.pop();
-				PdfPTable pdfPTable = new PdfPTable(table.columnNumber);
+				PdfPTable pdfPTable = new PdfPTable(table.columnNumber != null ? table.columnNumber : 1);
+				String width = getStyle(context.attributes, "width");
+				if (width != null) {
+					if (width.endsWith("%"))
+						pdfPTable.setWidthPercentage(Integer.parseInt(width.substring(0, width.length() - 1)));
+					else if (width.endsWith("px"))
+						pdfPTable.setTotalWidth(Integer.parseInt(width.substring(0, width.length() - 2)));
+				}
+				Integer border = context.getAttValueIgnoreCase("border", Integer.class);
+				Integer cellspacing = context.getAttValueIgnoreCase("cellspacing", Integer.class);
+				Integer cellpadding = context.getAttValueIgnoreCase("cellpadding", Integer.class);
 				for (PdfPCell c : table.cells) {
+					if (border == null || border == 0)
+						c.disableBorderSide(Rectangle.BOX);
+					else
+						c.setBorderWidth(border);
+					if (cellpadding != null)
+						c.setPadding(cellpadding);
 					pdfPTable.addCell(c);
 				}
 				addToDocument(pdfPTable);
@@ -428,13 +604,25 @@ public class BerichtGenerator {
 
 		@Override
 		public void characters(char[] ch, int start, int length) throws SAXException {
-			currentText.append(ch, start, length);
+			switch (currentContext.peek().action) {
+			case table:
+			case tbody:
+			case tr:
+			case ol:
+			case ul:
+				currentText.setLength(0);
+				break;
+			default:
+				currentText.append(ch, start, length);
+				break;
+			}
 		}
 
 		private void addText(String text, Context context) throws SAXException {
 			if (text.length() == 0)
 				return;
 			Chunk chunk = new Chunk(text, context.font);
+			chunk.setTextRise(context.textRise);
 			if (context.bgColor != null)
 				chunk.setBackground(context.bgColor);
 			getCurrentParagraph().add(chunk);
@@ -447,96 +635,63 @@ public class BerichtGenerator {
 
 		private StringBuilder replaceSubstitutesSAX(StringBuilder text, Context context) throws SAXException {
 			try {
-				return replaceSubstitutes(text, context);
+				return replaceSubstitutes(text, context, 0);
 			} catch (Exception e) {
 				throw new SAXException(e);
 			}
 		}
 
-		private StringBuilder replaceSubstitutes(StringBuilder text, Context context) throws Exception {
-			int begin = text.indexOf("{");
-			if (begin == -1)
+		private StringBuilder replaceSubstitutes(StringBuilder text, Context context, int offset) throws Exception {
+			Match match = findKeywordMatch(text, offset);
+			if (match == null)
 				return text;
+			String replacement = null;
+			switch (match.keyword) {
+			default:
+				replacement = replacer.replace(text, match);
+				if (replacement == null)
+					throw new IllegalArgumentException("Unbehandelte Substitution: " + match.keyword);
+				break;
+			case page:
+				replacement = Integer.toString(document.getPageNumber());
+				break;
+			case pages:
+				break;
+			case currentDate:
+				replacement = DateFormat.getDateInstance(DateFormat.LONG, /* Util.gibBenutzerLocale() */ Locale.GERMAN)
+						.format(new Date());
+				break;
+			case pageBreak:
+				// befindet sich das Page-Break-Tag mitten im Text,
+				// dann muss der vorherige Text erst dem Dokument hinzugefügt
+				// werden
+				addText(text.substring(0, match.start), context);
+				getCurrentParagraph().add(Chunk.NEXTPAGE);
+				text.delete(0, match.end);
+				return replaceSubstitutes(text, context, match.start);
+			case toc:
+				pageNumToc = writer.getPageNumber();
+				break;
+			}
+			text.replace(match.start, match.end, replacement != null ? replacement : "");
+			return replaceSubstitutes(text, context, match.start);
+		}
+
+		private Match findKeywordMatch(StringBuilder text, int offset) {
+			int begin = text.indexOf("{", offset);
+			if (begin == -1)
+				return null;
 			int end = text.indexOf("}", begin);
 			if (end == -1)
-				return text;
+				return null;
 			String key = text.substring(begin + 1, end);
-			Keyword keyword = Keyword.valueOf(key);
-			end++;
-			String replacement = null;
-			switch (keyword) {
-			default:
-				throw new IllegalArgumentException("Unbehandelte Substitution: " + key);
-
-				// case accountNumbers:
-				// StringBuilder sb = new StringBuilder();
-				// for (FirmaTO f :
-				// RisikoVerwaltenGFOGFO.getInstance().findeFirmen(kundeId)) {
-				// if (sb.length() > 0)
-				// sb.append(", ");
-				// sb.append(f.getMitglVersNr());
-				// }
-				// replacement = sb.toString();
-				// break;
-				// case groupName:
-				// replacement = getKonzern().getNameMaske();
-				// break;
-				// case sumInsurance:
-				// BirtDokumentSuchParameterTO params = new
-				// BirtDokumentSuchParameterTO();
-				// params.setKundeId(kundeId);
-				// params.setSpracheId(ReportingDZO.getInstance().findeSpracheId(Util.gibBenutzerSprache()).intValue());
-				// Zahlenwert summe = new Zahlenwert();
-				// for (RisikotorteTO to :
-				// ReportingDZO.getInstance().findeRisikotorte(params)) {
-				// if (to.getFvs() != null)
-				// summe = summe.add(to.getFvs());
-				// }
-				// replacement =
-				// DecimalFormat.getNumberInstance(Util.gibBenutzerLocale()).format(summe.toNumber())
-				// + " Mio €";
-				// break;
-				// case currentDate:
-				// replacement = DateFormat.getDateInstance(DateFormat.LONG,
-				// Util.gibBenutzerLocale()).format(new Date());
-				// break;
-				// case currentMonth:
-				// replacement = new SimpleDateFormat("MMMM yyyy",
-				// Util.gibBenutzerLocale()).format(new Date());
-				// break;
-				// case currentYear:
-				// replacement = new SimpleDateFormat("yyyy",
-				// Util.gibBenutzerLocale()).format(new Date());
-				// break;
-				// case personInChargeHGI:
-				// replacement = getKonzern().getBetreuerHgi();
-				// break;
-				// case personInChargeTech:
-				// replacement = getKonzern().getBetreuerTechn();
-				// break;
-				// case riskManager:
-				// Long riskmanager = getKonzern().getRiskmanager();
-				// if (riskmanager != null) {
-				// BenutzerTO benutzer =
-				// BerechtigungenVerwaltenGFOGFO.getInstance().gibBenutzer(riskmanager);
-				// replacement = benutzer.getVorname() + " " +
-				// benutzer.getName();
-				// }
-				// break;
-				// case pageBreak:
-				// // befindet sich das Page-Break-Tag mitten im Text,
-				// // dann muss der vorherige Text erst dem Dokument hinzugefügt
-				// // werden
-				// addText(text.substring(0, begin), context);
-				// getCurrentParagraph().add(Chunk.NEXTPAGE);
-				// text.delete(0, end);
-				// return replaceSubstitutes(text, context);
-				// case toc:
-				// pageNumToc = writer.getPageNumber();
-				// break;
+			try {
+				Keyword keyword = Keyword.valueOf(key);
+				end++;
+				return new Match(keyword, begin, end);
+			} catch (IllegalArgumentException e) {
+				throw new FachlicheException(messages, "generator.unknownKeyword", key);
 			}
-			// text.replace(begin, end, replacement != null ? replacement : "");
-			// return replaceSubstitutes(text, context);
 		}
 
 		/*
@@ -551,8 +706,7 @@ public class BerichtGenerator {
 			paragraph.setAlignment(getAlign(attributes));
 
 			if (index > 0 && currentSection[index - 1] == null)
-				throw new SAXException("TODO");// new
-												// FachlicheException(Messages.getString("BerichtGenerator.0")));
+				throw new SAXException(new FachlicheException(messages, "generator.emptySection"));
 			currentSection[index] = index == 0 ? new Chapter(paragraph, ++chapterNumber)
 					: currentSection[index - 1].addSection(paragraph);
 			currentSection[index].setTriggerNewPage(false);
@@ -563,8 +717,6 @@ public class BerichtGenerator {
 		}
 	}
 
-	private static final Logger LOG = LoggerFactory.getLogger(BerichtGenerator.class);
-
 	private static final Font[] hFonts = { new Font(FontFamily.HELVETICA, 14f, Font.BOLD),
 			new Font(FontFamily.HELVETICA, 12, Font.BOLD), new Font(FontFamily.HELVETICA, 10f, Font.BOLD) };
 
@@ -573,6 +725,8 @@ public class BerichtGenerator {
 	private static final Font tocFont = new Font(FontFamily.HELVETICA, 8f, Font.NORMAL);
 
 	private static final Font footerFont = new Font(FontFamily.HELVETICA, 6f, Font.NORMAL);
+
+	private final ResourceBundle messages = ResourceBundle.getBundle("MessagesBundle"); // locale
 
 	private int chapterNumber;
 
@@ -592,8 +746,6 @@ public class BerichtGenerator {
 
 	private PdfWriter writer;
 
-	// private KonzernTO konzern;
-
 	// wir merken uns die Seite, auf der das Inhaltsverzeichnis hinzugefügt
 	// wurde
 	private Integer pageNumToc;
@@ -612,23 +764,12 @@ public class BerichtGenerator {
 	 * @throws Exception
 	 *             Fehler
 	 */
-	public void generate(Announcement announcement, OutputStream out) throws Exception {
+	public void generate(final Announcement announcement, OutputStream out) throws Exception {
 
-		document = new Document(); // A4
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		writer = PdfWriter.getInstance(document, bos);
-		writer.setStrictImageSequence(true);
-		writer.setLinearPageMode();
+		ByteArrayOutputStream bos = setUpDocument();
 
-		try {
-			// DokumentTO dokument = RisikoVerwaltenGFOGFO.getInstance()
-			// .leseAttachmentKonzern(DownloadTyp.BildKonzern.ordinal(),
-			// kundeId, null, null);
-			// writer.setPageEvent(new HeaderLogo(null/* dokument.getData() */));
-		} catch (FachlicheException e) {
-			// kein Kunden-Logo
-			writer.setPageEvent(new HeaderLogo(null));
-		}
+		writer.setPageEvent(new HeaderWriter(null,
+				MessageFormat.format(messages.getString("generator.announcement"), announcement.getName())));
 
 		document.open();
 		document.addCreator("Wettkampfplaner");
@@ -636,16 +777,150 @@ public class BerichtGenerator {
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setValidating(false);
 		SAXParser parser = factory.newSAXParser();
-		SaxHandler handler = new SaxHandler();
+		SaxHandler handler = new SaxHandler(announcement);
 		appendText(announcement.getText(), parser, handler);
 		closeCurrentSection(0);
 
+		finishDocument(out, bos);
+	}
+
+	public void generate(Program program, OutputStream out) throws Exception {
+
+		ByteArrayOutputStream bos = setUpDocument();
+
+		writer.setPageEvent(new HeaderWriter(null,
+				MessageFormat.format(messages.getString("generator.program"), program.getAnnouncement().getName())));
+
+		document.open();
+		document.addCreator("Wettkampfplaner");
+
+		PdfPTable table = new PdfPTable(new float[] { .1f, .30f, .30f, .30f });
+		table.setWidthPercentage(100);
+		table.getDefaultCell().disableBorderSide(Rectangle.BOX);
+
+		Font raceFont = new Font(defaultFont);
+		raceFont.setStyle(defaultFont.getStyle() | Font.BOLD);
+
+		java.util.List<ProgramRace> races = new ArrayList<>(program.getRaces());
+		// Collections.sort(races, new Comparator<Race>() {
+		// @Override
+		// public int compare(Race r1, Race r2) {
+		// return r1.getNumber().compareTo(r2.getNumber());
+		// }
+		// });
+		DateFormat FORMAT_DAY = new SimpleDateFormat("EEEE");
+		DateFormat FORMAT_TIME = new SimpleDateFormat("HH:mm");
+		for (ProgramRace programRace : races) {
+
+			Race race = programRace.getRace();
+			PdfPCell cell = new PdfPCell(
+					new Phrase("Rennen " + race.getNumber() + "-" + programRace.getNumber(), raceFont));
+			cell.setColspan(2);
+			cell.disableBorderSide(Rectangle.BOX);
+			cell.setMinimumHeight(20);
+			cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
+			table.addCell(cell);
+
+			cell = new PdfPCell(new Phrase(programRace.getRaceType().getText(), defaultFont));
+			cell.setColspan(2);
+			cell.disableBorderSide(Rectangle.BOX);
+			cell.setMinimumHeight(20);
+			cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
+			table.addCell(cell);
+
+			cell = new PdfPCell(new Phrase(race.getBoatClass().getText() + " " + race.getAgeType().getText() + " "
+					+ race.getGender().getText(), defaultFont));
+			cell.setColspan(2);
+			cell.setBorder(Rectangle.BOTTOM);
+			table.addCell(cell);
+
+			cell = new PdfPCell(
+					new Phrase(programRace.getIntoFinal() + " " + programRace.getIntoSemiFinal(), defaultFont));
+			cell.setBorder(Rectangle.BOTTOM);
+			table.addCell(cell);
+
+			cell = new PdfPCell(
+					new Phrase(race.getDistance() + " m" + "     " + FORMAT_DAY.format(programRace.getStartTime()) + " "
+							+ FORMAT_TIME.format(programRace.getStartTime()), defaultFont));
+			cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+			cell.setBorder(Rectangle.BOTTOM);
+			table.addCell(cell);
+
+			java.util.List<Team> participants = programRace.getParticipants();
+			for (int i = 0; i < participants.size(); i++) {
+				Team team = participants.get(i);
+
+				table.addCell(new Phrase(Integer.toString(i + 1), defaultFont));
+
+				java.util.List<TeamMember> members = team.getMembers();
+				int normalTeamSize = race.getBoatClass().getMaximalTeamSize();
+				int n = Math.min(normalTeamSize, members.size());
+				for (int j = 0; j < n; j++) {
+					TeamMember member = members.get(j);
+					User user = member.getUser();
+
+					if (j == 2)
+						table.addCell(new Phrase("", defaultFont));
+
+					if (user != null)
+						// TODO alter
+						table.addCell(new Phrase(user.getFirstName() + " " + user.getLastName(), defaultFont));
+					else
+						table.addCell(new Phrase(member.getRemark(), defaultFont));
+
+					if (j == 1)
+						table.addCell(new Phrase(team.getClub().getShortName() != null ? team.getClub().getShortName()
+								: team.getClub().getName(), defaultFont));
+					else if (j == 3)
+						table.addCell(new Phrase("", defaultFont));
+				}
+				if (members.size() == 1) {
+					table.addCell(new Phrase("", defaultFont));
+					table.addCell(new Phrase(team.getClub().getShortName() != null ? team.getClub().getShortName()
+							: team.getClub().getName(), defaultFont));
+				}
+				if (members.size() > normalTeamSize) {
+					for (int j = normalTeamSize; j < members.size(); j++) {
+						TeamMember member = members.get(j);
+						User user = member.getUser();
+
+						cell = new PdfPCell(
+								new Phrase("Ersatz: " + user.getFirstName() + " " + user.getLastName(), defaultFont));
+						cell.setColspan(2);
+						cell.disableBorderSide(Rectangle.BOX);
+						cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+						table.addCell(cell);
+						table.addCell(new Phrase("", defaultFont));
+						table.addCell(new Phrase("", defaultFont));
+						// TODO das klappt bisher nur für einen
+					}
+				}
+			}
+		}
+		addToDocument(table);
+
+		closeCurrentSection(0);
+
+		finishDocument(out, bos);
+	}
+
+	private ByteArrayOutputStream setUpDocument() throws DocumentException {
+		document = new Document(); // A4
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		writer = PdfWriter.getInstance(document, bos);
+		writer.setStrictImageSequence(true);
+		writer.setLinearPageMode();
+		return bos;
+	}
+
+	private void finishDocument(OutputStream out, ByteArrayOutputStream bos)
+			throws Exception, IOException, DocumentException {
 		if (pageNumToc != null)
 			insertToc();
 
 		// wir verhindern so die "The document has no pages"-Exceptions
 		if (elementCount == 0)
-			throw new FachlicheException(null, null);// TODO Messages.getString("BerichtGenerator.3"));
+			throw new FachlicheException(messages, "generator.empty");
 
 		document.close();
 		writer.close();
@@ -663,47 +938,25 @@ public class BerichtGenerator {
 	private PdfPTable createFooter(int page, int total) {
 		PdfPTable table = new PdfPTable(1);
 		table.setTotalWidth(555);
-		table.getDefaultCell().setFixedHeight(20);
-		table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_RIGHT);
-		table.getDefaultCell().disableBorderSide(Rectangle.BOX);
-		// table.addCell(new Phrase(Messages.getString("BerichtGenerator.2",
-		// page, total), footerFont));
+		PdfPCell cell = new PdfPCell(
+				new Phrase(MessageFormat.format(messages.getString("generator.footer"), page, total), footerFont));
+		cell.setFixedHeight(20);
+		cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+		cell.setBorder(Rectangle.TOP);
+		table.addCell(cell);
 		return table;
 	}
 
 	private void appendText(String text, SAXParser parser, SaxHandler handler) throws Exception {
-		// IE produziert keinen XHTML-Code. Deshalb wandeln wir den Text mittels Tidy
 		if (text == null)
-			return;
-		Tidy tidy = new Tidy();
-		tidy.setWraplen(0);
-		tidy.setXHTML(true);
-		tidy.setInputEncoding("UTF-8");
-		tidy.setOutputEncoding("UTF-8");
-		tidy.setTidyMark(false);
-		tidy.setErrout(new PrintWriter(new ByteArrayOutputStream()));
-		ByteArrayOutputStream o = new ByteArrayOutputStream(text.length());
-		Node root = tidy.parse(new ByteArrayInputStream(text.getBytes("UTF8")), o);
-		Out out = new OutJavaImpl(tidy.getConfiguration(), tidy.getInputEncoding(), o) {
-			@Override
-			public void newline() {
-				//
-			}
-		};
-		PPrint p = new PPrint(tidy.getConfiguration());
-		p.printTree(out, (short) 0, 0, new Lexer(null, null, null), root);
-
-		byte[] bytes = o.toByteArray();
-		// ignoriere leere Texte
-		if (bytes.length > 0) {
-			try {
-				parser.parse(new InputSource(new InputStreamReader(new ByteArrayInputStream(bytes), "UTF8")), handler);
-			} catch (SAXException e) {
-				if (e.getException() instanceof FachlicheException || e.getException() instanceof TechnischeException)
-					throw e.getException();
-				// LogUtil.handleException(e, LOG, "Fehler bei der Textanalyse",
-				// o.toString());
-			}
+			text = "";
+		text = "<!DOCTYPE html [ <!ENTITY nbsp \"&#160;\">]><html>" + text + "</html>";
+		try {
+			parser.parse(new InputSource(new StringReader(text)), handler);
+		} catch (SAXException e) {
+			if (e.getException() == null)
+				throw e;
+			throw e.getException();
 		}
 	}
 
@@ -795,7 +1048,7 @@ public class BerichtGenerator {
 	}
 
 	private Element createTocHeading() throws DocumentException {
-		Phrase phrase = new Paragraph("");// Messages.getString("BerichtGenerator.4"));
+		Phrase phrase = new Paragraph(messages.getString("generator.toc"));
 		Font font = new Font(defaultFont);
 		font.setStyle(Font.BOLD);
 		font.setSize(44);
@@ -892,8 +1145,8 @@ public class BerichtGenerator {
 				addToDocumentDirectly(element);
 				added = true;
 			}
-			if (!added && pendingSection == null)
-				addToDocumentDirectly(element);
+			// if (!added && pendingSection == null)
+			// addToDocumentDirectly(element);
 		}
 		return element;
 	}

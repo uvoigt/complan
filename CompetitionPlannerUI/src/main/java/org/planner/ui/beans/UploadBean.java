@@ -1,7 +1,11 @@
 package org.planner.ui.beans;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.UUID;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.ExternalContext;
@@ -9,6 +13,7 @@ import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletResponse;
 
 import org.planner.ui.util.JsfUtil;
+import org.primefaces.PrimeFaces;
 import org.primefaces.context.RequestContext;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
@@ -20,13 +25,13 @@ import org.primefaces.model.UploadedFile;
  */
 public class UploadBean {
 
-	interface DownloadHandler {
-		void handleDownload(OutputStream out, String typ) throws Exception;
+	public interface DownloadHandler {
+		void handleDownload(OutputStream out, String typ, Object selection) throws Exception;
 
-		String getDownloadFileName();
+		String getDownloadFileName(Object selection);
 	}
 
-	interface UploadHandler {
+	public interface UploadHandler {
 		void handleUpload(InputStream in, String typ) throws Exception;
 	}
 
@@ -38,11 +43,24 @@ public class UploadBean {
 		void deleteUploaded();
 	}
 
+	private static class Content implements Serializable {
+
+		private static final long serialVersionUID = 1L;
+
+		private String name;
+		private byte[] bytes;
+
+		private Content(String name, byte[] bytes) {
+			this.name = name;
+			this.bytes = bytes;
+		}
+	}
+
 	private DownloadHandler downloadHandler;
 	private UploadHandler uploadHandler;
 	private UploadProcessor processor;
 
-	UploadBean(DownloadHandler downloadHandler, UploadHandler uploadHandler, UploadProcessor processor) {
+	public UploadBean(DownloadHandler downloadHandler, UploadHandler uploadHandler, UploadProcessor processor) {
 		this.downloadHandler = downloadHandler;
 		this.uploadHandler = uploadHandler;
 		this.processor = processor;
@@ -62,25 +80,40 @@ public class UploadBean {
 			processor.processUploaded();
 	}
 
+	public void create(String typ, Object selection) throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		String name;
+		try {
+			name = downloadHandler.getDownloadFileName(selection);
+			downloadHandler.handleDownload(out, typ, selection);
+		} catch (Exception e) {
+			FacesContext.getCurrentInstance().validationFailed();
+			throw e;
+		}
+		Map<String, Object> map = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
+		String token = UUID.randomUUID().toString();
+		map.put(token, new Content(name, out.toByteArray()));
+		PrimeFaces.current().ajax().addCallbackParam("token", token);
+	}
+
 	/**
-	 * Da &lt;p:fileDownload&gt; im Falle des Stream-Close den
-	 * <code>InputStream</code> des <code>StreamedContent</code> nicht schließt,
-	 * muss das re-implementiert werden.
+	 * Da &lt;p:fileDownload&gt; im Falle des Stream-Close den <code>InputStream</code> des <code>StreamedContent</code>
+	 * nicht schließt, muss das re-implementiert werden.
 	 * 
-	 * @param typ
-	 * @return
-	 * @throws Exception
 	 */
-	public void download(String typ) throws Exception {
+	public void download(String typ, String contentType, String encoding, Object selection) throws Exception {
 		FacesContext facesContext = FacesContext.getCurrentInstance();
 		ExternalContext externalContext = facesContext.getExternalContext();
 
+		String token = externalContext.getRequestParameterMap().get("token");
+		Content content = token != null ? (Content) externalContext.getSessionMap().remove(token) : null;
+
 		String contentDispositionValue = "attachment";
 
-		externalContext.setResponseContentType("application/csv");
-		externalContext.setResponseCharacterEncoding("iso-8859-1");
-		externalContext.setResponseHeader("Content-Disposition",
-				contentDispositionValue + ";filename=\"" + downloadHandler.getDownloadFileName() + "\"");
+		externalContext.setResponseContentType(contentType);
+		externalContext.setResponseCharacterEncoding(encoding);
+		externalContext.setResponseHeader("Content-Disposition", contentDispositionValue + ";filename=\""
+				+ (content != null ? content.name : downloadHandler.getDownloadFileName(selection)) + "\"");
 
 		if (RequestContext.getCurrentInstance().isSecure()) {
 			externalContext.setResponseHeader("Cache-Control", "public");
@@ -90,8 +123,10 @@ public class UploadBean {
 		OutputStream out = externalContext.getResponseOutputStream();
 
 		try {
-
-			downloadHandler.handleDownload(out, typ);
+			if (content != null)
+				out.write(content.bytes);
+			else
+				downloadHandler.handleDownload(out, typ, selection);
 			externalContext.setResponseStatus(HttpServletResponse.SC_OK);
 			externalContext.responseFlushBuffer();
 

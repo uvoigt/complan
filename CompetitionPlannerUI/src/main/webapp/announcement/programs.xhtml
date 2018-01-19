@@ -14,6 +14,15 @@
 		<ui:param name="editBean" value="#{programBean}"/>
 		<ui:param name="renderNewButton" value="false"/>
 		<ui:param name="renderCopyButton" value="false"/>
-		<ui:param name="renderImportPanel" value="false"/>
+		<ui:param name="renderDownloadSupport" value="true"/>
+		<ui:param name="uploadBean" value="#{programBean.uploadBean}"/>
+
+		<ui:define name="addRowButtons">
+			<p:commandButton icon="ui-icon-print" title="#{bundle.createPdf}"
+					action="#{programBean.uploadBean.create(null, item)}"
+					process="@this"
+					oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('datenForm',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
+		</ui:define>
+
 	</ui:composition>
 </html>

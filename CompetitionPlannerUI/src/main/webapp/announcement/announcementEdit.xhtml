@@ -72,20 +72,40 @@
 				</div>
 			</div>
 			<div class="ui-g">
-				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.announce}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.announcement}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
-					<p:commandButton value="#{bundle.setStatus}" action="#{announcementBean.announce()}"
-						process="announcementId @this" widgetVar="btnStatus" onsuccess="PF('btnStatus').disable()"/>
+					<div class="ui-g">
+						<p:commandButton value="#{bundle.setStatus}" action="#{announcementBean.setStatus('announced')}"
+							process="announcementId @this" widgetVar="btnAnnounce" onsuccess="PF('btnAnnounce').disable(); PF('btnRevoke').enable()"/>
+						<p:commandButton value="#{bundle.revokeStatus}" action="#{announcementBean.setStatus('created')}"
+							process="announcementId @this" widgetVar="btnRevoke" onsuccess="PF('btnRevoke').disable(); PF('btnAnnounce').enable()"
+							style="margin-left: 10px" rendered="#{authBean.inRole('Tester')}"/>
+						<p:commandButton value="#{bundle.testPdf}" action="#{announcementBean.uploadBean.create(null, announcement)}"
+							process="@form" style="margin-left: 10px"
+							oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('editForm',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
+						<p:commandButton widgetVar="pdfButton" style="display: none"
+							action="#{announcementBean.uploadBean.download(null, 'application/pdf', null, null)}"
+							ajax="false" process="@this"/>
+					</div>
 				</div>
 			</div>
 			<h:outputScript>
-				if (#{announcement.id == null or announcement.status != "created"})
-					PF("btnStatus").disable();
-				else
-					PF("btnStatus").enable();
+				if (#{announcement.id == null or announcement.status != "created"}) {
+					PF("btnAnnounce").disable();
+					PF("btnRevoke").enable();
+				} else {
+					PF("btnAnnounce").enable();
+					PF("btnRevoke").disable();
+				}
+				$(editForm).submit(function(e) {
+					setTimeout(function() {
+						$(editForm).find(".ui-submit-param").remove();
+					}, 10);
+				});
 			</h:outputScript>
 
-			<pe:ckEditor value="#{announcement.text}" widgetVar="annEditor" language="de"
+			<pe:ckEditor value="#{announcement.text}" widgetVar="annEditor"
+				customConfig="javax.faces.resource/editorConfig.js.xhtml?ln=js"
 				width="90%"/>
 
 		</ui:define>

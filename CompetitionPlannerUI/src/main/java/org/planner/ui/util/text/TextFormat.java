@@ -6,6 +6,9 @@ public class TextFormat {
 	}
 
 	public enum Keyword {
-
+		page, pages, //
+		toc, currentDate, pageBreak, //
+		name, category, location, address, homepage, startDate, endDate, //
+		races
 	}
 }
