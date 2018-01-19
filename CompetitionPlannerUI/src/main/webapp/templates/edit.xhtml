@@ -11,7 +11,7 @@
 
 			<ui:param name="canSave" value="#{true}"/>
 
-			<h:form>
+			<h:form id="editForm">
 
 				<p:hotkey bind="esc" action="#{startseiteBean.setMainContent(searchLink)}" process="@this" update=":mainContent"/>
 				<ui:insert name="editArea"/>
