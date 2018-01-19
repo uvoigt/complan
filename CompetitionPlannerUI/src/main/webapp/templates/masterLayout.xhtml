@@ -47,7 +47,9 @@
 				<ui:insert name="main">
 					<h:panelGroup id="mainContent" layout="block" styleClass="ui-corner-all ui-widget-content">
 
-						<p:messages id="messages" showDetail="true" autoUpdate="true" closable="true" showSummary="false"/>
+						<p:messages id="messages" showDetail="true" closable="true" showSummary="false">
+							<p:autoUpdate/>
+						</p:messages>
 
 						<ui:include src="#{startseiteBean.mainContent}" />
 
