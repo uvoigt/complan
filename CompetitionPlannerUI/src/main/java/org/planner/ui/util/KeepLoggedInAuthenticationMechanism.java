@@ -2,8 +2,6 @@ package org.planner.ui.util;
 
 import static io.undertow.UndertowMessages.MESSAGES;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.Calendar;
 import java.util.Map;
 
@@ -62,12 +60,6 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 			Cookie cookie = cookies.get(COOKIE_TOKEN);
 			if (cookie != null) {
 				String cookieValue = cookie.getValue();
-				try {
-					cookieValue = URLDecoder.decode(cookie.getValue(), "UTF8");
-				} catch (UnsupportedEncodingException e) {
-					// should not occur
-				}
-
 				User user = getService().authenticate(cookieValue, false);
 				if (user != null) {
 					if (LOG.isDebugEnabled())

@@ -16,7 +16,6 @@
 				<h:form>
 					<p:commandLink action="#{startseiteBean.setMainContent('/sections/start.xhtml')}"
 							update=":mainContent :messages :leftMenu" process="@this" style="outline: none"
-							oncomplete="hideHelp(); setUrlParam()"
 							value="#{bundle.title}">
 					</p:commandLink>
 				</h:form>

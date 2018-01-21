@@ -3,13 +3,9 @@ function selectSidebarLink(link) {
 	if (link) {
 		$(link).addClass("ui-state-active");
 	}
-	hideHelp();
 }
 function navItemSelected() {
 	$("#leftMenuContainer").css("display", "").addClass("menuHidden");
-}
-function hideHelp() {
-	PF("layout").hide("east");
 }
 function toggleHelp(show) {
 	var helpUI = $("#helpUI");
@@ -73,7 +69,7 @@ function message(msg) {
 	$(".loginMessage").html(msg);
 }
 function setUrlParam(val) {
-	val = val !== undefined ? "?i=" + encodeURIComponent(val) : location.protocol + "//" + location.host + location.pathname;
+	val = val ? "?" + encodeURIComponent(val) : location.protocol + "//" + location.host + location.pathname;
 	if (history.replaceState)
 		history.replaceState("", "", val);
 }

@@ -34,7 +34,6 @@ public abstract class AbstractEditBean implements ITarget, Serializable {
 	protected abstract void doSave();
 
 	protected Long getIdFromRequestParameters() {
-		urlParameters.init();
 		return urlParameters.getId();
 	}
 

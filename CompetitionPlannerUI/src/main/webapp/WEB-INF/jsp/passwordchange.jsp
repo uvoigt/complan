@@ -18,8 +18,7 @@
 <body onload="document.passform.p1.focus();">
 	<div class="vertical">
 		<div class="horizontal main">
-			<form method="post" action="passwordchange" name="passform">
-				<input type="hidden" name="t" value="<%= request.getParameter("t") %>" />
+			<form method="post" action="passwordchange?${pageContext.request.queryString}" name="passform">
 				<table>
 					<tbody>
 						<tr>

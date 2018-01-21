@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -136,6 +137,7 @@ public class RegistryImpl {
 	private String extractHashFromToken(String token, byte[] hashFromToken) {
 		byte[] decoded = null;
 		try {
+			token = URLDecoder.decode(token, "UTF8");
 			decoded = Base64.getDecoder().decode(token.getBytes("UTF8"));
 		} catch (Exception e) {
 			LOG.error("Fehler beim Dekodieren des Sicherheitstokens", e);
@@ -224,7 +226,7 @@ public class RegistryImpl {
 
 		String subject = messages.getMessage("email.register.subject");
 		String emailText = getFormattedMessage("email.register.html",
-				DateFormat.getDateTimeInstance().format(emailToken.getTokenExpires()), resetUrl + "?t=" + encodedToken);
+				DateFormat.getDateTimeInstance().format(emailToken.getTokenExpires()), resetUrl + "?" + encodedToken);
 
 		sendEmail(user, subject, emailText);
 		return getFormattedMessage("email.register.sent", email);
@@ -256,7 +258,7 @@ public class RegistryImpl {
 		String encodedToken = createEncodedToken(user, emailToken);
 
 		String emailText = getFormattedMessage("email.passwordreset.html", user.getFirstName(), user.getLastName(),
-				DateFormat.getDateTimeInstance().format(emailToken.getTokenExpires()), resetUrl + "?t=" + encodedToken);
+				DateFormat.getDateTimeInstance().format(emailToken.getTokenExpires()), resetUrl + "?" + encodedToken);
 
 		String subject = messages.getMessage("email.passwordreset.subject");
 		sendEmail(user, subject, emailText);

@@ -46,7 +46,7 @@ public class RegistryBean implements Serializable {
 	}
 
 	private String getToken(HttpServletRequest request) {
-		return request.getParameter("t");
+		return request.getQueryString();
 	}
 
 	public String sendRegister(String email, HttpServletRequest request) {

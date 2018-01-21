@@ -20,7 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.util.JsfUtil;
 import org.planner.util.LoggingInterceptor.Silent;
-import org.primefaces.context.RequestContext;
+import org.primefaces.PrimeFaces;
 
 @Named
 @RequestScoped
@@ -62,10 +62,8 @@ public class StartseiteBean implements Serializable {
 		}
 		if (mainContent == null) {
 			mainContent = (String) JsfUtil.getViewVariable("mainContent");
-			if (mainContent == null) {
-				urlParameters.init();
+			if (mainContent == null)
 				mainContent = urlParameters.getMainContent();
-			}
 		}
 		if (mainContent != null) {
 			JsfUtil.setViewVariable("mainContent", mainContent);
@@ -87,8 +85,9 @@ public class StartseiteBean implements Serializable {
 
 		if (Boolean.TRUE.equals(JsfUtil.getViewVariable("helpVisible")))
 			FacesContext.getCurrentInstance().getPartialViewContext().getRenderIds().add("help");
+		String queryString = "/sections/start.xhtml".equals(mainContent) ? "" : urlParameters.getEncoded();
 
-		RequestContext.getCurrentInstance().execute("setUrlParam('" + urlParameters.getEncoded() + "')");
+		PrimeFaces.current().executeScript("setUrlParam('" + queryString + "')");
 	}
 
 	public void setMainContentAndReset(String mainContent) {

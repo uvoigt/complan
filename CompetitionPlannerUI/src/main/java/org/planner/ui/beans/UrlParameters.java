@@ -4,9 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Named;
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.IOUtils;
@@ -27,7 +29,6 @@ public class UrlParameters {
 
 	private Object[] content = new Object[3];
 	private Class<?>[] types = { String.class, Long.class };
-	private boolean initialized;
 
 	private static final byte[] RAND;
 
@@ -41,18 +42,17 @@ public class UrlParameters {
 		RAND = buf;
 	}
 
+	@PostConstruct
 	public void init() {
-		if (initialized)
-			return;
-		initialized = true;
-		String string = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("i");
+		String string = ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest())
+				.getQueryString();
 		if (string == null)
 			return;
-		byte[] buf = decodeBytes(string);
-		int start = 0;
-		start++;
-		xor(buf);
 		try {
+			byte[] buf = decodeBytes(string);
+			int start = 0;
+			start++;
+			xor(buf);
 			MutableInt offset = new MutableInt(start);
 			for (int i = 0; i < content.length && offset.intValue() < buf.length; i++) {
 				Object object = getObject(buf, offset, types[i]);

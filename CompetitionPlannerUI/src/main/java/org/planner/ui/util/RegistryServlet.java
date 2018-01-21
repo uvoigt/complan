@@ -1,7 +1,6 @@
 package org.planner.ui.util;
 
 import java.io.IOException;
-import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -162,7 +161,7 @@ public class RegistryServlet extends HttpServlet {
 		Cookie[] cookies = request.getCookies();
 		for (Cookie cookie : cookies) {
 			if (KeepLoggedInAuthenticationMechanism.COOKIE_TOKEN.equals(cookie.getName())) {
-				service.forgetMe(URLDecoder.decode(cookie.getValue(), "UTF8"));
+				service.forgetMe(cookie.getValue());
 				if (LOG.isDebugEnabled())
 					LOG.debug("Deleting authentication cookie: " + cookie.getValue());
 				cookie = new Cookie(KeepLoggedInAuthenticationMechanism.COOKIE_TOKEN, null);
