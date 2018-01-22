@@ -27,6 +27,8 @@ public class Messages extends AbstractMap<String, String> implements Serializabl
 	private Map<String, String> delegate;
 	private Messages parent;
 
+	private ResourceBundle bundle;
+
 	public Messages() {
 	}
 
@@ -38,7 +40,7 @@ public class Messages extends AbstractMap<String, String> implements Serializabl
 	@PostConstruct
 	public void init() {
 		locale = FacesContext.getCurrentInstance().getViewRoot().getLocale();
-		ResourceBundle bundle = ResourceBundle.getBundle("MessagesBundle", locale);
+		bundle = ResourceBundle.getBundle("MessagesBundle", locale);
 		delegate = new HashMap<>();
 		for (String k : bundle.keySet()) {
 			delegate.put(k, bundle.getString(k));
@@ -47,6 +49,10 @@ public class Messages extends AbstractMap<String, String> implements Serializabl
 
 	public Locale getLocale() {
 		return locale;
+	}
+
+	public ResourceBundle getBundle() {
+		return bundle;
 	}
 
 	@Override
@@ -59,8 +65,8 @@ public class Messages extends AbstractMap<String, String> implements Serializabl
 	}
 
 	/**
-	 * Liefert den im Bundle enthaltenen String oder null, im Unterschied zu
-	 * {@link #get(Object)}, welches in jedem Fall einen Wert liefert.
+	 * Liefert den im Bundle enthaltenen String oder null, im Unterschied zu {@link #get(Object)}, welches in jedem Fall
+	 * einen Wert liefert.
 	 * 
 	 * @param key
 	 *            der Bundel-key
