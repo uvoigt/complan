@@ -35,6 +35,10 @@ import org.planner.ui.beans.Messages;
 import org.planner.ui.beans.RemoteDataModel;
 import org.planner.ui.beans.SearchBean.ColumnModel;
 import org.planner.ui.util.JsfUtil;
+import org.primefaces.component.datatable.DataTable;
+import org.primefaces.component.datatable.feature.DataTableFeatureKey;
+import org.primefaces.component.datatable.feature.FilterFeature;
+import org.primefaces.model.FilterMeta;
 
 @Named
 @RequestScoped
@@ -61,6 +65,8 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 
 	private boolean showEffect;
 
+	private DataTable registrationTable;
+
 	@PostConstruct
 	public void init() {
 		Long id = getIdFromRequestParameters();
@@ -83,6 +89,19 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		// TODO auch hier... über einen search-view-parameter die detailtiefe festlegen
 		// 4 aufgrund der Anzeige des Vereins bei manchen Sportlern, ansonsten reicht 2
 		registration = service.getObject(Registration.class, id, 4);
+	}
+
+	private void loadRegistrationAndUpdateModel() {
+		loadRegistration(registration.getId());
+		// da der value-Getter beim Table update nicht aufgerufen wird, muss das Table-Model manuell aktualisiert werden
+		registrationTable.setValue(registration.getEntries());
+		FilterFeature feature = (FilterFeature) registrationTable.getFeature(DataTableFeatureKey.FILTER);
+		// dies ist ein Hack, der das Filtern ermöglicht, da der RowIndex beim submit des delete-Buttons >= 0 ist,
+		// würde eine falsche FilterId für den Lookup in den Request-Parametern verwendet werden
+		registrationTable.setRowIndex(-1);
+		List<FilterMeta> filterMetadata = feature.populateFilterMetaData(FacesContext.getCurrentInstance(),
+				registrationTable);
+		feature.filter(FacesContext.getCurrentInstance(), registrationTable, filterMetadata, null);
 	}
 
 	public Registration getRegistration() {
@@ -169,7 +188,8 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			service.saveRegEntries(registration.getId(), entries);
 			showEffect = true;
 		}
-		loadRegistration(registration.getId());
+		if (showEffect)
+			loadRegistrationAndUpdateModel();
 	}
 
 	private void setAthletesToEntry(RegEntry entry) {
@@ -192,13 +212,15 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			request.setRemark(bundle.get("requestMsg"));
 			selectedEntry.setParticipants(Arrays.asList(request));
 			service.saveRegEntries(registration.getId(), entries);
+			showEffect = true;
+			loadRegistrationAndUpdateModel();
 		}
 	}
 
 	public void deleteFromRegistration(RegEntry entry) {
 		service.deleteFromRegEntry(registration.getId(), entry);
 		showEffect = true;
-		loadRegistration(registration.getId());
+		loadRegistrationAndUpdateModel();
 	}
 
 	public List<Race> getRaces() {
@@ -269,6 +291,14 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	public void toggleClubVisible() {
 		clubVisible = !clubVisible;
 		athletes = null;
+	}
+
+	public DataTable getRegistrationTable() {
+		return registrationTable;
+	}
+
+	public void setRegistrationTable(DataTable registrationTable) {
+		this.registrationTable = registrationTable;
 	}
 
 	public Object renderClubName(Map<String, Object> user) {

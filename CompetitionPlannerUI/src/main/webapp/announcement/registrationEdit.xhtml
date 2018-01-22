@@ -4,7 +4,8 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:pe="http://primefaces.org/ui/extensions">
 
 	<ui:composition template="/templates/title.xhtml">
 		<ui:param name="bundle" value="#{messages.bundle('registrations')}"/>
@@ -59,8 +60,8 @@
 									<p:outputLabel value="#{bundle.format('racesCount', registrationBean.races.size())}"/>
 								</f:facet>
 
-								<p:ajax event="rowSelect" oncomplete="registrationEdit_enableButtons()"/>
-								<p:ajax event="rowUnselect" oncomplete="registrationEdit_enableButtons()"/>
+								<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons()"/>
+								<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons()"/>
 								<p:ajax event="filter" oncomplete="PF('racesTable').unselectAllRows();registrationEdit_enableButtons()"/>
 
 								<p:column headerText="#{bundle.number}" sortBy="#{race.number}" filterBy="#{race.number}" filterMatchMode="exact">
@@ -89,14 +90,12 @@
 								action="#{registrationBean.addRequest(bundle)}"
 								process="@form"
 								update="registrationTable"
-								oncomplete="PF('registrationTable').filter()"
 								style="margin-bottom: 1em"/>
 							<p:commandButton icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
 								widgetVar="btnAddAthlete"
 								action="#{registrationBean.addToRegistration()}"
 								process="@form"
-								update="registrationTable"
-								oncomplete="PF('registrationTable').filter()"/>
+								update="registrationTable"/>
 							<p:commandButton icon="ui-icon-arrowthick-1-w" title="#{messages.backToOverview}"
 								action="#{startseiteBean.setMainContent('/announcement/registrations.xhtml')}"
 								process="@this"
@@ -129,11 +128,10 @@
 
 								<p:ajax event="page" process="@form:clubVisible" update="@form:clubVisible"/>
 								<p:ajax event="sort" process="@form:clubVisible" update="@form:clubVisible"/>
-								<p:ajax event="rowSelect" oncomplete="registrationEdit_enableButtons()"/>
-								<p:ajax event="rowUnselect" oncomplete="registrationEdit_enableButtons()"/>
+								<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons()"/>
+								<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons()"/>
 								<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible" oncomplete="PF('athletesTable').unselectAllRows();registrationEdit_enableButtons();checkEmpty()"/>
-								<p:ajax event="rowDblselect" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"
-									oncomplete="PF('registrationTable').filter()"/>
+								<p:ajax event="rowDblselect" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
 
 								<p:column headerText="#{bundle.club}" sortBy="#{user.club.name}" filterBy="#{user.club.name}" filterMatchMode="contains"
 										visible="#{registrationBean.clubVisible}" filterValue="#{registrationBean.loggedInUser.club.name}">
@@ -162,6 +160,7 @@
 				<p:dataTable id="registrationTable" widgetVar="registrationTable"
 						var="entry" rowKey="#{entry.id}"
 						value="#{registrationBean.registration.entries}"
+						binding="#{registrationBean.registrationTable}"
 						emptyMessage="#{bundle.noRegistrations}"
 						sortMode="single"
 						selectionMode="single"
@@ -177,8 +176,8 @@
 						</h:panelGroup>
 					</f:facet>
 
-					<p:ajax event="rowSelect" oncomplete="registrationEdit_enableButtons()"/>
-					<p:ajax event="rowUnselect" oncomplete="registrationEdit_enableButtons()"/>
+					<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons()"/>
+					<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons()"/>
 					<p:ajax event="filter" oncomplete="PF('registrationTable').unselectAllRows()"/>
 
 					<p:column headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry, bundle)}" filterMatchMode="contains" filterStyle="width: 80%">
@@ -195,9 +194,9 @@
 					<p:column width="30">
 						<p:commandButton icon="ui-icon-trash" title="#{bundle.deleteParticipant}"
 								action="#{registrationBean.deleteFromRegistration(entry)}"
-								process="@form:registrationTable"
-								update="@form:registrationTable"
-								oncomplete="PF('registrationTable').filter()"/>
+								partialSubmit="false"
+								process="registrationTable"
+								update="registrationTable"/>
 					</p:column>
 				</p:dataTable>
 
