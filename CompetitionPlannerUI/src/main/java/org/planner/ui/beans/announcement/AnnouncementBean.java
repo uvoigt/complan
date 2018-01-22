@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -45,6 +44,9 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	@Inject
 	private Messages messages;
+
+	@Inject
+	private BerichtGenerator generator;
 
 	private UploadBean uploadBean;
 
@@ -153,13 +155,13 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 		// vorher sollte der Ausschreibungstext geprüft werden
 		try {
-			new BerichtGenerator().generate(announcement, new NullOutputStream());
+			generator.generate(announcement, new NullOutputStream());
 		} catch (Exception e) {
 			if (e instanceof FachlicheException)
 				throw (FachlicheException) e;
 			if (e instanceof TechnischeException)
 				throw (TechnischeException) e;
-			throw new FachlicheException(ResourceBundle.getBundle("MessagesBundle"), "announcements.textError", e);
+			throw new FachlicheException(messages.getBundle(), "announcements.textError", e);
 		}
 
 		service.saveAnnouncement(announcement);
@@ -220,9 +222,12 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		// unterscheide die beiden Use-Cases Aufruf von der Suchseite und Aufruf von der Edit-Seite
 		if (ctx.getExternalContext().getRequestParameterMap().containsKey("editForm")) {
-			Club club = service.getLoggedInUser().getClub();
-			announcement.setClub(club);
-			handleLocation(location, announcement.getLocation(), club);
+			// das ist bei Neuanlage einer Ausschreibung
+			if (announcement.getClub() == null) {
+				Club club = service.getLoggedInUser().getClub();
+				announcement.setClub(club);
+				handleLocation(location, announcement.getLocation(), club);
+			}
 		} else {
 			Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selection, "id");
 			announcement = service.getObject(Announcement.class, id, 1);
@@ -232,6 +237,6 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	@Override
 	public void handleDownload(OutputStream out, String typ, Object selection) throws Exception {
-		new BerichtGenerator().generate(announcement, out);
+		generator.generate(announcement, out);
 	}
 }

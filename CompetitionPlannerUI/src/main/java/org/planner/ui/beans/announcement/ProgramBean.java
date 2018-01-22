@@ -1,8 +1,6 @@
 package org.planner.ui.beans.announcement;
 
 import java.io.OutputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -20,11 +18,8 @@ import org.planner.eo.Program;
 import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
-import org.planner.eo.ProgramRace.RaceType;
 import org.planner.eo.User;
-import org.planner.model.AgeType;
 import org.planner.ui.beans.AbstractEditBean;
-import org.planner.ui.beans.Messages;
 import org.planner.ui.beans.UploadBean;
 import org.planner.ui.beans.UploadBean.DownloadHandler;
 import org.planner.ui.util.BerichtGenerator;
@@ -38,10 +33,11 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	private static final long serialVersionUID = 1L;
 
-	private static DateFormat DF_WEEKDAY = new SimpleDateFormat("EEEE");
+	@Inject
+	private RenderBean renderer;
 
 	@Inject
-	private Messages messages;
+	private BerichtGenerator generator;
 
 	private UploadBean uploadBean;
 
@@ -94,7 +90,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	@Override
 	public void handleDownload(OutputStream out, String typ, Object selection) throws Exception {
-		new BerichtGenerator().generate(program, out);
+		generator.generate(program, out);
 	}
 
 	public UploadBean getUploadBean() {
@@ -158,29 +154,11 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	}
 
 	public String renderAgeGroup(User user) {
-		if (user == null || user.getAgeType().ordinal() >= AgeType.junioren.ordinal())
-			return null;
-		return new StringBuilder().append("(").append(user.getAge()).append(")").toString();
+		return renderer.renderAgeGroup(user);
 	}
 
 	public String renderRaceMode(ProgramRace race) {
-		String s = "";
-		if (race.getRaceType() == RaceType.heat) {
-			int intoFinal = race.getIntoFinal();
-			int intoSemiFinal = race.getIntoSemiFinal();
-			if (intoFinal > 0)
-				s = (intoFinal > 1 ? "1. - " : "") + intoFinal + ". in den Endlauf"; // TODO
-			if (intoSemiFinal > 0) {
-				if (s.length() > 0)
-					s += " ";
-				if (intoFinal == 0)
-					s += "1. - ";
-				else if (intoSemiFinal > intoFinal + 1)
-					s += (intoFinal + 1) + ". - ";
-				s += intoSemiFinal + ". in den Zwischenlauf"; // TODO
-			}
-		}
-		return s;
+		return renderer.renderRaceMode(race);
 	}
 
 	public List<String> suggestExpr(String text) {
@@ -214,7 +192,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	}
 
 	public String renderStartTime(Date date) {
-		return DF_WEEKDAY.format(date) + " " + DateFormat.getTimeInstance().format(date);
+		return renderer.renderStartTime(date);
 	}
 
 	public List<ProgramRace> getSelectedRaces() {

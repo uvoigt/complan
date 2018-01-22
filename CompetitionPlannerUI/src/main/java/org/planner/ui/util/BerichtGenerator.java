@@ -1,6 +1,7 @@
 package org.planner.ui.util;
 
 import java.awt.Color;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,15 +11,15 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.Stack;
 
-import javax.inject.Named;
+import javax.inject.Inject;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -31,6 +32,8 @@ import org.planner.eo.Race;
 import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
 import org.planner.eo.User;
+import org.planner.ui.beans.Messages;
+import org.planner.ui.beans.announcement.RenderBean;
 import org.planner.ui.util.text.TextFormat.Keyword;
 import org.planner.util.LogUtil.FachlicheException;
 import org.xml.sax.Attributes;
@@ -39,7 +42,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chapter;
 import com.itextpdf.text.Chunk;
@@ -57,9 +59,12 @@ import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.Section;
 import com.itextpdf.text.TabStop.Alignment;
+import com.itextpdf.text.api.Indentable;
+import com.itextpdf.text.pdf.PdfDiv;
 import com.itextpdf.text.pdf.PdfObject;
 import com.itextpdf.text.pdf.PdfOutline;
 import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPRow;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfReader;
@@ -73,14 +78,13 @@ import com.itextpdf.text.pdf.draw.LineSeparator;
  * 
  * @author Uwe Voigt, IBM
  */
-@Named
 public class BerichtGenerator {
 
 	private class HeaderWriter extends PdfPageEventHelper {
 		private Image logo;
 		private PdfPTable header;
 
-		private HeaderWriter(byte[] imageData, String title) throws Exception {
+		private HeaderWriter(byte[] imageData, PdfPCell title) throws Exception {
 			final int dim = 50;
 			if (imageData != null) {
 				logo = Image.getInstance(imageData);
@@ -89,9 +93,7 @@ public class BerichtGenerator {
 			}
 			header = new PdfPTable(1);
 			header.setTotalWidth(555);
-			PdfPCell cell = new PdfPCell(new Phrase(title, defaultFont));
-			cell.setBorder(Rectangle.BOTTOM);
-			header.addCell(cell);
+			header.addCell(title);
 		}
 
 		@Override
@@ -118,7 +120,6 @@ public class BerichtGenerator {
 		div, span, //
 		table, tbody, tr, td, //
 		ul, ol, li, //
-		font, //
 		strong, b, em, i, u, s, sub, sup, //
 		p, img
 	}
@@ -164,21 +165,152 @@ public class BerichtGenerator {
 				}
 			}
 
-			<T> T getAttValueIgnoreCase(String name, Class<T> type) {
+			private <T> T getAttributeValue(String name, Class<T> type) {
 				for (int i = 0, n = attributes.getLength(); i < n; i++) {
 					String qn = attributes.getQName(i);
 					if (name.equalsIgnoreCase(qn)) {
-						String s = attributes.getValue(i);
-						if (s == null)
-							return null;
-						try {
-							return type.getConstructor(String.class).newInstance(s);
-						} catch (Exception e) {
-							throw new IllegalArgumentException("Fehler beim Lesen des Attributs " + name, e);
-						}
+						return getValueInstance(attributes.getValue(i), type);
 					}
 				}
 				return null;
+			}
+
+			private <T> T getStyleValue(String name, Class<T> type) {
+				String style = getAttributeValue("style", String.class);
+				if (style == null)
+					return getValueInstance(null, type);
+				String[] pairs = style.split(";");
+				for (int i = 0; i < pairs.length; i++) {
+					String[] pair = pairs[i].split(":");
+					if (pair[0].trim().equalsIgnoreCase(name)) {
+						return getValueInstance(pair[1].trim(), type);
+					}
+				}
+				return getValueInstance(null, type);
+			}
+
+			@SuppressWarnings("unchecked")
+			private <T> T getValueInstance(String s, Class<T> type) {
+				if (type == Font.class)
+					return (T) getFont(s, font);
+				if (type == BaseColor.class)
+					return (T) getColor(s);
+				if (s == null)
+					return null;
+				try {
+					return type.getConstructor(String.class).newInstance(s);
+				} catch (Exception e) {
+					throw new IllegalArgumentException("Lesen des Wertes von " + s, e);
+				}
+			}
+
+			private Float getSizeValue(String size) {
+				if (size == null)
+					return null;
+				if (size.endsWith("px"))
+					size = size.substring(0, size.length() - 2);
+				return Float.valueOf(size);
+			}
+
+			private float getFontSize(String size, Font currentFont) {
+				if (size == null)
+					return currentFont.getSize();
+				return getSizeValue(size);
+			}
+
+			private BaseColor getColor(String value) {
+				if (value == null)
+					return null;
+				if (value.startsWith("rgb(")) {
+					String[] v = value.substring(4, value.length() - 1).split(",");
+					return new BaseColor(Integer.parseInt(v[0].trim()), Integer.parseInt(v[1].trim()),
+							Integer.parseInt(v[2].trim()));
+				}
+				Color awtColor = Color.decode(value);
+				return new BaseColor(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
+			}
+
+			private Font getFont(String face, Font currentFont) {
+				if (face == null)
+					return new Font(currentFont);
+				String[] parts = face.split(",");
+				if (parts.length > 1) {
+					for (String string : parts) {
+						Font font = getFont(string, currentFont);
+						if (font != null)
+							return font;
+					}
+				}
+				try {
+					switch (FontFamily.valueOf(face.toUpperCase())) {
+					default:
+						return new Font(currentFont);
+					case COURIER:
+						return new Font(FontFamily.COURIER, currentFont.getSize(), currentFont.getStyle());
+					case HELVETICA:
+						return new Font(FontFamily.HELVETICA, currentFont.getSize(), currentFont.getStyle());
+					case TIMES_ROMAN:
+						return new Font(FontFamily.TIMES_ROMAN, currentFont.getSize(), currentFont.getStyle());
+					}
+				} catch (IllegalArgumentException e) {
+					return null;
+				}
+			}
+
+			private int getAlignment(String alignment) {
+				if (alignment == null)
+					alignment = getStyleValue("text-align", String.class);
+				if (alignment != null) {
+					switch (Alignment.valueOf(alignment.toUpperCase())) {
+					case LEFT:
+						return Element.ALIGN_LEFT;
+					case CENTER:
+						return Element.ALIGN_CENTER;
+					case RIGHT:
+						return Element.ALIGN_RIGHT;
+					case ANCHOR: // TODO richtig?
+						return Element.ALIGN_JUSTIFIED;
+					}
+				}
+				return Element.ALIGN_UNDEFINED;
+			}
+
+			private void processStyle() {
+				BaseColor bgColor = getStyleValue("background-color", BaseColor.class);
+				if (bgColor != null)
+					this.bgColor = bgColor;
+				font = getStyleValue("font-family", Font.class);
+				font.setSize(getFontSize(getStyleValue("font-size", String.class), font));
+				BaseColor color = getStyleValue("color", BaseColor.class);
+				if (color != null) {
+					font = new Font(font);
+					font.setColor(color);
+				}
+			}
+
+			private void applyStyle(Element e) {
+				if (e instanceof Rectangle)
+					((Rectangle) e).setBackgroundColor(bgColor);
+				if (e instanceof PdfDiv) {
+					((PdfDiv) e).setBackgroundColor(bgColor);
+					((PdfDiv) e).setTextAlignment(getAlignment(null));
+					// ((PdfDiv) e).setPercentageWidth(100f);
+				}
+				if (e instanceof PdfPCell) {
+					((PdfPCell) e).setHorizontalAlignment(getAlignment(null));
+					if (currentElement instanceof Paragraph
+							&& ((Paragraph) currentElement).getAlignment() != Element.ALIGN_UNDEFINED)
+						((PdfPCell) e).setHorizontalAlignment(((Paragraph) currentElement).getAlignment());
+				}
+				if (e instanceof PdfPTable) {
+					PdfPTable t = (PdfPTable) e;
+					for (PdfPRow row : t.getRows()) {
+						for (PdfPCell cell : row.getCells()) {
+							if (cell != null && cell.getBackgroundColor() == null)
+								cell.setBackgroundColor(bgColor);
+						}
+					}
+				}
 			}
 		}
 
@@ -238,34 +370,37 @@ public class BerichtGenerator {
 					table.addCell(new Phrase("Distanz", headerFont));
 					table.addCell(new Phrase("Zusatz", headerFont));
 
-					java.util.List<Race> races = new ArrayList<>(announcement.getRaces());
-					Collections.sort(races, new Comparator<Race>() {
-						@Override
-						public int compare(Race r1, Race r2) {
-							return r1.getNumber().compareTo(r2.getNumber());
+					// im Falle einer Neuanlage der Ausschreibung existiren noch keine Rennen!
+					if (announcement.getRaces() != null) {
+						java.util.List<Race> races = new ArrayList<>(announcement.getRaces());
+						Collections.sort(races, new Comparator<Race>() {
+							@Override
+							public int compare(Race r1, Race r2) {
+								return r1.getNumber().compareTo(r2.getNumber());
+							}
+						});
+						DateFormat FORMAT_DAY = new SimpleDateFormat("EEEE");
+						DateFormat FORMAT_TIME = new SimpleDateFormat("HH:mm");
+						for (Race race : races) {
+							String day = "";
+							if (race.getDay() != null) {
+								Calendar cal = Calendar.getInstance();
+								cal.setTime(announcement.getStartDate());
+								cal.add(Calendar.DAY_OF_YEAR, race.getDay());
+								day = FORMAT_DAY.format(cal.getTime());
+							}
+							String time = "";
+							if (race.getStartTime() != null) {
+								time = FORMAT_TIME.format(race.getStartTime());
+							}
+							table.addCell(new Phrase(day, defaultFont));
+							table.addCell(new Phrase(time, defaultFont));
+							table.addCell(new Phrase(Integer.toString(race.getNumber()), defaultFont));
+							table.addCell(new Phrase(race.getBoatClass().getText() + " " + race.getGender().getText()
+									+ " " + race.getAgeType().getText(), defaultFont));
+							table.addCell(new Phrase(race.getDistance() + " m", defaultFont));
+							table.addCell(new Phrase());
 						}
-					});
-					DateFormat FORMAT_DAY = new SimpleDateFormat("EEEE");
-					DateFormat FORMAT_TIME = new SimpleDateFormat("HH:mm");
-					for (Race race : races) {
-						String day = "";
-						if (race.getDay() != null) {
-							Calendar cal = Calendar.getInstance();
-							cal.setTime(announcement.getStartDate());
-							cal.add(Calendar.DAY_OF_YEAR, race.getDay());
-							day = FORMAT_DAY.format(cal.getTime());
-						}
-						String time = "";
-						if (race.getStartTime() != null) {
-							time = FORMAT_TIME.format(race.getStartTime());
-						}
-						table.addCell(new Phrase(day, defaultFont));
-						table.addCell(new Phrase(time, defaultFont));
-						table.addCell(new Phrase(Integer.toString(race.getNumber()), defaultFont));
-						table.addCell(new Phrase(race.getBoatClass().getText() + " " + race.getGender().getText() + " "
-								+ race.getAgeType().getText(), defaultFont));
-						table.addCell(new Phrase(race.getDistance() + " m", defaultFont));
-						table.addCell(new Phrase());
 					}
 					addToDocument(table);
 					return "";
@@ -303,14 +438,8 @@ public class BerichtGenerator {
 			default:
 				break;
 			case p:
-				closeCurrentParagraph();
-				currentParagraph = new Paragraph();
-				break;
-			case font:
-				flushText(context);
-				context.font = getFont(attributes.getValue("face"), context.font);
-				context.font.setSize(getSize(attributes.getValue("size"), context.font));
-				context.font.setColor(getColor(attributes.getValue("color"), context.font));
+				closeCurrentElement();
+				currentElement = new Paragraph();
 				break;
 			case strong:
 			case b:
@@ -344,54 +473,51 @@ public class BerichtGenerator {
 				break;
 			case span:
 				flushText(context);
-				BaseColor bgColor = getColor(getStyle(attributes, "background-color"));
-				if (bgColor != null)
-					context.bgColor = bgColor;
-				BaseColor color = getColor(getStyle(attributes, "color"));
-				if (color != null) {
-					context.font = new Font(context.font);
-					context.font.setColor(color);
-				}
+				context.processStyle();
 				break;
 			case div:
-				closeCurrentParagraph();
-				currentParagraph = new Paragraph();
-				currentParagraph.setAlignment(getAlign(attributes));
+				flushText(context);
+				closeCurrentElement();
+				currentElement = new PdfDiv();
+				context.processStyle();
 				break;
 			case blockquote:
-				closeCurrentParagraph();
+				closeCurrentElement();
 				currentIndent += 15;
 				break;
 			case ul:
-				closeCurrentParagraph();
+				closeCurrentElement();
 				currentList = new List(false);
 				break;
 			case ol:
-				closeCurrentParagraph();
+				closeCurrentElement();
 				currentList = new List(true);
 				break;
 			case table:
 				// schließe den vorherigen Abschnitt nur wenn es sich nicht um
 				// eine geschachtelte Tabelle handelt
+				flushText(context);
 				if (currentTable.isEmpty())
-					closeCurrentParagraph();
+					closeCurrentElement();
 				currentTable.push(new Table());
+				context.processStyle();
 				break;
 			case td:
 				PdfPCell cell = new PdfPCell();
-				Integer colspan = context.getAttValueIgnoreCase("colspan", Integer.class);
+				Integer colspan = context.getAttributeValue("colspan", Integer.class);
 				if (colspan != null)
 					cell.setColspan(colspan);
-				Integer rowspan = context.getAttValueIgnoreCase("rowspan", Integer.class);
+				Integer rowspan = context.getAttributeValue("rowspan", Integer.class);
 				if (rowspan != null)
 					cell.setRowspan(rowspan);
 				currentTable.peek().cells.add(cell);
+				context.processStyle();
 				break;
 			case img:
 				// https://localhost:8443/planner/javax.faces.resource/ckeditor/plugins/smiley/images/regular_smile.png.xhtml?ln=primefaces-extensions&amp;v=6.1.1
 				// ist
 				// META-INF/resources/primefaces-extensions/ckeditor/plugins/smiley/images/regular_smile.png
-				String src = attributes.getValue("src");
+				String src = context.getAttributeValue("src", String.class);
 				final String resource = "javax.faces.resource";
 				int index = src.indexOf(resource);
 				if (index != -1) {
@@ -399,96 +525,48 @@ public class BerichtGenerator {
 					index = src.indexOf(".xhtml?");
 					if (index != -1)
 						src = src.substring(0, index);
-					InputStream in = getClass().getClassLoader()
-							.getResourceAsStream("/META-INF/resources/primefaces-extensions" + src);
-					if (in != null) {
-						ByteArrayOutputStream out = new ByteArrayOutputStream();
-						try {
-							IOUtils.copy(in, out);
-							Image image = Image.getInstance(out.toByteArray());
-							getCurrentParagraph().add(image);
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (BadElementException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+					addImage(context, getClass().getClassLoader()
+							.getResourceAsStream("/META-INF/resources/primefaces-extensions" + src));
+				} else if (src.startsWith("data:")) {
+					index = src.indexOf("base64,");
+					if (index != -1) {
+						byte[] bytes = Base64.getDecoder().decode(src.substring(index + 7));
+						addImage(context, new ByteArrayInputStream(bytes));
 					}
-				} else {
-					// TODO
 				}
 				break;
 			}
 		}
 
-		private int getAlign(Attributes attributes) {
-			String align = attributes.getValue("align");
-			if (align != null) {
-				switch (Alignment.valueOf(align.toLowerCase())) {
-				case LEFT:
-					return Element.ALIGN_LEFT;
-				case CENTER:
-					return Element.ALIGN_CENTER;
-				case RIGHT:
-					return Element.ALIGN_RIGHT;
-				case ANCHOR: // TODO richtig?
-					return Element.ALIGN_JUSTIFIED;
+		private void addImage(Context context, InputStream in) {
+			if (in == null)
+				return;
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			try {
+				IOUtils.copy(in, out);
+				Image image = Image.getInstance(out.toByteArray());
+				Float width = context.getAttributeValue("width", Float.class);
+				Float height = context.getAttributeValue("height", Float.class);
+				if (height != null || width != null) {
+					image.scaleAbsolute(width != null ? width : image.getWidth(),
+							height != null ? height : image.getHeight());
+				} else {
+					width = context.getSizeValue(context.getStyleValue("width", String.class));
+					height = context.getSizeValue(context.getStyleValue("height", String.class));
+					Float border = context.getSizeValue(context.getStyleValue("border-width", String.class));
+					if (height != null || width != null)
+						image.scaleAbsolute(width != null ? width : image.getWidth(),
+								height != null ? height : image.getHeight());
+					if (border != null) {
+						image.setBorderWidth(border);
+						image.setBorder(Rectangle.BOX);
+					}
+
 				}
+				addToCurrentElement(image);
+			} catch (Exception e) {
+				throw new IllegalArgumentException("Problem with adding an image", e);
 			}
-			return Element.ALIGN_UNDEFINED;
-		}
-
-		private String getStyle(Attributes attributes, String name) {
-			String style = attributes.getValue("style");
-			if (style == null)
-				return null;
-			String[] pairs = style.split(";");
-			for (int i = 0; i < pairs.length; i++) {
-				String[] pair = pairs[i].split(":");
-				if (pair[0].equalsIgnoreCase(name))
-					return pair[1].trim();
-			}
-			return null;
-		}
-
-		private BaseColor getColor(String value) {
-			if (value == null)
-				return null;
-			if (value.startsWith("rgb(")) {
-				String[] v = value.substring(4, value.length() - 1).split(",");
-				return new BaseColor(Integer.parseInt(v[0].trim()), Integer.parseInt(v[1].trim()),
-						Integer.parseInt(v[2].trim()));
-			}
-			Color awtColor = Color.decode(value);
-			return new BaseColor(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
-		}
-
-		private Font getFont(String face, Font currentFont) {
-			if (face == null)
-				return new Font(currentFont);
-			switch (FontFamily.valueOf(face)) {
-			default:
-				return new Font(currentFont);
-			case COURIER:
-				return new Font(FontFamily.COURIER, currentFont.getSize(), currentFont.getStyle());
-			case HELVETICA:
-				return new Font(FontFamily.HELVETICA, currentFont.getSize(), currentFont.getStyle());
-			case TIMES_ROMAN:
-				return new Font(FontFamily.TIMES_ROMAN, currentFont.getSize(), currentFont.getStyle());
-			}
-		}
-
-		private float getSize(String size, Font currentFont) {
-			if (size == null)
-				return currentFont.getSize();
-			return 3 * Integer.parseInt(size);
-		}
-
-		private BaseColor getColor(String color, Font currentFont) {
-			if (color == null)
-				return currentFont.getColor();
-			return getColor(color);
 		}
 
 		@Override
@@ -502,10 +580,14 @@ public class BerichtGenerator {
 			case body:
 			case p:
 				addText(text, context);
-				closeCurrentParagraph();
+				closeCurrentElement();
+				break;
+			case div:
+				addText(text, context);
+				context.applyStyle(currentElement);
 				break;
 			case blockquote:
-				closeCurrentParagraph();
+				closeCurrentElement();
 				currentIndent -= 15;
 				break;
 			case b:
@@ -514,29 +596,31 @@ public class BerichtGenerator {
 			case s:
 			case sub:
 			case sup:
-			case font:
-				addText(text, context);
-				break;
+				// case span:
+				// addText(text, context);
+				// break;
 			case h1:
-				createSection(text, 0, context.attributes);
+				createSection(text, 0, context);
 				break;
 			case h2:
-				createSection(text, 1, context.attributes);
+				createSection(text, 1, context);
 				break;
 			case h3:
-				createSection(text, 2, context.attributes);
+				createSection(text, 2, context);
 				break;
 			case br:
 				addText(text, context);
-				getCurrentParagraph().add(Chunk.NEWLINE);
+				addToCurrentElement(Chunk.NEWLINE);
 				break;
 			case hr:
 				LineSeparator separator = new LineSeparator();
 				separator.setPercentage(100);
-				getCurrentParagraph().add(new Chunk(separator));
+				addToCurrentElement(new Chunk(separator));
 				break;
 			case li:
-				Phrase phrase = currentParagraph != null ? currentParagraph : new Phrase();
+				if (currentElement != null && !(currentElement instanceof Phrase))
+					closeCurrentElement();
+				Phrase phrase = currentElement instanceof Phrase ? (Phrase) currentElement : new Phrase();
 				if (text.length() > 0)
 					phrase.add(new Chunk(text, context.font));
 				ListItem item = new ListItem(phrase);
@@ -546,7 +630,7 @@ public class BerichtGenerator {
 							new Chunk((char) 183 + "   ", new Font(FontFamily.SYMBOL, context.font.getSize()))); // bullet
 				}
 				currentList.add(item);
-				currentParagraph = null;
+				currentElement = null;
 				break;
 			case ul:
 			case ol:
@@ -555,14 +639,12 @@ public class BerichtGenerator {
 			case td:
 				Table table = currentTable.peek();
 				PdfPCell cell = table.getCurrentCell();
-				cell.setBackgroundColor(getColor(context.getAttValueIgnoreCase("bgcolor", String.class)));
-				cell.setHorizontalAlignment(getAlign(context.attributes));
-				if (currentParagraph != null && currentParagraph.getAlignment() != Element.ALIGN_UNDEFINED)
-					cell.setHorizontalAlignment(currentParagraph.getAlignment());
+				context.applyStyle(cell);
 				if (cell.getTable() == null && cell.getCompositeElements() == null) {
-					cell.setPhrase(currentParagraph != null ? currentParagraph : new Phrase(text, defaultFont));
+					cell.setPhrase(
+							currentElement instanceof Phrase ? (Phrase) currentElement : new Phrase(text, defaultFont));
 				}
-				currentParagraph = null;
+				currentElement = null;
 				break;
 			case tr:
 				table = currentTable.peek();
@@ -577,16 +659,19 @@ public class BerichtGenerator {
 			case table:
 				table = currentTable.pop();
 				PdfPTable pdfPTable = new PdfPTable(table.columnNumber != null ? table.columnNumber : 1);
-				String width = getStyle(context.attributes, "width");
+				String width = context.getStyleValue("width", String.class);
 				if (width != null) {
 					if (width.endsWith("%"))
 						pdfPTable.setWidthPercentage(Integer.parseInt(width.substring(0, width.length() - 1)));
 					else if (width.endsWith("px"))
 						pdfPTable.setTotalWidth(Integer.parseInt(width.substring(0, width.length() - 2)));
 				}
-				Integer border = context.getAttValueIgnoreCase("border", Integer.class);
-				Integer cellspacing = context.getAttValueIgnoreCase("cellspacing", Integer.class);
-				Integer cellpadding = context.getAttValueIgnoreCase("cellpadding", Integer.class);
+				Integer border = context.getAttributeValue("border", Integer.class);
+				Integer cellspacing = context.getAttributeValue("cellspacing", Integer.class);
+				Integer cellpadding = context.getAttributeValue("cellpadding", Integer.class);
+				String align = context.getAttributeValue("align", String.class);
+				if (align != null)
+					pdfPTable.setHorizontalAlignment(context.getAlignment(align));
 				for (PdfPCell c : table.cells) {
 					if (border == null || border == 0)
 						c.disableBorderSide(Rectangle.BOX);
@@ -596,6 +681,7 @@ public class BerichtGenerator {
 						c.setPadding(cellpadding);
 					pdfPTable.addCell(c);
 				}
+				context.applyStyle(pdfPTable);
 				addToDocument(pdfPTable);
 				break;
 			}
@@ -625,7 +711,7 @@ public class BerichtGenerator {
 			chunk.setTextRise(context.textRise);
 			if (context.bgColor != null)
 				chunk.setBackground(context.bgColor);
-			getCurrentParagraph().add(chunk);
+			addToCurrentElement(chunk);
 		}
 
 		private void flushText(Context context) throws SAXException {
@@ -666,7 +752,7 @@ public class BerichtGenerator {
 				// dann muss der vorherige Text erst dem Dokument hinzugefügt
 				// werden
 				addText(text.substring(0, match.start), context);
-				getCurrentParagraph().add(Chunk.NEXTPAGE);
+				addToCurrentElement(Chunk.NEXTPAGE);
 				text.delete(0, match.end);
 				return replaceSubstitutes(text, context, match.start);
 			case toc:
@@ -690,7 +776,7 @@ public class BerichtGenerator {
 				end++;
 				return new Match(keyword, begin, end);
 			} catch (IllegalArgumentException e) {
-				throw new FachlicheException(messages, "generator.unknownKeyword", key);
+				throw new FachlicheException(messages.getBundle(), "generator.unknownKeyword", key);
 			}
 		}
 
@@ -699,14 +785,14 @@ public class BerichtGenerator {
 		 * Seite stehen bleiben, wenn der Platz für den Bericht nicht mehr ausreicht, dürfen die Kapitel nicht sofort
 		 * dem Dokument hinzugefügt werden.
 		 */
-		private void createSection(String text, int index, Attributes attributes) throws SAXException {
+		private void createSection(String text, int index, Context context) throws SAXException {
 			closeCurrentSection(index);
 			Chunk chunk = new Chunk(text, hFonts[index]);
 			Paragraph paragraph = new Paragraph(chunk);
-			paragraph.setAlignment(getAlign(attributes));
+			paragraph.setAlignment(context.getAlignment(null));
 
 			if (index > 0 && currentSection[index - 1] == null)
-				throw new SAXException(new FachlicheException(messages, "generator.emptySection"));
+				throw new SAXException(new FachlicheException(messages.getBundle(), "generator.emptySection"));
 			currentSection[index] = index == 0 ? new Chapter(paragraph, ++chapterNumber)
 					: currentSection[index - 1].addSection(paragraph);
 			currentSection[index].setTriggerNewPage(false);
@@ -717,16 +803,20 @@ public class BerichtGenerator {
 		}
 	}
 
-	private static final Font[] hFonts = { new Font(FontFamily.HELVETICA, 14f, Font.BOLD),
+	private final Font[] hFonts = { new Font(FontFamily.HELVETICA, 14f, Font.BOLD),
 			new Font(FontFamily.HELVETICA, 12, Font.BOLD), new Font(FontFamily.HELVETICA, 10f, Font.BOLD) };
 
-	private static final Font defaultFont = new Font(FontFamily.HELVETICA, 8f, Font.NORMAL);
+	private final Font defaultFont = new Font(FontFamily.HELVETICA, 8f, Font.NORMAL);
 
-	private static final Font tocFont = new Font(FontFamily.HELVETICA, 8f, Font.NORMAL);
+	private final Font tocFont = new Font(FontFamily.HELVETICA, 8f, Font.NORMAL);
 
-	private static final Font footerFont = new Font(FontFamily.HELVETICA, 6f, Font.NORMAL);
+	private final Font footerFont = new Font(FontFamily.HELVETICA, 6f, Font.NORMAL);
 
-	private final ResourceBundle messages = ResourceBundle.getBundle("MessagesBundle"); // locale
+	@Inject
+	private Messages messages;
+
+	@Inject
+	private RenderBean renderer;
 
 	private int chapterNumber;
 
@@ -738,7 +828,7 @@ public class BerichtGenerator {
 
 	private Stack<SaxHandler.Table> currentTable = new Stack<SaxHandler.Table>();
 
-	private Paragraph currentParagraph;
+	private Element currentElement;
 
 	private float currentIndent;
 
@@ -746,8 +836,7 @@ public class BerichtGenerator {
 
 	private PdfWriter writer;
 
-	// wir merken uns die Seite, auf der das Inhaltsverzeichnis hinzugefügt
-	// wurde
+	// wir merken uns die Seite, auf der das Inhaltsverzeichnis hinzugefügt wurde
 	private Integer pageNumToc;
 
 	private boolean isToc;
@@ -766,10 +855,12 @@ public class BerichtGenerator {
 	 */
 	public void generate(final Announcement announcement, OutputStream out) throws Exception {
 
-		ByteArrayOutputStream bos = setUpDocument();
+		ByteArrayOutputStream bos = setUpDocument(new Document());
 
-		writer.setPageEvent(new HeaderWriter(null,
-				MessageFormat.format(messages.getString("generator.announcement"), announcement.getName())));
+		PdfPCell title = new PdfPCell(
+				new Phrase(messages.format("generator.announcement", announcement.getName()), defaultFont));
+		title.setBorder(Rectangle.BOTTOM);
+		writer.setPageEvent(new HeaderWriter(null, title));
 
 		document.open();
 		document.addCreator("Wettkampfplaner");
@@ -786,115 +877,63 @@ public class BerichtGenerator {
 
 	public void generate(Program program, OutputStream out) throws Exception {
 
-		ByteArrayOutputStream bos = setUpDocument();
+		ByteArrayOutputStream bos = setUpDocument(new Document(PageSize.A4, 36, 36, 60, 36));
 
-		writer.setPageEvent(new HeaderWriter(null,
-				MessageFormat.format(messages.getString("generator.program"), program.getAnnouncement().getName())));
+		PdfPCell title = createProgramTitle(program.getAnnouncement().getName(),
+				program.getAnnouncement().getStartDate());
+
+		HeaderWriter headerWriter = new HeaderWriter(null, title);
+		writer.setPageEvent(headerWriter);
 
 		document.open();
 		document.addCreator("Wettkampfplaner");
 
-		PdfPTable table = new PdfPTable(new float[] { .1f, .30f, .30f, .30f });
-		table.setWidthPercentage(100);
-		table.getDefaultCell().disableBorderSide(Rectangle.BOX);
+		PdfPTable table = createProgramTable();
 
 		Font raceFont = new Font(defaultFont);
 		raceFont.setStyle(defaultFont.getStyle() | Font.BOLD);
 
 		java.util.List<ProgramRace> races = new ArrayList<>(program.getRaces());
-		// Collections.sort(races, new Comparator<Race>() {
-		// @Override
-		// public int compare(Race r1, Race r2) {
-		// return r1.getNumber().compareTo(r2.getNumber());
-		// }
-		// });
-		DateFormat FORMAT_DAY = new SimpleDateFormat("EEEE");
-		DateFormat FORMAT_TIME = new SimpleDateFormat("HH:mm");
+
+		DateFormat dfDay = new SimpleDateFormat("EEEE");
+		DateFormat dfTime = new SimpleDateFormat("HH:mm");
+
+		Calendar currentStartTime = null;
+
 		for (ProgramRace programRace : races) {
 
+			if (currentStartTime != null) {
+				int previousDay = currentStartTime.get(Calendar.DAY_OF_YEAR);
+				currentStartTime.setTime(programRace.getStartTime());
+				if (currentStartTime.get(Calendar.DAY_OF_YEAR) > previousDay) {
+					addToDocument(table);
+					addToDocument(Chunk.NEXTPAGE);
+					table = createProgramTable();
+					headerWriter.header.deleteLastRow();
+					headerWriter.header.addCell(
+							createProgramTitle(program.getAnnouncement().getName(), currentStartTime.getTime()));
+				}
+			} else {
+				currentStartTime = Calendar.getInstance();
+				currentStartTime.setTime(programRace.getStartTime());
+			}
+
 			Race race = programRace.getRace();
-			PdfPCell cell = new PdfPCell(
-					new Phrase("Rennen " + race.getNumber() + "-" + programRace.getNumber(), raceFont));
-			cell.setColspan(2);
-			cell.disableBorderSide(Rectangle.BOX);
-			cell.setMinimumHeight(20);
-			cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
-			table.addCell(cell);
 
-			cell = new PdfPCell(new Phrase(programRace.getRaceType().getText(), defaultFont));
-			cell.setColspan(2);
-			cell.disableBorderSide(Rectangle.BOX);
-			cell.setMinimumHeight(20);
-			cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
-			table.addCell(cell);
+			int numRows = table.getRows().size();
 
-			cell = new PdfPCell(new Phrase(race.getBoatClass().getText() + " " + race.getAgeType().getText() + " "
-					+ race.getGender().getText(), defaultFont));
-			cell.setColspan(2);
-			cell.setBorder(Rectangle.BOTTOM);
-			table.addCell(cell);
+			addRaceHeader(table, raceFont, dfDay, dfTime, programRace, race);
+			addRaceParticipants(table, programRace, race);
 
-			cell = new PdfPCell(
-					new Phrase(programRace.getIntoFinal() + " " + programRace.getIntoSemiFinal(), defaultFont));
-			cell.setBorder(Rectangle.BOTTOM);
-			table.addCell(cell);
-
-			cell = new PdfPCell(
-					new Phrase(race.getDistance() + " m" + "     " + FORMAT_DAY.format(programRace.getStartTime()) + " "
-							+ FORMAT_TIME.format(programRace.getStartTime()), defaultFont));
-			cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-			cell.setBorder(Rectangle.BOTTOM);
-			table.addCell(cell);
-
-			java.util.List<Team> participants = programRace.getParticipants();
-			for (int i = 0; i < participants.size(); i++) {
-				Team team = participants.get(i);
-
-				table.addCell(new Phrase(Integer.toString(i + 1), defaultFont));
-
-				java.util.List<TeamMember> members = team.getMembers();
-				int normalTeamSize = race.getBoatClass().getMaximalTeamSize();
-				int n = Math.min(normalTeamSize, members.size());
-				for (int j = 0; j < n; j++) {
-					TeamMember member = members.get(j);
-					User user = member.getUser();
-
-					if (j == 2)
-						table.addCell(new Phrase("", defaultFont));
-
-					if (user != null)
-						// TODO alter
-						table.addCell(new Phrase(user.getFirstName() + " " + user.getLastName(), defaultFont));
-					else
-						table.addCell(new Phrase(member.getRemark(), defaultFont));
-
-					if (j == 1)
-						table.addCell(new Phrase(team.getClub().getShortName() != null ? team.getClub().getShortName()
-								: team.getClub().getName(), defaultFont));
-					else if (j == 3)
-						table.addCell(new Phrase("", defaultFont));
-				}
-				if (members.size() == 1) {
-					table.addCell(new Phrase("", defaultFont));
-					table.addCell(new Phrase(team.getClub().getShortName() != null ? team.getClub().getShortName()
-							: team.getClub().getName(), defaultFont));
-				}
-				if (members.size() > normalTeamSize) {
-					for (int j = normalTeamSize; j < members.size(); j++) {
-						TeamMember member = members.get(j);
-						User user = member.getUser();
-
-						cell = new PdfPCell(
-								new Phrase("Ersatz: " + user.getFirstName() + " " + user.getLastName(), defaultFont));
-						cell.setColspan(2);
-						cell.disableBorderSide(Rectangle.BOX);
-						cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-						table.addCell(cell);
-						table.addCell(new Phrase("", defaultFont));
-						table.addCell(new Phrase("", defaultFont));
-						// TODO das klappt bisher nur für einen
-					}
-				}
+			float tableHeight = table.calculateHeights();
+			if (tableHeight / (document.top() - document.bottomMargin()) > 1) {
+				while (table.getRows().size() > numRows)
+					table.deleteLastRow();
+				addToDocument(table);
+				addToDocument(Chunk.NEXTPAGE);
+				table = createProgramTable();
+				addRaceHeader(table, raceFont, dfDay, dfTime, programRace, race);
+				addRaceParticipants(table, programRace, race);
 			}
 		}
 		addToDocument(table);
@@ -904,8 +943,130 @@ public class BerichtGenerator {
 		finishDocument(out, bos);
 	}
 
-	private ByteArrayOutputStream setUpDocument() throws DocumentException {
-		document = new Document(); // A4
+	private PdfPTable createProgramTable() {
+		PdfPTable table = new PdfPTable(new float[] { .03f, .40f, .40f, .17f });
+		table.setWidthPercentage(100);
+		// für calculateHeights
+		table.setTotalWidth((PageSize.A4.getWidth() - document.leftMargin() - document.rightMargin())
+				* table.getWidthPercentage() / 100);
+		table.getDefaultCell().disableBorderSide(Rectangle.BOX);
+		table.getDefaultCell().setPadding(5);
+		return table;
+	}
+
+	private void addRaceHeader(PdfPTable table, Font raceFont, DateFormat dfDay, DateFormat dfTime,
+			ProgramRace programRace, Race race) {
+		PdfPCell cell = new PdfPCell(new Phrase(renderer.renderRaceTitle(programRace), raceFont));
+		cell.setColspan(2);
+		cell.disableBorderSide(Rectangle.BOX);
+		cell.setMinimumHeight(20);
+		cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
+		table.addCell(cell);
+
+		cell = new PdfPCell(new Phrase(renderer.renderRaceNumer(programRace), defaultFont));
+		cell.disableBorderSide(Rectangle.BOX);
+		cell.setMinimumHeight(20);
+		cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
+		table.addCell(cell);
+
+		cell = new PdfPCell(new Phrase(race.getDistance() + " m", defaultFont));
+		cell.disableBorderSide(Rectangle.BOX);
+		cell.setMinimumHeight(20);
+		cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
+		table.addCell(cell);
+
+		cell = new PdfPCell(new Phrase(
+				race.getBoatClass().getText() + " " + race.getAgeType().getText() + " " + race.getGender().getText(),
+				defaultFont));
+		cell.setColspan(2);
+		cell.setBorder(Rectangle.BOTTOM);
+		table.addCell(cell);
+
+		String raceMode = renderer.renderRaceMode(programRace);
+		cell = new PdfPCell(new Phrase(raceMode, defaultFont));
+		cell.setBorder(Rectangle.BOTTOM);
+		table.addCell(cell);
+
+		cell = new PdfPCell(
+				new Phrase(dfDay.format(programRace.getStartTime()) + " " + dfTime.format(programRace.getStartTime()),
+						defaultFont));
+		cell.setBorder(Rectangle.BOTTOM);
+		table.addCell(cell);
+	}
+
+	private void addRaceParticipants(PdfPTable table, ProgramRace programRace, Race race) {
+		java.util.List<Team> participants = programRace.getParticipants();
+		for (int i = 0; i < participants.size(); i++) {
+			Team team = participants.get(i);
+
+			table.addCell(new Phrase(Integer.toString(i + 1), defaultFont));
+
+			java.util.List<TeamMember> members = team.getMembers();
+			int normalTeamSize = race.getBoatClass().getMaximalTeamSize();
+			int n = Math.min(normalTeamSize, members.size());
+			for (int j = 0; j < n; j++) {
+				TeamMember member = members.get(j);
+				User user = member.getUser();
+
+				if (j == 2)
+					table.addCell(new Phrase("", defaultFont));
+
+				if (member.getRemark() != null) {
+					table.addCell(new Phrase(member.getRemark(), defaultFont));
+				} else {
+					String userName = user.getFirstName() + " " + user.getLastName();
+					String ageGroup = renderer.renderAgeGroup(user);
+					if (ageGroup != null)
+						userName += " " + ageGroup;
+					table.addCell(new Phrase(userName, defaultFont));
+				}
+
+				if (j == 1)
+					table.addCell(new Phrase(team.getClub().getShortName() != null ? team.getClub().getShortName()
+							: team.getClub().getName(), defaultFont));
+				else if (j == 3)
+					table.addCell(new Phrase("", defaultFont));
+			}
+			if (members.size() == 1) {
+				table.addCell(new Phrase("", defaultFont));
+				table.addCell(new Phrase(team.getClub().getShortName() != null ? team.getClub().getShortName()
+						: team.getClub().getName(), defaultFont));
+			}
+			if (members.size() > normalTeamSize) {
+				for (int j = normalTeamSize; j < members.size(); j++) {
+					TeamMember member = members.get(j);
+					User user = member.getUser();
+
+					PdfPCell cell = new PdfPCell(
+							new Phrase("Ersatz: " + user.getFirstName() + " " + user.getLastName(), defaultFont));
+					cell.setColspan(2);
+					cell.disableBorderSide(Rectangle.BOX);
+					cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+					table.addCell(cell);
+					table.addCell(new Phrase("", defaultFont));
+					table.addCell(new Phrase("", defaultFont));
+					// TODO das klappt bisher nur für einen
+				}
+			}
+		}
+	}
+
+	private PdfPCell createProgramTitle(String name, Date date) {
+		PdfPCell title = new PdfPCell();
+		title.setBorder(Rectangle.BOTTOM);
+		Paragraph titleParagraph = new Paragraph(16, messages.format("generator.program", name), defaultFont);
+		// paragraph.setSpacingBefore(16);
+		title.addElement(titleParagraph);
+		titleParagraph = new Paragraph(16, new SimpleDateFormat("EEEE, dd.MMMM yyyy").format(date), defaultFont);
+		// paragraph.setSpacingAfter(16);
+		title.addElement(titleParagraph);
+		title.setPaddingTop(16);
+		title.setPaddingBottom(8);
+		return title;
+	}
+
+	private ByteArrayOutputStream setUpDocument(Document document) throws DocumentException {
+		this.document = document;
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		writer = PdfWriter.getInstance(document, bos);
 		writer.setStrictImageSequence(true);
@@ -920,7 +1081,7 @@ public class BerichtGenerator {
 
 		// wir verhindern so die "The document has no pages"-Exceptions
 		if (elementCount == 0)
-			throw new FachlicheException(messages, "generator.empty");
+			throw new FachlicheException(messages.getBundle(), "generator.empty");
 
 		document.close();
 		writer.close();
@@ -939,7 +1100,7 @@ public class BerichtGenerator {
 		PdfPTable table = new PdfPTable(1);
 		table.setTotalWidth(555);
 		PdfPCell cell = new PdfPCell(
-				new Phrase(MessageFormat.format(messages.getString("generator.footer"), page, total), footerFont));
+				new Phrase(MessageFormat.format(messages.get("generator.footer"), page, total), footerFont));
 		cell.setFixedHeight(20);
 		cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
 		cell.setBorder(Rectangle.TOP);
@@ -960,17 +1121,16 @@ public class BerichtGenerator {
 		}
 	}
 
-	private void closeCurrentParagraph() throws SAXException {
-		if (currentParagraph != null) {
-			currentParagraph.setIndentationLeft(currentIndent);
-			Element e = currentParagraph;
-			currentParagraph = null;
-			addToDocument(e);
-		}
+	private void closeCurrentElement() throws SAXException {
+		if (currentElement instanceof Indentable)
+			((Indentable) currentElement).setIndentationLeft(currentIndent);
+		Element e = currentElement;
+		currentElement = null;
+		addToDocument(e);
 	}
 
 	private void closeCurrentSection(int depth) throws SAXException {
-		closeCurrentParagraph();
+		closeCurrentElement();
 		if (pendingSection != null && pendingSection.getNumberDepth() == depth + 1)
 			closePendingSection();
 		for (int i = 2; i > depth; i--) {
@@ -1048,7 +1208,7 @@ public class BerichtGenerator {
 	}
 
 	private Element createTocHeading() throws DocumentException {
-		Phrase phrase = new Paragraph(messages.getString("generator.toc"));
+		Phrase phrase = new Paragraph(messages.get("generator.toc"));
 		Font font = new Font(defaultFont);
 		font.setStyle(Font.BOLD);
 		font.setSize(44);
@@ -1113,10 +1273,15 @@ public class BerichtGenerator {
 		return -1;
 	}
 
-	private Paragraph getCurrentParagraph() {
-		if (currentParagraph == null)
-			currentParagraph = new Paragraph();
-		return currentParagraph;
+	@SuppressWarnings("unchecked")
+	private Element addToCurrentElement(Element child) {
+		if (currentElement == null)
+			currentElement = new Paragraph();
+		if (currentElement instanceof java.util.List)
+			((java.util.List<Object>) currentElement).add(child);
+		else if (currentElement instanceof PdfDiv)
+			((PdfDiv) currentElement).addElement(child);
+		return currentElement;
 	}
 
 	private <T extends Element> T addToDocument(T element) throws SAXException {
@@ -1133,8 +1298,8 @@ public class BerichtGenerator {
 					cell.addElement(element);
 				}
 				added = true;
-			} else if (currentParagraph != null) {
-				currentParagraph.add(element);
+			} else if (currentElement != null) {
+				addToCurrentElement(element);
 			} else if (currentSection[2] != null) {
 				currentSection[2].add(element);
 			} else if (currentSection[1] != null) {
