@@ -166,10 +166,30 @@
 							<!--Class-Path>model-${project.version}.jar commons-lang-2.6.jar</Class-Path-->
 							<Implementation-Vendor>Uwe Voigt</Implementation-Vendor>
 							<Implementation-Version>1.0</Implementation-Version>
-							<Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+							<Build-Timestamp>${build.time}</Build-Timestamp>
 						</manifestEntries>
 					</archive>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<id>timestamp-property</id>
+						<goals>
+							<goal>timestamp-property</goal>
+						</goals>
+						<configuration>
+							<name>build.time</name>
+							<pattern>dd.MM.yyyy HH:mm</pattern>
+							<locale>de</locale>
+							<timeZone>Europe/Berlin</timeZone>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
