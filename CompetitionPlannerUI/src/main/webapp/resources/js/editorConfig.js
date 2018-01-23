@@ -24,7 +24,7 @@ CKEDITOR.plugins.add("SelectImage", {
 		});
 	}
 });
-function selectImage(editor) {
+function selectImage() {
 	var form = document.getElementById("fileUploadForm");
 	if (!form) {
 		var form = document.createElement("form");
@@ -36,20 +36,20 @@ function selectImage(editor) {
 		form.appendChild(input);
 		document.body.appendChild(form);
 		input.onchange = function() {
-			fileSelected(form, editor);
+			fileSelected(form);
 		}
 	}
 	form.fileSelect.value = null;
 	form.fileSelect.click();
 }
-function fileSelected(form, editor) {
+function fileSelected(form) {
 	if (form.fileSelect.files.length != 1)
 		return;
 	var file = form.fileSelect.files.item(0);
 	if (window.FileReader) {
 		var fr = new FileReader();
 		fr.onload = function () {
-			editor.insertHtml("<img src=\"" + fr.result + "\" />");
+			CKEDITOR.currentInstance.insertHtml("<img src=\"" + fr.result + "\" />");
 		};
 		fr.readAsDataURL(file);
 	}
