@@ -21,12 +21,13 @@
 						style="margin-right: 0.5em;"
 						action="#{bean.save(searchLink)}"
 						process="@form"
-						update=":messages :mainContent #{addToUpdate}"
+						update="messages mainContent #{addToUpdate}"
 						rendered="#{canSave}"/>
 					<p:commandButton value="#{messages.cancel}" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
 						action="#{startseiteBean.setMainContent(searchLink)}"
 						process="@this"
-						update=":messages :mainContent"/>
+						partialSubmit="true"
+						update="messages mainContent"/>
 					<p:defaultCommand target="btnSave" />
 				</h:panelGroup>
 
