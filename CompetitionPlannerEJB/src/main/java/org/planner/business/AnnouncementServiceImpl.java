@@ -331,7 +331,9 @@ public class AnnouncementServiceImpl {
 					// Hibernate kümmert sich zwar ohnehin um eine unique Liste
 					// aber die Position würde immer weiter hochgezählt werden
 					for (Participant existingParticipant : existingParticipants) {
-						if (existingParticipant.getUser().getId().equals(newParticipant.getUser().getId()))
+						User existingUser = existingParticipant.getUser();
+						User newUser = newParticipant.getUser();
+						if (existingUser != null && newUser != null && existingUser.getId().equals(newUser.getId()))
 							continue OuterLoop;
 					}
 				}
@@ -424,7 +426,7 @@ public class AnnouncementServiceImpl {
 		} else {
 			for (Participant participant : participants) {
 				User user = participant.getUser();
-				if (user.getGender() != race.getGender()) {
+				if (user != null && user.getGender() != race.getGender()) {
 					throw new FachlicheException(messages.getResourceBundle(), "registration.illegalGender",
 							race.getGender().getAgeFriendlyText(race.getAgeType()),
 							user.getGender().getAgeFriendlyText(user.getAgeType()));
