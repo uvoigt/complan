@@ -16,6 +16,9 @@
 		<ui:param name="user" value="#{userBean.user}"/>
 
 		<ui:define name="editArea">
+			<h:outputScript>
+				$(".ui-selectonemenu-panel:gt(0)").remove();
+			</h:outputScript>
 
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.userId}"/></div>
