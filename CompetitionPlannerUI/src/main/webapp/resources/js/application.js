@@ -140,6 +140,23 @@ function setupAjax() {
 		}
 	});
 }
+function copyToClipboard(element) {
+	if (document.selection) { 
+		var range = document.body.createTextRange();
+		range.moveToElementText(element);
+		range.select().createTextRange();
+		var result = document.execCommand("copy"); 
+		range.empty();
+		return result;
+	} else if (window.getSelection) {
+		var range = document.createRange();
+		range.selectNode(element);
+		window.getSelection().addRange(range);
+		var result = document.execCommand("copy"); 
+		window.getSelection().removeAllRanges();
+		return result;
+	}
+}
 $(window).resize(function() {
 	$("#leftMenuContainer").css("display", "");
 });

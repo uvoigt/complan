@@ -16,10 +16,20 @@
 				draggable="false" appendTo="body" modal="true" closeOnEscape="true"
 				widgetVar="exceptionDialog" height="#{viewExpired or businessException ? 'auto' : '25em'}">
 			<h:outputText value="#{pfExceptionHandler.message}"/>
-			<p:fieldset legend="#{bundle.details}" style="margin: 20px 0 20px 0" rendered="#{not viewExpired and not businessException}">
+			<h:panelGroup layout="block" styleClass="copiedMessage">
+				<h:outputText value="${bundle.copied}"/>
+			</h:panelGroup>
+			<p:fieldset legend="#{bundle.details}" styleClass="errorBox" rendered="#{not viewExpired and not businessException}"
+					widgetVar="errorDetails">
 				<h:outputText value="#{pfExceptionHandler.formattedStackTrace}"
 						escape="false"/>
 			</p:fieldset>
+			<h:outputScript>
+				PF("errorDetails").legend.click(function() {
+					if (copyToClipboard(PF("errorDetails").jq.children().get(1)))
+						$(".copiedMessage").show().fadeOut(3000);
+				});
+			</h:outputScript>
 			<h:panelGroup layout="block" rendered="#{viewExpired}" style="text-align: center; margin-top: 17px">
 				<h:form>
 					<p:commandButton onclick="window.location.reload()" value="#{bundle.reload}" type="button"/>
