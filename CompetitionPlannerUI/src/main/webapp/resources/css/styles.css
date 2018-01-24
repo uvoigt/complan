@@ -279,8 +279,12 @@ input[readonly=readonly] {
 	width: 10px;	
 }
 
-.teamCol {
+.memberCol {
 	width: 75%;
+}
+
+.teamCol {
+	text-align: right;
 }
 
 .teamMembers > div {

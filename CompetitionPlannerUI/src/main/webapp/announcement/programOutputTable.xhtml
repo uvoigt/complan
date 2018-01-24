@@ -37,16 +37,17 @@
 				<h:outputText value="#{team.lane}"/>
 			</p:column>
 	
-			<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
+			<p:column styleClass="memberCol" rendered="#{programBean.showTeams}">
 				<p:dataGrid columns="2" var="member" value="#{team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
 					<h:panelGroup style="text-align: left">
 						<h:outputText value="#{member.remark != null ? member.remark : member.user.firstName} "/>
 						<h:outputText value="#{member.user.lastName} "/>
 						<h:outputText value="#{programBean.renderAgeGroup(member.user)}"/>
+						<h:outputText value="(#{member.user.club.shortNameOrName})" rendered="#{member.user.club.id != team.club.id and member.remark == null}"/>
 					</h:panelGroup>
 				</p:dataGrid>
 			</p:column>
-			<p:column rendered="#{programBean.showTeams}">
+			<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
 				<h:outputText value="#{not empty team.club.shortName ? team.club.shortName : team.club.name}"/>
 			</p:column>
 	
