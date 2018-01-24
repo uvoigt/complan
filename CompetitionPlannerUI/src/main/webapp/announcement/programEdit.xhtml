@@ -16,6 +16,25 @@
 
 			<h:form>
 
+				<p:panelGrid columns="5" styleClass="ui-panelgrid-blank">
+					<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
+							process="@form" update="programTable" oncomplete="resizeDsc()"/>
+					<p:commandButton value="#{bundle.checkProgram}" action="#{programBean.checkProgram()}"
+							process="@form" update="programTable" oncomplete="resizeDsc()"/>
+					<h:panelGroup>
+						<h:outputText value="#{bundle.showTeams}"/>
+						<p:selectBooleanCheckbox value="#{programBean.showTeams}" style="margin-left: 5px">
+							<p:ajax partialSubmit="true" update="programTable"/>
+						</p:selectBooleanCheckbox>
+					</h:panelGroup>
+					<p:commandButton widgetVar="swapRaces" value="#{bundle.swapRaces}" action="#{programBean.swapRaces()}"
+							process="@this programTable" update="programTable" partialSubmit="true"
+							onsuccess="PF('swapRaces').disable();"/>
+					<p:commandButton value="#{messages.backToOverview}"
+							action="#{startseiteBean.setMainContent('/announcement/programs.xhtml')}"
+							process="@this" partialSubmit="true" update="mainContent"/>
+				</p:panelGrid>
+
 				<p:remoteCommand global="false" name="checkExpr" action="#{programBean.checkExpr()}"
 					process="@this expr" update="exprStatus" partialSubmit="true"/>
 				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0" legend="#{bundle.options}" widgetVar="optionsSet">
@@ -84,25 +103,6 @@
 						</div>
 					</h:panelGroup>
 				</p:fieldset>
-
-				<p:panelGrid columns="5" styleClass="ui-panelgrid-blank">
-					<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
-							process="@form" update="programTable" oncomplete="resizeDsc()"/>
-					<p:commandButton value="#{bundle.checkProgram}" action="#{programBean.checkProgram()}"
-							process="@form" update="programTable" oncomplete="resizeDsc()"/>
-					<h:panelGroup>
-						<h:outputText value="#{bundle.showTeams}"/>
-						<p:selectBooleanCheckbox value="#{programBean.showTeams}" style="margin-left: 5px">
-							<p:ajax partialSubmit="true" update="programTable"/>
-						</p:selectBooleanCheckbox>
-					</h:panelGroup>
-					<p:commandButton widgetVar="swapRaces" value="#{bundle.swapRaces}" action="#{programBean.swapRaces()}"
-							process="@this programTable" update="programTable" partialSubmit="true"
-							onsuccess="PF('swapRaces').disable();"/>
-					<p:commandButton value="#{messages.backToOverview}"
-							action="#{startseiteBean.setMainContent('/announcement/programs.xhtml')}"
-							process="@this" update="mainContent"/>
-				</p:panelGrid>
 
 				<ui:include src="programOutputTable.xhtml"/>
 
