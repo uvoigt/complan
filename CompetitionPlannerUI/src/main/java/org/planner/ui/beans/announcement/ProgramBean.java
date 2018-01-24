@@ -72,7 +72,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	private void loadProgram(Long id) {
 		// TODO auch hier... über einen search-view-parameter die detailtiefe festlegen
-		program = service.getObject(Program.class, id, 3);
+		program = service.getObject(Program.class, id, 5);
 	}
 
 	@Override
