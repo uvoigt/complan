@@ -288,11 +288,6 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		return showEffect;
 	}
 
-	public void toggleClubVisible() {
-		clubVisible = !clubVisible;
-		athletes = null;
-	}
-
 	public DataTable getRegistrationTable() {
 		return registrationTable;
 	}
