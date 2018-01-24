@@ -38,7 +38,7 @@
 			<h:panelGroup layout="block" style="margin: 5px; float: left">
 				<p:commandButton value="#{bundle.newButton}"
 					action="#{searchBean.anlegen(bearbeitenLink, typ, editBean)}"
-					process="@this"
+					process="@form"
 					update=":mainContent"
 					style="margin-right: 5px"
 					rendered="#{renderCrudButtonsValue and renderNewButtonValue}"/>
