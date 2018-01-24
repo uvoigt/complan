@@ -60,7 +60,7 @@
 									<p:outputLabel value="#{bundle.format('racesCount', registrationBean.races.size())}"/>
 								</f:facet>
 
-								<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons()"/>
+								<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons(); PF('registrationTable').unselectAllRows()"/>
 								<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons()"/>
 								<p:ajax event="filter" oncomplete="PF('racesTable').unselectAllRows();registrationEdit_enableButtons()"/>
 
@@ -120,10 +120,10 @@
 									<h:panelGroup id="resultCount">
 										<p:outputLabel id="resultCountLabel"/>
 									</h:panelGroup>
-									<p:commandButton id="toggler" action="#{registrationBean.toggleClubVisible()}"
+									<p:commandButton id="toggler" type="button"
 										style="float:right; margin: -5px -10px 0 0;"
-										icon="ui-icon-calculator" title="#{bundle.chooseClub}" onclick="toggleColumn(PF('athletesTable'), 1)"
-										update="@form:clubVisible athletesTable"/>
+										icon="ui-icon-calculator" title="#{bundle.chooseClub}"
+										onclick="toggleColumn(PF('athletesTable'), 1); $('[id$=clubVisible]').val($('[id$=clubVisible]').val() == 'false' ? 'true' : 'false')"/>
 								</f:facet>
 
 								<p:ajax event="page" process="@form:clubVisible" update="@form:clubVisible"/>
