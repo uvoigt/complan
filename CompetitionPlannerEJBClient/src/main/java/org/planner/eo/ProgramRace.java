@@ -63,6 +63,10 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 		return id;
 	}
 
+	public void setId(Long id) {
+		this.id = id;
+	}
+
 	public Race getRace() {
 		return race;
 	}

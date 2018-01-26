@@ -46,6 +46,9 @@ import org.planner.eo.Registration_;
 import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
 import org.planner.eo.User;
+import org.planner.model.AgeType;
+import org.planner.model.BoatClass;
+import org.planner.model.Gender;
 import org.planner.model.Suchkriterien;
 import org.planner.util.ExpressionParser;
 import org.planner.util.ExpressionParser.ExpressionException;
@@ -490,8 +493,9 @@ public class ProgramServiceImpl {
 	private Program doGetProgram(EntityManager em, Long id, boolean loadTeams) {
 		// in JPQL gibt es eine MultipleBagException
 		StringBuilder sql = new StringBuilder("select p.id, " //
-				+ "a.name AName, " //
+				+ "a.name AName, a.startDate, " //
 				+ "pr.id RaceId, pr.number, pr.startTime, pr.raceType, pr.heatMode, " //
+				+ "r.number RaceNumber, r.gender, r.distance, r.boatClass, r.ageType, " //
 				+ "t.id TeamId, t.lane, " //
 				+ "tc.id TeamClubId, tc.shortName TCShort, tc.name TCName, " //
 				+ "tm.pos, tm.remark, " //
@@ -499,7 +503,8 @@ public class ProgramServiceImpl {
 				+ "uc.id UserClubId, uc.shortName UCShort, uc.name UCName " //
 				+ "from Program p " //
 				+ "left outer join Announcement a on p.announcement_id=a.id "
-				+ "left outer join ProgramRace pr on pr.program_id=p.id ");
+				+ "left outer join ProgramRace pr on pr.program_id=p.id "
+				+ "left outer join Race r on pr.race_id=r.id ");
 		if (loadTeams)
 			sql.append("left outer join Team t on t.programrace_id=pr.id " //
 					+ "left outer join Club tc on t.club_id=tc.id " //
@@ -523,41 +528,51 @@ public class ProgramServiceImpl {
 			if (program.getAnnouncement() == null) {
 				Announcement announcement = new Announcement();
 				announcement.setName((String) row[1]);
+				announcement.setStartDate((Date) row[2]);
 				program.setAnnouncement(announcement);
 			}
-			BigInteger raceId = (BigInteger) row[2];
+			BigInteger raceId = (BigInteger) row[3];
 			ProgramRace race = races.get(raceId);
 			if (race == null) {
 				race = new ProgramRace();
 				race.setId(raceId.longValue());
-				race.setNumber((Integer) row[3]);
-				race.setStartTime((Date) row[4]);
-				race.setRaceType(byOrdinal(RaceType.class, (Integer) row[5]));
-				race.setHeatMode((String) row[6]);
+				race.setNumber((Integer) row[4]);
+				race.setStartTime((Date) row[5]);
+				race.setRaceType(byOrdinal(RaceType.class, (Integer) row[6]));
+				race.setHeatMode((String) row[7]);
 				race.setParticipants(new ArrayList<Team>());
 				races.put(raceId, race);
+
+				Race r = new Race();
+				r.setNumber((Integer) row[8]);
+				r.setGender(byOrdinal(Gender.class, (Integer) row[9]));
+				r.setDistance(((BigInteger) row[10]).intValue());
+				r.setBoatClass(byOrdinal(BoatClass.class, (Integer) row[11]));
+				r.setAgeType(byOrdinal(AgeType.class, (Integer) row[12]));
+				race.setRace(r);
+
 				program.getRaces().add(race);
 			}
-			BigInteger teamId = (BigInteger) row[7];
+			BigInteger teamId = (BigInteger) row[13];
 			if (teamId != null) {
 				Team team = teams.get(teamId);
 				if (team == null) {
 					team = new Team();
-					team.setLane((int) row[8]);
-					team.setClub(getClub(clubs, row, 9));
+					team.setLane((int) row[14]);
+					team.setClub(getClub(clubs, row, 15));
 					team.setMembers(new ArrayList<TeamMember>());
 					teams.put(teamId, team);
 					race.getParticipants().add(team);
 				}
 				TeamMember member = new TeamMember();
-				member.setPos((int) row[12]);
-				member.setRemark((String) row[13]);
+				member.setPos((int) row[18]);
+				member.setRemark((String) row[19]);
 				if (member.getRemark() == null) {
 					User user = new User();
-					user.setFirstName((String) row[14]);
-					user.setLastName((String) row[15]);
-					user.setBirthDate((Date) row[16]);
-					user.setClub(getClub(clubs, row, 17));
+					user.setFirstName((String) row[20]);
+					user.setLastName((String) row[21]);
+					user.setBirthDate((Date) row[22]);
+					user.setClub(getClub(clubs, row, 23));
 					member.setUser(user);
 				}
 				team.getMembers().add(member);
@@ -571,6 +586,7 @@ public class ProgramServiceImpl {
 		Club club = clubs.get(clubId);
 		if (club == null) {
 			club = new Club();
+			club.setId(clubId.longValue());
 			club.setShortName((String) row[offset++]);
 			club.setName((String) row[offset]);
 			clubs.put(clubId, club);

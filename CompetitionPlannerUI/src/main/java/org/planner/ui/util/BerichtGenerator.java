@@ -26,6 +26,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.io.IOUtils;
 import org.planner.eo.Address;
 import org.planner.eo.Announcement;
+import org.planner.eo.Club;
 import org.planner.eo.Program;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.Race;
@@ -350,7 +351,8 @@ public class BerichtGenerator {
 							: announcement.getLocation().getAddress();
 					return address.getPostCode() + " " + address.getCity().getName() + " " + address.getStreet();
 				case homepage:
-					return announcement.getClub().getAddress().getHomepage() != null
+					Club club = announcement.getClub();
+					return club != null && club.getAddress().getHomepage() != null
 							? announcement.getClub().getAddress().getHomepage() : "";
 				case startDate:
 					return DateFormat.getDateInstance().format(announcement.getStartDate());
@@ -1018,6 +1020,8 @@ public class BerichtGenerator {
 					String ageGroup = renderer.renderAgeGroup(user);
 					if (ageGroup != null)
 						userName += " " + ageGroup;
+					if (!team.getClub().getId().equals(user.getClub().getId()))
+						userName += " (" + user.getClub().getShortNameOrName() + ")";
 					table.addCell(new Phrase(userName, defaultFont));
 				}
 

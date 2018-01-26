@@ -42,6 +42,11 @@ public class HasHeatMode implements Serializable {
 		heatMode = intoFinal + ";" + intoSemiFinal;
 	}
 
+	// für das Setzen aus einer nativen Query
+	public void setHeatMode(String heatMode) {
+		this.heatMode = heatMode;
+	}
+
 	public int getIntoFinal() {
 		if (intoFinal == null)
 			parseHeatMode();
