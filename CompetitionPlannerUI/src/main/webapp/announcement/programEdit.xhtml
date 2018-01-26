@@ -35,15 +35,15 @@
 							process="@this" partialSubmit="true" update="mainContent"/>
 				</p:panelGrid>
 
-				<p:remoteCommand global="false" name="checkExpr" action="#{programBean.checkExpr()}"
+				<p:remoteCommand global="false" name="checkExpr" action="#{programOptionsBean.checkExpr()}"
 					process="@this expr" update="exprStatus" partialSubmit="true"/>
 				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0" legend="#{bundle.options}" widgetVar="optionsSet">
 					<p:ajax event="toggle" oncomplete="resizeDsc(); initExpr()" partialSubmit="true" process="@none"/>
 					<h:panelGroup styleClass="ui-g" layout="block">
 						<h:panelGroup layout="block" style="width: 100%">
-							<p:inputTextarea id="expr" value="#{programBean.program.options.expr}" style="width: 100%" rows="10" widgetVar="expr"
-								completeMethod="#{programBean.suggestExpr}" minQueryLength="100" onkeyup="checkExpr()"/>
-							<p:inputText id="exprStatus" readonly="true" style="width: 100%; color: red" value="#{programBean.exprStatus}"/>
+							<p:inputTextarea id="expr" value="#{programOptionsBean.program.options.expr}" style="width: 100%" rows="10" widgetVar="expr"
+								completeMethod="#{programOptionsBean.suggestExpr}" minQueryLength="100" onkeyup="checkExpr()"/>
+							<p:inputText id="exprStatus" readonly="true" style="width: 100%; color: red" value="#{programOptionsBean.exprStatus}"/>
 						</h:panelGroup>
 						<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.heatMode}"/></div>
 						<h:panelGroup styleClass="ui-g-12 ui-md-6 ui-lg-4">

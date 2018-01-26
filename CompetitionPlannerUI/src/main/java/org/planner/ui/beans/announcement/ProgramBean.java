@@ -24,8 +24,6 @@ import org.planner.ui.beans.UploadBean;
 import org.planner.ui.beans.UploadBean.DownloadHandler;
 import org.planner.ui.util.BerichtGenerator;
 import org.planner.ui.util.JsfUtil;
-import org.planner.util.ExpressionParser;
-import org.planner.util.LogUtil.FachlicheException;
 
 @Named
 @RequestScoped
@@ -37,6 +35,9 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	private RenderBean renderer;
 
 	@Inject
+	private ProgramOptionsBean options;
+
+	@Inject
 	private BerichtGenerator generator;
 
 	private UploadBean uploadBean;
@@ -44,8 +45,6 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	private Program program;
 
 	private List<ProgramRace> selectedRaces;
-
-	private String exprStatus;
 
 	private boolean showTeams = true;
 
@@ -72,6 +71,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	private void loadProgram(Long id) {
 		program = service.getProgram(id, showTeams);
+		options.setProgram(program);
 	}
 
 	@Override
@@ -160,22 +160,6 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		return renderer.renderRaceMode(race);
 	}
 
-	public List<String> suggestExpr(String text) {
-		return ExpressionParser.getCompletion(text);
-	}
-
-	public void checkExpr() {
-		exprStatus = null;
-		String expr = program.getOptions().getExpr();
-		if (expr != null) {
-			try {
-				new ExpressionParser().evaluateExpression(expr, 0, 9); // TODO
-			} catch (FachlicheException e) {
-				exprStatus = e.getMessage();
-			}
-		}
-	}
-
 	public void swapRaces() {
 		if (selectedRaces.size() == 2) {
 			ProgramRace r1 = selectedRaces.get(0);
@@ -184,10 +168,6 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 			loadProgram(program.getId());
 			selectedRaces.clear();
 		}
-	}
-
-	public String getExprStatus() {
-		return exprStatus;
 	}
 
 	public String renderStartTime(Date date) {

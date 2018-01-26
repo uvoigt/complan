@@ -492,8 +492,7 @@ public class ProgramServiceImpl {
 
 	private Program doGetProgram(EntityManager em, Long id, boolean loadTeams) {
 		// in JPQL gibt es eine MultipleBagException
-		StringBuilder sql = new StringBuilder("select p.id, " //
-				+ "a.name AName, a.startDate, " //
+		StringBuilder sql = new StringBuilder("select " //
 				+ "pr.id RaceId, pr.number, pr.startTime, pr.raceType, pr.heatMode, " //
 				+ "r.number RaceNumber, r.gender, r.distance, r.boatClass, r.ageType, " //
 				+ "t.id TeamId, t.lane, " //
@@ -521,58 +520,53 @@ public class ProgramServiceImpl {
 		Map<BigInteger, ProgramRace> races = new HashMap<>();
 		Map<BigInteger, Team> teams = new HashMap<>();
 		Map<BigInteger, Club> clubs = new HashMap<>();
-		Program program = new Program();
+		// so werden die Options mitgeladen
+		Program program = em.find(Program.class, id);
+		em.detach(program);
 		program.setRaces(new ArrayList<ProgramRace>());
 		for (Object[] row : result) {
-			program.setId(((BigInteger) row[0]).longValue());
-			if (program.getAnnouncement() == null) {
-				Announcement announcement = new Announcement();
-				announcement.setName((String) row[1]);
-				announcement.setStartDate((Date) row[2]);
-				program.setAnnouncement(announcement);
-			}
-			BigInteger raceId = (BigInteger) row[3];
+			BigInteger raceId = (BigInteger) row[0];
 			ProgramRace race = races.get(raceId);
 			if (race == null) {
 				race = new ProgramRace();
 				race.setId(raceId.longValue());
-				race.setNumber((Integer) row[4]);
-				race.setStartTime((Date) row[5]);
-				race.setRaceType(byOrdinal(RaceType.class, (Integer) row[6]));
-				race.setHeatMode((String) row[7]);
+				race.setNumber((Integer) row[1]);
+				race.setStartTime((Date) row[2]);
+				race.setRaceType(byOrdinal(RaceType.class, (Integer) row[3]));
+				race.setHeatMode((String) row[4]);
 				race.setParticipants(new ArrayList<Team>());
 				races.put(raceId, race);
 
 				Race r = new Race();
-				r.setNumber((Integer) row[8]);
-				r.setGender(byOrdinal(Gender.class, (Integer) row[9]));
-				r.setDistance(((Number) row[10]).intValue());
-				r.setBoatClass(byOrdinal(BoatClass.class, (Integer) row[11]));
-				r.setAgeType(byOrdinal(AgeType.class, (Integer) row[12]));
+				r.setNumber((Integer) row[5]);
+				r.setGender(byOrdinal(Gender.class, (Integer) row[6]));
+				r.setDistance(((Number) row[7]).intValue());
+				r.setBoatClass(byOrdinal(BoatClass.class, (Integer) row[8]));
+				r.setAgeType(byOrdinal(AgeType.class, (Integer) row[9]));
 				race.setRace(r);
 
 				program.getRaces().add(race);
 			}
-			BigInteger teamId = (BigInteger) row[13];
+			BigInteger teamId = (BigInteger) row[10];
 			if (teamId != null) {
 				Team team = teams.get(teamId);
 				if (team == null) {
 					team = new Team();
-					team.setLane((int) row[14]);
-					team.setClub(getClub(clubs, row, 15));
+					team.setLane((int) row[11]);
+					team.setClub(getClub(clubs, row, 12));
 					team.setMembers(new ArrayList<TeamMember>());
 					teams.put(teamId, team);
 					race.getParticipants().add(team);
 				}
 				TeamMember member = new TeamMember();
-				member.setPos((int) row[18]);
-				member.setRemark((String) row[19]);
+				member.setPos((int) row[15]);
+				member.setRemark((String) row[16]);
 				if (member.getRemark() == null) {
 					User user = new User();
-					user.setFirstName((String) row[20]);
-					user.setLastName((String) row[21]);
-					user.setBirthDate((Date) row[22]);
-					user.setClub(getClub(clubs, row, 23));
+					user.setFirstName((String) row[17]);
+					user.setLastName((String) row[18]);
+					user.setBirthDate((Date) row[19]);
+					user.setClub(getClub(clubs, row, 20));
 					member.setUser(user);
 				}
 				team.getMembers().add(member);
