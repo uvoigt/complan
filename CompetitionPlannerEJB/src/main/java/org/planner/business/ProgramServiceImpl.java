@@ -546,7 +546,7 @@ public class ProgramServiceImpl {
 				Race r = new Race();
 				r.setNumber((Integer) row[8]);
 				r.setGender(byOrdinal(Gender.class, (Integer) row[9]));
-				r.setDistance(((BigInteger) row[10]).intValue());
+				r.setDistance(((Number) row[10]).intValue());
 				r.setBoatClass(byOrdinal(BoatClass.class, (Integer) row[11]));
 				r.setAgeType(byOrdinal(AgeType.class, (Integer) row[12]));
 				race.setRace(r);
