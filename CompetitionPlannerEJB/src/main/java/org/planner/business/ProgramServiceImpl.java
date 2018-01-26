@@ -3,6 +3,7 @@ package org.planner.business;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -16,6 +17,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
 import org.joda.time.Days;
 import org.joda.time.Instant;
@@ -43,6 +45,7 @@ import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
 import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
+import org.planner.eo.User;
 import org.planner.model.Suchkriterien;
 import org.planner.util.ExpressionParser;
 import org.planner.util.ExpressionParser.ExpressionException;
@@ -283,7 +286,7 @@ public class ProgramServiceImpl {
 			LOG.debug("Wir haben insgesamt Meldungen fuer " + races.size() + " von " + announcement.getRaces().size()
 					+ " ausgeschriebenen Rennen");
 
-		int numberOfLanes = 8; // TODO announcement.get.. tracksSprint
+		int numberOfLanes = 9; // TODO announcement.get.. tracksSprint
 		program.setRaces(new ArrayList<ProgramRace>());
 
 		EvalContext context = new EvalContext(announcement, program.getOptions());
@@ -473,6 +476,114 @@ public class ProgramServiceImpl {
 				return null;
 			}
 		});
+	}
+
+	public Program getProgram(final Long id, final boolean loadTeams) {
+		return dao.executeOperation(new IOperation<Program>() {
+			@Override
+			public Program execute(EntityManager em) {
+				return doGetProgram(em, id, loadTeams);
+			}
+		});
+	}
+
+	private Program doGetProgram(EntityManager em, Long id, boolean loadTeams) {
+		// in JPQL gibt es eine MultipleBagException
+		StringBuilder sql = new StringBuilder("select p.id, " //
+				+ "a.name AName, " //
+				+ "pr.id RaceId, pr.number, pr.startTime, pr.raceType, pr.heatMode, " //
+				+ "t.id TeamId, t.lane, " //
+				+ "tc.id TeamClubId, tc.shortName TCShort, tc.name TCName, " //
+				+ "tm.pos, tm.remark, " //
+				+ "tu.firstName, tu.lastName, tu.birthDate, " //
+				+ "uc.id UserClubId, uc.shortName UCShort, uc.name UCName " //
+				+ "from Program p " //
+				+ "left outer join Announcement a on p.announcement_id=a.id "
+				+ "left outer join ProgramRace pr on pr.program_id=p.id ");
+		if (loadTeams)
+			sql.append("left outer join Team t on t.programrace_id=pr.id " //
+					+ "left outer join Club tc on t.club_id=tc.id " //
+					+ "left outer join TeamMember tm on tm.team_id=t.id " //
+					+ "left outer join User tu on tm.user_id=tu.id " //
+					+ "left outer join Club uc on tu.club_id=uc.id ");
+		sql.append("where p.id = :id");
+		Query query = em.createNativeQuery(sql.toString());
+		query.setParameter("id", id);
+		@SuppressWarnings("unchecked")
+		List<Object[]> result = query.getResultList();
+		if (result.isEmpty())
+			return null;
+		Map<BigInteger, ProgramRace> races = new HashMap<>();
+		Map<BigInteger, Team> teams = new HashMap<>();
+		Map<BigInteger, Club> clubs = new HashMap<>();
+		Program program = new Program();
+		program.setRaces(new ArrayList<ProgramRace>());
+		for (Object[] row : result) {
+			program.setId(((BigInteger) row[0]).longValue());
+			if (program.getAnnouncement() == null) {
+				Announcement announcement = new Announcement();
+				announcement.setName((String) row[1]);
+				program.setAnnouncement(announcement);
+			}
+			BigInteger raceId = (BigInteger) row[2];
+			ProgramRace race = races.get(raceId);
+			if (race == null) {
+				race = new ProgramRace();
+				race.setId(raceId.longValue());
+				race.setNumber((Integer) row[3]);
+				race.setStartTime((Date) row[4]);
+				race.setRaceType(byOrdinal(RaceType.class, (Integer) row[5]));
+				race.setHeatMode((String) row[6]);
+				race.setParticipants(new ArrayList<Team>());
+				races.put(raceId, race);
+				program.getRaces().add(race);
+			}
+			BigInteger teamId = (BigInteger) row[7];
+			if (teamId != null) {
+				Team team = teams.get(teamId);
+				if (team == null) {
+					team = new Team();
+					team.setLane((int) row[8]);
+					team.setClub(getClub(clubs, row, 9));
+					team.setMembers(new ArrayList<TeamMember>());
+					teams.put(teamId, team);
+					race.getParticipants().add(team);
+				}
+				TeamMember member = new TeamMember();
+				member.setPos((int) row[12]);
+				member.setRemark((String) row[13]);
+				if (member.getRemark() == null) {
+					User user = new User();
+					user.setFirstName((String) row[14]);
+					user.setLastName((String) row[15]);
+					user.setBirthDate((Date) row[16]);
+					user.setClub(getClub(clubs, row, 17));
+					member.setUser(user);
+				}
+				team.getMembers().add(member);
+			}
+		}
+		return program;
+	}
+
+	private Club getClub(Map<BigInteger, Club> clubs, Object[] row, int offset) {
+		BigInteger clubId = (BigInteger) row[offset++];
+		Club club = clubs.get(clubId);
+		if (club == null) {
+			club = new Club();
+			club.setShortName((String) row[offset++]);
+			club.setName((String) row[offset]);
+			clubs.put(clubId, club);
+		}
+		return club;
+	}
+
+	private <T extends Enum<T>> T byOrdinal(Class<T> type, int ordinal) {
+		for (T t : type.getEnumConstants()) {
+			if (t.ordinal() == ordinal)
+				return t;
+		}
+		throw new IllegalArgumentException();
 	}
 
 	public void checkProgram(Program program) {
