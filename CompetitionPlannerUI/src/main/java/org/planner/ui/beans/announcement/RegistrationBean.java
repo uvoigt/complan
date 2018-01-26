@@ -242,7 +242,7 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			columns.add(new ColumnModel(null, userColumns[2].getName(), true));
 			columns.add(new ColumnModel(null, userColumns[4].getName(), true));
 			columns.add(new ColumnModel(null, userColumns[5].getName(), true));
-			athletes = new RemoteDataModel<>(this, User.class, columns, null);
+			athletes = new RemoteDataModel<>(this, User.class, columns, null, "athletes");
 			HashMap<String, Object> filters = new HashMap<>();
 			filters.put("club.name", getLoggedInUser().getClub().getName());
 			athletes.setFilterPreset(filters);

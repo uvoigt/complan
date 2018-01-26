@@ -41,12 +41,20 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 
 	private HashMap<String, Object> filterPreset;
 
+	private String variablePrefix;
+
 	public RemoteDataModel(IResultProvider provider, Class<T> type, List<ColumnModel> columns,
 			List<ColumnModel> mandatoryColumns) {
+		this(provider, type, columns, mandatoryColumns, "");
+	}
+
+	public RemoteDataModel(IResultProvider provider, Class<T> type, List<ColumnModel> columns,
+			List<ColumnModel> mandatoryColumns, String variablePrefix) {
 		dataProvider = provider;
 		zeilentyp = type;
 		this.columns = columns;
 		this.mandatory = mandatoryColumns;
+		this.variablePrefix = variablePrefix;
 	}
 
 	/*
@@ -60,8 +68,8 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 
 		Integer first = (Integer) JsfUtil.getViewVariable("first");
 		Integer rows = (Integer) JsfUtil.getViewVariable("rows");
-		List<SortMeta> sortState = (List<SortMeta>) JsfUtil.getViewVariable("sortState");
-		Map<String, Object> filters = (Map<String, Object>) JsfUtil.getViewVariable("filters");
+		List<SortMeta> sortState = (List<SortMeta>) JsfUtil.getViewVariable(variablePrefix + "sortState");
+		Map<String, Object> filters = (Map<String, Object>) JsfUtil.getViewVariable(variablePrefix + "filters");
 
 		List<T> data = load(first != null ? first : 0, rows != null ? rows : getPageSize(), sortState, filters);
 		setWrappedData(data);
