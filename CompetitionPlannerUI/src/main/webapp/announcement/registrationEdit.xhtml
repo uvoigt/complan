@@ -35,8 +35,12 @@
 				function updateResultCount(count) {
 					if (count == undefined)
 						count = PF("athletesTable").tbody.children().length;
-					var l = $("[id*=resultCountLabel]");
+					var l = $("[id$=resultCountLabel]");
 					l.text('#{bundle.format("athletesCount", "xxx")}'.replace(/xxx/, count));
+				}
+				function updateResultSelected() {
+					var count = PF("athletesTable").selection.length;
+					$("[id$=resultSelectedLabel]").text('#{bundle.format("selected", "xxx")}'.replace(/xxx/, count));
 				}
 				</h:outputScript>
 
@@ -118,7 +122,12 @@
 
 								<f:facet name="header">
 									<h:panelGroup id="resultCount">
-										<p:outputLabel id="resultCountLabel"/>
+										<h:outputLabel id="resultCountLabel"/>
+									</h:panelGroup>
+									<h:panelGroup id="resultSelected">
+										<h:outputText value=" - "/>
+										<h:outputLabel id="resultSelectedLabel"
+											value="#{bundle.format('selected', registrationBean.selectedAthletes != null ? registrationBean.selectedAthletes.size() : 0)}"/>
 									</h:panelGroup>
 									<p:commandButton id="toggler" type="button"
 										style="float:right; margin: -5px -10px 0 0;"
@@ -128,8 +137,8 @@
 
 								<p:ajax event="page" process="@form:clubVisible" update="@form:clubVisible"/>
 								<p:ajax event="sort" process="@form:clubVisible" update="@form:clubVisible"/>
-								<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons()"/>
-								<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons()"/>
+								<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons(); updateResultSelected()"/>
+								<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons(); updateResultSelected()"/>
 								<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible" oncomplete="PF('athletesTable').unselectAllRows();registrationEdit_enableButtons();checkEmpty()"/>
 								<p:ajax event="rowDblselect" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
 
