@@ -21,8 +21,6 @@ public class RenderBean {
 	@Inject
 	private Messages messages;
 
-	private static DateFormat DF_WEEKDAY = new SimpleDateFormat("EEEE");
-
 	public String renderRaceTitle(ProgramRace race) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(messages.get("programs.race")); // TODO evtl. woanders hin
@@ -70,7 +68,7 @@ public class RenderBean {
 	}
 
 	public String renderStartTime(Date date) {
-		return DF_WEEKDAY.format(date) + " " + DateFormat.getTimeInstance().format(date);
+		return new SimpleDateFormat("EEEE").format(date) + " " + DateFormat.getTimeInstance().format(date);
 	}
 
 }
