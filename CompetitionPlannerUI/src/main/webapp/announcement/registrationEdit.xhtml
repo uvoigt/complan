@@ -100,10 +100,11 @@
 								action="#{registrationBean.addToRegistration()}"
 								process="@form"
 								update="registrationTable"/>
-							<p:commandButton icon="ui-icon-arrowthick-1-w" title="#{messages.backToOverview}"
+							<p:commandButton id="btnCancel" icon="ui-icon-arrowthick-1-w" title="#{messages.backToOverview}"
 								action="#{startseiteBean.setMainContent('/announcement/registrations.xhtml')}"
 								process="@this"
 								update="mainContent"
+								partialSubmit="true"
 								style="margin-top: 10em"/>
 						</td>
 						<td style="width: 49%">
@@ -139,11 +140,12 @@
 								<p:ajax event="sort" process="@form:clubVisible" update="@form:clubVisible"/>
 								<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons(); updateResultSelected()"/>
 								<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons(); updateResultSelected()"/>
-								<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible" oncomplete="PF('athletesTable').unselectAllRows();registrationEdit_enableButtons();checkEmpty()"/>
+								<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible"
+									oncomplete="PF('athletesTable').unselectAllRows();registrationEdit_enableButtons();checkEmpty(); updateResultSelected()"/>
 								<p:ajax event="rowDblselect" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
 
 								<p:column headerText="#{bundle.club}" sortBy="#{user.club.name}" filterBy="#{user.club.name}" filterMatchMode="contains"
-										visible="#{registrationBean.clubVisible}" filterValue="#{registrationBean.loggedInUser.club.name}">
+										visible="#{registrationBean.clubVisible}" filterValue="#{authBean.loggedInUser.club.name}">
 									<h:outputText value="#{registrationBean.renderClubName(user)}"/>
 								</p:column>
 								<p:column headerText="#{bundle.firstName}" sortBy="#{user.firstName}" filterBy="#{user.firstName}" filterMatchMode="contains">
@@ -203,7 +205,6 @@
 					<p:column width="30">
 						<p:commandButton icon="ui-icon-trash" title="#{bundle.deleteParticipant}"
 								action="#{registrationBean.deleteFromRegistration(entry)}"
-								partialSubmit="false"
 								process="registrationTable"
 								update="registrationTable"/>
 					</p:column>
@@ -212,9 +213,7 @@
 			</h:form>
 
 			<h:outputScript>
-				setTimeout(function() {
-					registrationEdit_enableButtons();
-				}, 50);
+				registrationEdit_enableButtons();
 			</h:outputScript>
 
 		</ui:define>

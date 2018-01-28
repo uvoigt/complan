@@ -21,9 +21,13 @@ public class MyProfileBean extends AbstractEditBean {
 
 	private Club newClub;
 
+	@Override
 	@PostConstruct
 	public void init() {
-		user = service.getLoggedInUser();
+		super.init();
+
+		if (!isCancelPressed())
+			user = auth.getLoggedInUser();
 	}
 
 	public User getUser() {

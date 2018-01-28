@@ -48,16 +48,20 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	private boolean showTeams = true;
 
+	@Override
 	@PostConstruct
 	public void init() {
+		super.init();
+
 		uploadBean = new UploadBean(this, null, null);
 
 		Long id = getIdFromRequestParameters();
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
 		if (id != null) {
-			loadProgram(id);
-			JsfUtil.setViewVariable("id", program.getId());
+			if (!isCancelPressed())
+				loadProgram(id);
+			JsfUtil.setViewVariable("id", id);
 		}
 	}
 

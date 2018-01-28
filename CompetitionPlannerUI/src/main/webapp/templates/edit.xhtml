@@ -23,7 +23,7 @@
 						process="@form"
 						update="messages mainContent #{addToUpdate}"
 						rendered="#{canSave}"/>
-					<p:commandButton value="#{messages.cancel}" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
+					<p:commandButton value="#{messages.cancel}" id="btnCancel" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
 						action="#{startseiteBean.setMainContent(searchLink)}"
 						process="@this"
 						partialSubmit="true"

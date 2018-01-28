@@ -60,16 +60,19 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	private Calendar endDate;
 
+	@Override
 	@PostConstruct
 	public void init() {
+		super.init();
+
 		uploadBean = new UploadBean(this, null, null);
 
 		Long id = getIdFromRequestParameters();
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
-		if (id != null) {
+		if (id != null && !isCancelPressed()) {
 			announcement = service.getObject(Announcement.class, id, 1);
-			JsfUtil.setViewVariable("id", announcement.getId());
+			JsfUtil.setViewVariable("id", id);
 		} else {
 			announcement = new Announcement();
 		}
@@ -145,7 +148,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	@Override
 	protected void doSave() {
-		Club club = getLoggedInUser().getClub();
+		Club club = auth.getLoggedInUser().getClub();
 		handleLocation(location, announcement.getLocation(), club);
 		// handleLocation(juryLocation, announcement.getJuryLocation(), club);
 		// handleLocation(openingLocation, announcement.getOpeningLocation(),
@@ -224,7 +227,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		if (ctx.getExternalContext().getRequestParameterMap().containsKey("editForm")) {
 			// das ist bei Neuanlage einer Ausschreibung
 			if (announcement.getClub() == null) {
-				Club club = service.getLoggedInUser().getClub();
+				Club club = auth.getLoggedInUser().getClub();
 				announcement.setClub(club);
 				handleLocation(location, announcement.getLocation(), club);
 			}

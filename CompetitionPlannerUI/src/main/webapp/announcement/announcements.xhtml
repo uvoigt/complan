@@ -37,7 +37,7 @@
 					process="@this"
 					update="mainContent"
 					rendered="#{authBean.inRole('Sportwart')}"
-					disabled="#{not (item.status == 'announced' and item['club.name'] == announcementBean.loggedInUser.club.name)}"/>
+					disabled="#{not (item.status == 'announced' and item['club.name'] == authBean.loggedInUser.club.name)}"/>
 		</ui:define>
 
 	</ui:composition>

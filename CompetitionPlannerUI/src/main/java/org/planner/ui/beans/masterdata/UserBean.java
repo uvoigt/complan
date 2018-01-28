@@ -30,8 +30,6 @@ public class UserBean extends AbstractEditBean {
 
 	private User user;
 
-	private User myUser;
-
 	private List<Club> clubs;
 
 	private List<String> selectedRoles;
@@ -41,6 +39,7 @@ public class UserBean extends AbstractEditBean {
 	@Inject
 	private Messages messages;
 
+	@Override
 	@PostConstruct
 	public void init() {
 		Long id = getIdFromRequestParameters();
@@ -52,7 +51,6 @@ public class UserBean extends AbstractEditBean {
 		} else {
 			user = new User();
 		}
-		myUser = service.getLoggedInUser();
 		prepareSelectedRoles();
 	}
 
@@ -136,7 +134,7 @@ public class UserBean extends AbstractEditBean {
 	}
 
 	public User getMyUser() {
-		return myUser;
+		return auth.getLoggedInUser();
 	}
 
 	private void prepareSelectedRoles() {

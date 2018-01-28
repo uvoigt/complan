@@ -67,14 +67,18 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 
 	private DataTable registrationTable;
 
+	@Override
 	@PostConstruct
 	public void init() {
+		super.init();
+
 		Long id = getIdFromRequestParameters();
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
 		if (id != null) {
-			loadRegistration(id);
-			JsfUtil.setViewVariable("id", registration.getId());
+			if (!isCancelPressed())
+				loadRegistration(id);
+			JsfUtil.setViewVariable("id", id);
 		}
 	}
 
@@ -224,7 +228,7 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	}
 
 	public List<Race> getRaces() {
-		if (races == null) {
+		if (races == null && !isCancelPressed()) {
 			Announcement announcement = registration.getAnnouncement();
 			races = service.getRaces(announcement.getId());
 		}
@@ -244,7 +248,7 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			columns.add(new ColumnModel(null, userColumns[5].getName(), true));
 			athletes = new RemoteDataModel<>(this, User.class, columns, null, "athletes");
 			HashMap<String, Object> filters = new HashMap<>();
-			filters.put("club.name", getLoggedInUser().getClub().getName());
+			filters.put("club.name", auth.getLoggedInUser().getClub().getName());
 			athletes.setFilterPreset(filters);
 		}
 		return athletes;

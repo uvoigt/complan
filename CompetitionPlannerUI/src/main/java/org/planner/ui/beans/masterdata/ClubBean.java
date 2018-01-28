@@ -17,12 +17,15 @@ public class ClubBean extends AbstractEditBean {
 
 	private Club club;
 
+	@Override
 	@PostConstruct
 	public void init() {
+		super.init();
+
 		Long id = getIdFromRequestParameters();
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
-		if (id != null) {
+		if (id != null && !isCancelPressed()) {
 			club = service.getObject(Club.class, id, 1);
 			JsfUtil.setViewVariable("id", club.getId());
 		} else {

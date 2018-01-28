@@ -1,15 +1,27 @@
 package org.planner.ui.beans.common;
 
-import javax.enterprise.context.ApplicationScoped;
+import java.io.Serializable;
+
+import javax.enterprise.context.SessionScoped;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.commons.lang.StringUtils;
+import org.planner.eo.User;
+import org.planner.remote.ServiceFacade;
 
 @Named
-@ApplicationScoped
-public class AuthBean {
+@SessionScoped
+public class AuthBean implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+
+	@Inject
+	private ServiceFacade service;
+
+	private User loggedInUser;
 
 	public boolean inRole(String role) {
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
@@ -47,4 +59,11 @@ public class AuthBean {
 		ExternalContext ctx = FacesContext.getCurrentInstance().getExternalContext();
 		return !ctx.isUserInRole(role1) && !ctx.isUserInRole(role2);
 	}
+
+	public User getLoggedInUser() {
+		if (loggedInUser == null)
+			loggedInUser = service.getLoggedInUser();
+		return loggedInUser;
+	}
+
 }

@@ -7,6 +7,7 @@ import javax.faces.event.PhaseId;
 import javax.faces.view.facelets.FaceletContext;
 
 import org.planner.ui.beans.Messages;
+import org.primefaces.util.Constants;
 
 /**
  * Platz für JSF-spezifische statische Utility-Methoden.
@@ -74,6 +75,12 @@ public class JsfUtil {
 			stateSaver.put(name, value);
 		else
 			stateSaver.remove(name);
+	}
+
+	public static boolean isFromSource(String id) {
+		Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+		String sourceValue = params.get(Constants.RequestParams.PARTIAL_SOURCE_PARAM);
+		return sourceValue != null && sourceValue.endsWith(id);
 	}
 
 	private JsfUtil() {

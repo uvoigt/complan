@@ -16,11 +16,16 @@ public class MyClubBean extends AbstractEditBean {
 
 	private Club club;
 
+	@Override
 	@PostConstruct
 	public void init() {
-		club = service.getLoggedInUser().getClub();
-		if (club.getAddress() == null)
-			club.setAddress(new Address());
+		super.init();
+
+		if (!isCancelPressed()) {
+			club = auth.getLoggedInUser().getClub();
+			if (club.getAddress() == null)
+				club.setAddress(new Address());
+		}
 	}
 
 	public Club getClub() {

@@ -16,12 +16,15 @@ public class RoleBean extends AbstractEditBean {
 
 	private Role role;
 
+	@Override
 	@PostConstruct
 	public void init() {
+		super.init();
+
 		Long id = getIdFromRequestParameters();
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
-		if (id != null) {
+		if (id != null && !isCancelPressed()) {
 			role = service.getObject(Role.class, id, 0);
 			JsfUtil.setViewVariable("id", role.getId());
 		} else {

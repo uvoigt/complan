@@ -20,12 +20,12 @@
 					action="#{registrationBean.setStatus(item, 'submitted')}"
 					process="@this"
 					update="suchErgebnisTable"
-					rendered="#{item.status == 'created' and item['club.name'] == registrationBean.loggedInUser.club.name}"/>
+					rendered="#{item.status == 'created' and item['club.name'] == authBean.loggedInUser.club.name}"/>
 			<p:commandButton icon="ui-icon-circle-arrow-w" title="#{bundle.revokeStatus}"
 					action="#{registrationBean.setStatus(item, 'created')}"
 					process="@this"
 					update="suchErgebnisTable"
-					rendered="#{authBean.inRole('Tester') and item.status == 'submitted' and item['club.name'] == registrationBean.loggedInUser.club.name}"/>
+					rendered="#{authBean.inRole('Tester') and item.status == 'submitted' and item['club.name'] == authBean.loggedInUser.club.name}"/>
 		</ui:define>
 	</ui:composition>
 </html>

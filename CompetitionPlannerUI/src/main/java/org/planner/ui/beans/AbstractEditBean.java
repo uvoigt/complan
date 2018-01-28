@@ -5,9 +5,10 @@ import java.io.Serializable;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 
-import org.planner.eo.User;
 import org.planner.model.Suchkriterien;
 import org.planner.remote.ServiceFacade;
+import org.planner.ui.beans.common.AuthBean;
+import org.planner.ui.util.JsfUtil;
 import org.planner.util.LogUtil.TechnischeException;
 
 //@Logged
@@ -24,7 +25,14 @@ public abstract class AbstractEditBean implements ITarget, Serializable {
 	@Inject
 	private UrlParameters urlParameters;
 
-	private User loggedInUser;
+	@Inject
+	protected AuthBean auth;
+
+	private boolean cancelPressed;
+
+	protected void init() {
+		cancelPressed = JsfUtil.isFromSource("btnCancel");
+	}
 
 	public void save(String link) {
 		doSave();
@@ -54,9 +62,7 @@ public abstract class AbstractEditBean implements ITarget, Serializable {
 		return criteria;
 	}
 
-	public User getLoggedInUser() {
-		if (loggedInUser == null)
-			loggedInUser = service.getLoggedInUser();
-		return loggedInUser;
+	protected boolean isCancelPressed() {
+		return cancelPressed;
 	}
 }
