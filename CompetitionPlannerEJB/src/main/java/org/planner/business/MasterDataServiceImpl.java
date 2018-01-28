@@ -76,8 +76,7 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 			if (eo != null)
 				throw new FachlicheException(messages.getResourceBundle(), "user.exists", user.getUserId());
 		}
-		if (user.getClub().getId() == null)
-			saveClub(user.getClub());
+		common.checkWriteAccess(user, user.getId() == null ? Operation.create : Operation.save);
 		if (existing != null) {
 			// wenn der User sich gerade selbst speichert (MyProfile), dann ist ggf. das Passwort mit dabei
 			if ((loggedInUser == null || loggedInUser.getId().equals(user.getId())) && user.getPassword() != null)
@@ -85,6 +84,7 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 			else
 				user.setPassword(existing.getPassword());
 			// sichere extra Properties vor dem Überschreiben
+			user.setUserId(existing.getUserId());
 			if (loggedInUser != null) // nicht Admin
 				user.setLocked(existing.isLocked());
 			// sichere ggf. bestehende Rollen, die nur der Admin speichern darf
@@ -93,6 +93,8 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 					user.getRoles().add(role);
 			}
 		}
+		if (user.getClub().getId() == null)
+			saveClub(user.getClub());
 
 		return common.save(user);
 	}
