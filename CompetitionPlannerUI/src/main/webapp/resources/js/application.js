@@ -16,7 +16,7 @@ function toggleHelp(show) {
 		helpUI.animate({ "left": isSmallScreen ? "0" : "30%" }, 200);
 	}
 }
-function sendLogin() {
+function sendLogin(formId) {
 	var dlg = PF("loginDlg");
 	var req = createXMLHttpRequest();
 	req.open("POST", "j_security_check");
@@ -27,9 +27,11 @@ function sendLogin() {
 			if (req.status == 200 && req.responseText.indexOf("<title>" + dlg.jq.find("#loginDialog_title").text() + "</title>") == -1) {
 				message("");
 				dlg.hide();
-				//	var ext;
-				//	PrimeFaces.ajax.AjaxRequest(dlg.cfg, ext);
-				refresh();							
+				var prevId = PrimeFaces.identity;
+				PrimeFaces.ab({ s: formId, f: formId, u: "leftMenu theme currentUser currentUserMenu", onco: function() {
+					if (prevId != PrimeFaces.identity)
+						PrimeFaces.ab( { s: formId, f: formId, u: "mainContent" });
+				}});
 			} else {
 				message("{msg:loginError}");
 			}
@@ -73,6 +75,18 @@ function setUrlParam(val) {
 	if (history.replaceState)
 		history.replaceState("", "", val);
 }
+function announcementEdit_enableStatusButtons(status) {
+	var btnAnnounce = PF("btnAnnounce");
+	var btnRevoke = PF("btnRevoke");
+	if (!btnAnnounce || !btnRevoke)
+		return;
+	btnAnnounce.disable();
+	btnRevoke.disable();
+	if (status == 0)
+		btnAnnounce.enable();
+	else if (status == 1)
+		btnRevoke.enable();
+}
 function registrationEdit_enableButtons() {
 	var racesTable = PF("racesTable");
 	var athletesTable = PF("athletesTable");
@@ -102,26 +116,31 @@ function toggleColumn(table, index) {
 	columnHeader.toggleClass("ui-helper-hidden");
 	table.tbody.children("tr").find("td:nth-child(" + index + ")").toggleClass("ui-helper-hidden");
 }
-function initExprText() {
+function programEdit_initExpr() {
 	var expr = PF("expr");
 	if (!expr)
 		return;
 	expr.jq.attr("spellcheck", false);
-	expr.jq.keydown(function(ev) {
-		console.log(ev);
-		if (ev.key == '') {
-			var popup = document.createElement("div")
-			document.body.append(p);
-			var pjq = $(popup);
-			pjq.css("background-color", "#faebd7");
-			pjq.width(144);
-			pjq.height(136);
-			pjq.css("position", "absolute");
-			pjq.css("top", "");
-			pjq.css("left", "");
-			pjq.css("border-radius", "3px");
-			pjq.css("border", "solid 1px");
+	if (expr.jq.initialized)
+		return;
+	expr.jq.initialized = true;
+	expr.jq.keydown(function(evt) {
+		if (evt.keyCode == 9) {
+			var start = expr.jq.getSelection().start;
+			var text = expr.jq.val();
+			expr.jq.val(text.substring(0, start) + "\t" + text.substring(start, text.length));
+			expr.jq.setSelection(start + 1);
+			evt.preventDefault();
+			evt.stopPropagation();
 		}
+	});
+	expr.jq.keypress(function(evt) {
+		if (evt.charCode != 32 || !evt.ctrlKey)
+			return;
+		var text = expr.jq.val();
+		text = text.substring(0, expr.jq.getCursorPosition());
+		expr.search(text);
+		expr.query = "";
 	});
 }
 function setupAjax() {

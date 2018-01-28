@@ -8,16 +8,12 @@
 <body>
 	<ui:composition>
 		<h:outputScript>
-			function login() {
-				sendLogin();
-			}
 			setupAjax();
 		</h:outputScript>
 		<p:dialog widgetVar="loginDlg" id="loginDialog" header="#{messages.loginTitle}" showEffect="clip" hideEffect="clip"
 				responsive="true" draggable="false" modal="true" closable="false" resizable="false" appendTo="body"
 				onShow="PF('loginDlg').initPosition(); message()">
 			<h:form>
-				<p:remoteCommand name="refresh" process="@this" update="leftMenu theme currentUser currentUserMenu"/>
 				<h:panelGroup layout="block" styleClass="loginError loginNoUser loginMessage">
 				</h:panelGroup>
 				<p:panelGrid cellpadding="5" cellspacing="10" styleClass="loginTable">
@@ -26,7 +22,7 @@
 							<h:outputText value="#{messages.loginName}"/>
 						</p:column>
 						<p:column>
-							<input type="text" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" autocomplete="off" onkeypress="if (event.keyCode == 13) login()"/>
+							<input type="text" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" autocomplete="off" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/>
 						</p:column>
 					</p:row>
 					<p:row>
@@ -34,7 +30,7 @@
 							<h:outputText value="#{messages.loginPass}"/>
 						</p:column>
 						<p:column>
-							<input type="password" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" onkeypress="if (event.keyCode == 13) login()"/>
+							<input type="password" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/>
 						</p:column>
 					</p:row>
 					<p:row>
@@ -44,7 +40,7 @@
 					</p:row>
 				</p:panelGrid>
 				<h:panelGroup layout="block" style="width: 100%; text-align: center;">
-					<p:commandButton value="#{messages.loginSubmit}" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" onclick="login()"/>
+					<p:commandButton value="#{messages.loginSubmit}" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" onclick="sendLogin('#{component.namingContainer.id}')"/>
 				</h:panelGroup>
 			</h:form>
 		</p:dialog>
