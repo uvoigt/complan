@@ -48,7 +48,7 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 
 	public KeepLoggedInAuthenticationMechanism(FormParserFactory formParserFactory, String name, String loginPage,
 			String errorPage) {
-		super(formParserFactory, name, loginPage, errorPage);
+		super(formParserFactory, name, loginPage, errorPage, null, false);
 	}
 
 	@Override
