@@ -75,78 +75,124 @@ function setUrlParam(val) {
 	if (history.replaceState)
 		history.replaceState("", "", val);
 }
-function announcementEdit_enableStatusButtons(status) {
-	var btnAnnounce = PF("btnAnnounce");
-	var btnRevoke = PF("btnRevoke");
-	if (!btnAnnounce || !btnRevoke)
-		return;
-	btnAnnounce.disable();
-	btnRevoke.disable();
-	if (status == 0)
-		btnAnnounce.enable();
-	else if (status == 1)
-		btnRevoke.enable();
-}
-function registrationEdit_enableButtons() {
-	var racesTable = PF("racesTable");
-	var athletesTable = PF("athletesTable");
-	var registrationTable = PF("registrationTable");
-	var registrationSelected = registrationTable && registrationTable.getSelectedRowsCount() > 0;
-	if (athletesTable && athletesTable.getSelectedRowsCount() > 0 &&
-			(racesTable && racesTable.getSelectedRowsCount() > 0 || registrationSelected))
-		PF("btnAddAthlete").enable();
-	else
-		PF("btnAddAthlete").disable();
-	if (registrationSelected)
-		PF("btnAddRequest").enable();
-	else
-		PF("btnAddRequest").disable();
-}
-function copyFilters() {
-	var racesTable = PF("racesTable");
-	var athletesTable = PF("athletesTable");
-	var ageType = racesTable.jq.find("[name$=ageType\\:filter]").val();
-	athletesTable.jq.find("[name$=ageType\\:filter]").val(ageType);
-	var gender = racesTable.jq.find("[name$=gender\\:filter]").val();
-	athletesTable.jq.find("[name$=gender\\:filter]").val(gender);
-	athletesTable.filter();
-}
-function toggleColumn(table, index) {
-	var columnHeader = table.thead.children("tr").find("th:nth-child(" + index + ")");
-	columnHeader.toggleClass("ui-helper-hidden");
-	table.tbody.children("tr").find("td:nth-child(" + index + ")").toggleClass("ui-helper-hidden");
-}
-function programEdit_initExpr() {
-	var expr = PF("expr");
-	if (!expr)
-		return;
-	expr.jq.attr("spellcheck", false);
-	if (expr.jq.initialized)
-		return;
-	expr.jq.initialized = true;
-	expr.jq.keydown(function(evt) {
-		if (evt.keyCode == 9) {
-			var start = expr.jq.getSelection().start;
-			var text = expr.jq.val();
-			expr.jq.val(text.substring(0, start) + "\t" + text.substring(start, text.length));
-			expr.jq.setSelection(start + 1);
-			evt.preventDefault();
-			evt.stopPropagation();
-		}
-	});
-	expr.jq.keypress(function(evt) {
-		if (evt.charCode != 32 || !evt.ctrlKey)
+var announcementEdit = {
+	init: function() {
+		$(editForm).submit(function(e) {
+			setTimeout(function() {
+				$(editForm).find(".ui-submit-param").remove();
+			}, 10);
+		});
+		return this;
+	},
+	enableButtons: function(status) {
+		var btnAnnounce = PF("btnAnnounce");
+		var btnRevoke = PF("btnRevoke");
+		if (!btnAnnounce || !btnRevoke)
 			return;
-		var text = expr.jq.val();
-		text = text.substring(0, expr.jq.getCursorPosition());
-		expr.search(text);
-		expr.query = "";
-	});
-}
+		btnAnnounce.disable();
+		btnRevoke.disable();
+		if (status == 0)
+			btnAnnounce.enable();
+		else if (status == 1)
+			btnRevoke.enable();
+	}
+};
+var registrationEdit = {
+	enableButtons: function() {
+		var racesTable = PF("racesTable");
+		var athletesTable = PF("athletesTable");
+		var registrationTable = PF("registrationTable");
+		var registrationSelected = registrationTable && registrationTable.getSelectedRowsCount() > 0;
+		if (athletesTable && athletesTable.getSelectedRowsCount() > 0 &&
+				(racesTable && racesTable.getSelectedRowsCount() > 0 || registrationSelected))
+			PF("btnAddAthlete").enable();
+		else
+			PF("btnAddAthlete").disable();
+		if (registrationSelected)
+			PF("btnAddRequest").enable();
+		else
+			PF("btnAddRequest").disable();
+		return this;
+	},
+	checkEmpty: function() {
+		if ($("[id$=athletesTable] .ui-datatable-empty-message").length > 0)
+			updateResultCount(0);
+		return this;
+	},
+	updateResultCount: function(count) {
+		if (count == undefined)
+			count = PF("athletesTable").tbody.children().length;
+		var l = $("[id$=resultCountLabel]");
+		l.text("{msg:registrations.athletesCount, xxx}".replace(/xxx/, count));
+		return this;
+	},
+	updateResultSelected: function() {
+		var count = PF("athletesTable").selection.length;
+		$("[id$=resultSelectedLabel]").text("{msg:registrations.selected, xxx}".replace(/xxx/, count));
+		return this;
+	},
+	copyFilters: function() {
+		var racesTable = PF("racesTable");
+		var athletesTable = PF("athletesTable");
+		var ageType = racesTable.jq.find("[name$=ageType\\:filter]").val();
+		athletesTable.jq.find("[name$=ageType\\:filter]").val(ageType);
+		var gender = racesTable.jq.find("[name$=gender\\:filter]").val();
+		athletesTable.jq.find("[name$=gender\\:filter]").val(gender);
+		athletesTable.filter();
+	},
+	toggleColumn: function(table, index) {
+		var columnHeader = table.thead.children("tr").find("th:nth-child(" + index + ")");
+		columnHeader.toggleClass("ui-helper-hidden");
+		table.tbody.children("tr").find("td:nth-child(" + index + ")").toggleClass("ui-helper-hidden");
+	}
+};
+var programEdit = {
+	initExpr: function() {
+		var expr = PF("expr");
+		if (!expr)
+			return;
+		expr.jq.attr("spellcheck", false);
+		if (expr.jq.initialized)
+			return;
+		expr.jq.initialized = true;
+		expr.jq.keydown(function(evt) {
+			if (evt.keyCode == 9) {
+				var start = expr.jq.getSelection().start;
+				var text = expr.jq.val();
+				expr.jq.val(text.substring(0, start) + "\t" + text.substring(start, text.length));
+				expr.jq.setSelection(start + 1);
+				evt.preventDefault();
+				evt.stopPropagation();
+			}
+		});
+		expr.jq.keypress(function(evt) {
+			if (evt.charCode != 32 || !evt.ctrlKey)
+				return;
+			var text = expr.jq.val();
+			text = text.substring(0, expr.jq.getCursorPosition());
+			expr.search(text);
+			expr.query = "";
+		});
+	},
+	toggleRaceSelection: function(checkbox) {
+		var pt = PF("programTable");
+		try {
+			checkbox.prop("checked") ? pt.selectRowWithCheckbox(checkbox, true) : pt.unselectRowWithCheckbox(checkbox, true);
+		} catch (ex) {}
+		var numChecked = pt.tbody.find("> tr > td >* :checkbox.ui-state-active").length;
+		if (numChecked > 2) {
+			checkbox.prop("checked", false);
+			numChecked--;
+			try {
+				pt.unselectRowWithCheckbox(checkbox, true);
+			} catch (ex) {}
+		}
+		numChecked == 2 ? PF("swapRaces").enable() : PF("swapRaces").disable();
+	}
+};
 function setupAjax() {
 	$.ajaxSetup({
 		dataFilter: function(data) {
-			$(document).off("keydown");
 			if (data.indexOf("{msg:loginTitle}") != -1) {
 				PrimeFaces.debug("Detected unauthenticated request");
 				var dlg = PF("loginDlg");
@@ -157,6 +203,30 @@ function setupAjax() {
 			}
 			return data;
 		}
+	});
+}
+function showStatusDialog() {
+	statusTimeout = setTimeout(function() {
+		statusTimeout = null;
+		PF("statusDialog").show();
+	}, 500);
+}
+function hideStatusDialog() {
+	if (statusTimeout)
+		clearTimeout(statusTimeout);
+	else
+		PF("statusDialog").hide();
+}
+function updateConfirmDlg(title, msg) {
+	var dlg = PF("confirmDlg");
+	dlg.title.text(title);
+	dlg.message.text(msg);
+	dlg.icon.remove();
+}
+function initErrorDialog() {
+	PF("errorDetails").legend.click(function() {
+		if (copyToClipboard(PF("errorDetails").jq.children().get(1)))
+			$(".copiedMessage").show().fadeOut(3000);
 	});
 }
 function copyToClipboard(element) {

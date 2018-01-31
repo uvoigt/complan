@@ -44,22 +44,23 @@
 				<ui:insert name="menu">
 					<ui:include src="/sections/menu.xhtml" />
 				</ui:insert>
-				<ui:insert name="main">
-					<h:panelGroup id="mainContent" layout="block" styleClass="ui-corner-all ui-widget-content">
 
-						<p:messages id="messages" showDetail="true" closable="true" showSummary="false">
-							<p:autoUpdate/>
-						</p:messages>
+				<ui:insert name="noscript"><noscript><div class="noscript">#{messages.noscript}</div></noscript></ui:insert>
 
-						<ui:include src="#{startseiteBean.mainContent}" />
+				<h:panelGroup id="mainContent" layout="block" styleClass="ui-corner-all ui-widget-content">
+					<p:messages id="messages" showDetail="true" closable="true" showSummary="false">
+						<p:autoUpdate/>
+					</p:messages>
 
-					</h:panelGroup>
-					<h:form rendered="false">
-						<pe:ckEditor/>
-						<p:inputSwitch />
-						<p:fileUpload />
-					</h:form>
-				</ui:insert>
+					<ui:include src="#{startseiteBean.mainContent}" />
+
+				</h:panelGroup>
+				<h:form rendered="false">
+					<pe:ckEditor/>
+					<p:inputSwitch />
+					<p:fileUpload />
+				</h:form>
+
 			</h:panelGroup>
 		</p:layoutUnit>
 	</p:layout>
@@ -79,8 +80,5 @@
 		</p:fieldset>
 	</h:panelGroup>
 	<ui:debug rendered="#{facesContext.application.projectStage == 'Development'}"/>
-	<noscript>
-		<div class="noscript">#{messages.noscript}</div>
-	</noscript>
 </h:body>
 </html>

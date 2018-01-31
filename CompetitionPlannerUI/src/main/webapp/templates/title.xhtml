@@ -7,12 +7,7 @@
 	xmlns:c="http://java.sun.com/jsp/jstl/core">
 
 	<ui:composition>
-		<h:outputScript>
-			var title = '#{title}';
-			if (title == '')
-				title = '#{bundle.title}';
-			document.title=title;
-		</h:outputScript>
+		<h:outputScript>document.title="#{bundle.title}";</h:outputScript>
 		<c:choose>
 			<c:when test="#{authBean.inRoles(roles)}">
 				<ui:insert name="content"/>

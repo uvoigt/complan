@@ -16,157 +16,128 @@
 
 		<ui:define name="content">
 
-			<style>
-				.tableTop td {
-					vertical-align: top
-				}
-				.tableTop td button:parent td {
-					vertical-align: middle
-				}
-			</style>
-
 			<h:form>
 
-				<h:outputScript>
-				function checkEmpty() {
-					if ($("[id$=athletesTable] .ui-datatable-empty-message").length > 0)
-						updateResultCount(0);
-				}
-				function updateResultCount(count) {
-					if (count == undefined)
-						count = PF("athletesTable").tbody.children().length;
-					var l = $("[id$=resultCountLabel]");
-					l.text('#{bundle.format("athletesCount", "xxx")}'.replace(/xxx/, count));
-				}
-				function updateResultSelected() {
-					var count = PF("athletesTable").selection.length;
-					$("[id$=resultSelectedLabel]").text('#{bundle.format("selected", "xxx")}'.replace(/xxx/, count));
-				}
-				</h:outputScript>
+				<h:panelGrid columns="3" columnClasses="regEditTable, regEditTableMid, regEditTable" cellpadding="0" cellspacing="0">
+					<p:dataTable id="racesTable" widgetVar="racesTable"
+							var="race" rowKey="#{race.id}"
+							value="#{registrationBean.races}"
+							emptyMessage="#{bundle.noRaces}"
+							sortMode="multiple"
+							selectionMode="multiple"
+							selection="#{registrationBean.selectedRaces}"
+							filterEvent="enter"
+							rows="10"
+							paginator="true" paginatorPosition="top"
+							scrollable="false" scrollHeight="20%"
+							style="width: 100%">
 
-				<table class="tableTop">
-					<tr>
-						<td style="width: 49%">
-							<p:dataTable id="racesTable" widgetVar="racesTable"
-									var="race" rowKey="#{race.id}"
-									value="#{registrationBean.races}"
-									emptyMessage="#{bundle.noRaces}"
-									sortMode="multiple"
-									selectionMode="multiple"
-									selection="#{registrationBean.selectedRaces}"
-									filterEvent="enter"
-									rows="10"
-									paginator="true" paginatorPosition="top"
-									scrollable="false" scrollHeight="20%"
-									style="width: 100%">
+						<f:facet name="header">
+							<p:outputLabel value="#{bundle.format('racesCount', registrationBean.races.size())}"/>
+						</f:facet>
 
-								<f:facet name="header">
-									<p:outputLabel value="#{bundle.format('racesCount', registrationBean.races.size())}"/>
-								</f:facet>
+						<pe:javascript event="rowSelect" execute="PF('registrationTable').unselectAllRows(); registrationEdit.enableButtons()"/>
+						<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons()"/>
+						<p:ajax event="filter" oncomplete="PF('racesTable').unselectAllRows(); registrationEdit.enableButtons()"/>
 
-								<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons(); PF('registrationTable').unselectAllRows()"/>
-								<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons()"/>
-								<p:ajax event="filter" oncomplete="PF('racesTable').unselectAllRows();registrationEdit_enableButtons()"/>
+						<p:column headerText="#{bundle.number}" sortBy="#{race.number}" filterBy="#{race.number}" filterMatchMode="exact">
+							<h:outputText value="#{race.number}"/>
+						</p:column>
+						<p:column headerText="#{bundle.boatClass}" sortBy="#{race.boatClass.text}" filterBy="#{race.boatClass.text}" filterMatchMode="contains">
+							<h:outputText value="#{race.boatClass.text}"/>
+						</p:column>
+						<p:column id="ageType" headerText="#{bundle.ageType}" sortBy="#{race.ageType}" filterBy="#{race.ageType.text}" filterMatchMode="contains">
+							<h:outputText value="#{race.ageType.text}"/>
+						</p:column>
+						<p:column id="gender" headerText="#{bundle.gender}" sortBy="#{race.gender.text}" filterBy="#{race.gender.text}" filterMatchMode="contains">
+							<h:outputText value="#{race.gender.text}"/>
+						</p:column>
+						<p:column headerText="#{bundle.distance}" sortBy="#{race.distance}" filterBy="#{race.distance}" filterMatchMode="contains">
+							<h:outputText value="#{race.distance}"/>
+						</p:column>
+					</p:dataTable>
 
-								<p:column headerText="#{bundle.number}" sortBy="#{race.number}" filterBy="#{race.number}" filterMatchMode="exact">
-									<h:outputText value="#{race.number}"/>
-								</p:column>
-								<p:column headerText="#{bundle.boatClass}" sortBy="#{race.boatClass.text}" filterBy="#{race.boatClass.text}" filterMatchMode="contains">
-									<h:outputText value="#{race.boatClass.text}"/>
-								</p:column>
-								<p:column id="ageType" headerText="#{bundle.ageType}" sortBy="#{race.ageType}" filterBy="#{race.ageType.text}" filterMatchMode="contains">
-									<h:outputText value="#{race.ageType.text}"/>
-								</p:column>
-								<p:column id="gender" headerText="#{bundle.gender}" sortBy="#{race.gender.text}" filterBy="#{race.gender.text}" filterMatchMode="contains">
-									<h:outputText value="#{race.gender.text}"/>
-								</p:column>
-								<p:column headerText="#{bundle.distance}" sortBy="#{race.distance}" filterBy="#{race.distance}" filterMatchMode="contains">
-									<h:outputText value="#{race.distance}"/>
-								</p:column>
-							</p:dataTable>
-						</td>
-						<td style="vertical-align: middle;">
-							<p:button icon="ui-icon-circle-arrow-e" title="#{bundle.copyFilter}"
-								onclick="copyFilters(); return false;"
-								style="margin-bottom: 1em"/>
-							<p:commandButton icon="ui-icon-person" title="#{bundle.addRequest}"
-								widgetVar="btnAddRequest"
-								action="#{registrationBean.addRequest(bundle)}"
-								process="@form"
-								update="registrationTable"
-								style="margin-bottom: 1em"/>
-							<p:commandButton icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
-								widgetVar="btnAddAthlete"
-								action="#{registrationBean.addToRegistration()}"
-								process="@form"
-								update="registrationTable"/>
-							<p:commandButton id="btnCancel" icon="ui-icon-arrowthick-1-w" title="#{messages.backToOverview}"
-								action="#{startseiteBean.setMainContent('/announcement/registrations.xhtml')}"
-								process="@this"
-								update="mainContent"
-								partialSubmit="true"
-								style="margin-top: 10em"/>
-						</td>
-						<td style="width: 49%">
-							<h:inputHidden id="clubVisible" value="#{registrationBean.clubVisible}"/>
-							<p:dataTable id="athletesTable" widgetVar="athletesTable"
-									var="user" rowKey="#{user.id}"
-									value="#{registrationBean.athletes}"
-									emptyMessage="#{bundle.noAthletes}"
-									sortMode="multiple"
-									selectionMode="multiple"
-									selection="#{registrationBean.selectedAthletes}"
-									filterEvent="enter"
-									rows="10" lazy="true" rowIndexVar="rowIndex"
-									paginator="true" paginatorPosition="top"
-									scrollable="false" scrollHeight="20%">
+					<h:panelGroup>
+						<p:button icon="ui-icon-circle-arrow-e" title="#{bundle.copyFilter}"
+							onclick="registrationEdit.copyFilters(); return false;"
+							style="margin-bottom: 1em"/>
+						<p:commandButton icon="ui-icon-person" title="#{bundle.addRequest}"
+							widgetVar="btnAddRequest"
+							action="#{registrationBean.addRequest(bundle)}"
+							process="@form"
+							update="registrationTable"
+							style="margin-bottom: 1em"/>
+						<p:commandButton icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
+							widgetVar="btnAddAthlete"
+							action="#{registrationBean.addToRegistration()}"
+							process="@form"
+							update="registrationTable"/>
+						<p:commandButton id="btnCancel" icon="ui-icon-arrowthick-1-w" title="#{messages.backToOverview}"
+							action="#{startseiteBean.setMainContent('/announcement/registrations.xhtml')}"
+							process="@this"
+							update="mainContent"
+							partialSubmit="true"
+							style="margin-top: 10em"/>
+					</h:panelGroup>
 
-								<f:facet name="header">
-									<h:panelGroup id="resultCount">
-										<h:outputLabel id="resultCountLabel"/>
-									</h:panelGroup>
-									<h:panelGroup id="resultSelected">
-										<h:outputText value=" - "/>
-										<h:outputLabel id="resultSelectedLabel"
-											value="#{bundle.format('selected', registrationBean.selectedAthletes != null ? registrationBean.selectedAthletes.size() : 0)}"/>
-									</h:panelGroup>
-									<p:commandButton id="toggler" type="button"
-										style="float:right; margin: -5px -10px 0 0;"
-										icon="ui-icon-calculator" title="#{bundle.chooseClub}"
-										onclick="toggleColumn(PF('athletesTable'), 1); $('[id$=clubVisible]').val($('[id$=clubVisible]').val() == 'false' ? 'true' : 'false')"/>
-								</f:facet>
+					<h:panelGroup>
+						<h:inputHidden id="clubVisible" value="#{registrationBean.clubVisible}"/>
+						<p:dataTable id="athletesTable" widgetVar="athletesTable"
+								var="user" rowKey="#{user.id}"
+								value="#{registrationBean.athletes}"
+								emptyMessage="#{bundle.noAthletes}"
+								sortMode="multiple"
+								selectionMode="multiple"
+								selection="#{registrationBean.selectedAthletes}"
+								filterEvent="enter"
+								rows="10" lazy="true" rowIndexVar="rowIndex"
+								paginator="true" paginatorPosition="top"
+								scrollable="false" scrollHeight="20%">
 
-								<p:ajax event="page" process="@form:clubVisible" update="@form:clubVisible"/>
-								<p:ajax event="sort" process="@form:clubVisible" update="@form:clubVisible"/>
-								<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons(); updateResultSelected()"/>
-								<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons(); updateResultSelected()"/>
-								<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible"
-									oncomplete="PF('athletesTable').unselectAllRows();registrationEdit_enableButtons();checkEmpty(); updateResultSelected()"/>
-								<p:ajax event="rowDblselect" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
+							<f:facet name="header">
+								<h:panelGroup id="resultCount">
+									<h:outputLabel id="resultCountLabel"/>
+								</h:panelGroup>
+								<h:panelGroup id="resultSelected">
+									<h:outputText value=" - "/>
+									<h:outputLabel id="resultSelectedLabel"
+										value="#{bundle.format('selected', registrationBean.selectedAthletes != null ? registrationBean.selectedAthletes.size() : 0)}"/>
+								</h:panelGroup>
+								<p:commandButton id="toggler" type="button"
+									style="float:right; margin: -5px -10px 0 0;"
+									icon="ui-icon-calculator" title="#{bundle.chooseClub}"
+									onclick="registrationEdit.toggleColumn(PF('athletesTable'), 1); $('[id$=clubVisible]').val($('[id$=clubVisible]').val() == 'false' ? 'true' : 'false')"/>
+							</f:facet>
 
-								<p:column headerText="#{bundle.club}" sortBy="#{user.club.name}" filterBy="#{user.club.name}" filterMatchMode="contains"
-										visible="#{registrationBean.clubVisible}" filterValue="#{authBean.loggedInUser.club.name}">
-									<h:outputText value="#{registrationBean.renderClubName(user)}"/>
-								</p:column>
-								<p:column headerText="#{bundle.firstName}" sortBy="#{user.firstName}" filterBy="#{user.firstName}" filterMatchMode="contains">
-									<h:outputText value="#{user.firstName}"/>
-								</p:column>
-								<p:column headerText="#{bundle.lastName}" sortBy="#{user.lastName}" filterBy="#{user.lastName}" filterMatchMode="contains">
-									<h:outputText value="#{user.lastName}"/>
-								</p:column>
-								<p:column id="ageType" headerText="#{bundle.ageType}" sortBy="#{user.birthDate}" filterBy="#{user.ageType}" filterMatchMode="contains">
-									<h:outputText value="#{registrationBean.renderAgeType(user)}"/>
-								</p:column>
-								<p:column id="gender" headerText="#{bundle.gender}" sortBy="#{user.gender}" filterBy="#{user.gender}" filterMatchMode="contains">
-									<h:outputText value="#{user.gender.text}"/>
-								<h:outputScript rendered="#{rowIndex == 0}">
-									updateResultCount(#{registrationBean.athletes.rowCount});
-								</h:outputScript>
-								</p:column>
-							</p:dataTable>
-						</td>
-					</tr>
-				</table>
+							<p:ajax event="page" process="@form:clubVisible" update="@form:clubVisible"/>
+							<p:ajax event="sort" process="@form:clubVisible" update="@form:clubVisible"/>
+							<pe:javascript event="rowSelect" execute="registrationEdit.enableButtons().updateResultSelected()"/>
+							<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons().updateResultSelected()"/>
+							<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible"
+								oncomplete="PF('athletesTable').unselectAllRows(); registrationEdit.enableButtons().checkEmpty().updateResultSelected()"/>
+							<p:ajax event="rowDblselect" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
+
+							<p:column headerText="#{bundle.club}" sortBy="#{user.club.name}" filterBy="#{user.club.name}" filterMatchMode="contains"
+									visible="#{registrationBean.clubVisible}" filterValue="#{authBean.loggedInUser.club.getName()}">
+								<h:outputText value="#{registrationBean.renderClubName(user)}"/>
+							</p:column>
+							<p:column headerText="#{bundle.firstName}" sortBy="#{user.firstName}" filterBy="#{user.firstName}" filterMatchMode="contains">
+								<h:outputText value="#{user.firstName}"/>
+							</p:column>
+							<p:column headerText="#{bundle.lastName}" sortBy="#{user.lastName}" filterBy="#{user.lastName}" filterMatchMode="contains">
+								<h:outputText value="#{user.lastName}"/>
+							</p:column>
+							<p:column id="ageType" headerText="#{bundle.ageType}" sortBy="#{user.birthDate}" filterBy="#{user.ageType}" filterMatchMode="contains">
+								<h:outputText value="#{registrationBean.renderAgeType(user)}"/>
+							</p:column>
+							<p:column id="gender" headerText="#{bundle.gender}" sortBy="#{user.gender}" filterBy="#{user.gender}" filterMatchMode="contains">
+								<h:outputText value="#{user.gender.text}"/>
+							<h:outputScript rendered="#{rowIndex == 0}">registrationEdit.updateResultCount(#{registrationBean.athletes.rowCount});</h:outputScript>
+							</p:column>
+						</p:dataTable>
+					</h:panelGroup>
+
+				</h:panelGrid>
 
 				<p:dataTable id="registrationTable" widgetVar="registrationTable"
 						var="entry" rowKey="#{entry.id}"
@@ -187,9 +158,9 @@
 						</h:panelGroup>
 					</f:facet>
 
-					<pe:javascript event="rowSelect" execute="registrationEdit_enableButtons()"/>
-					<pe:javascript event="rowUnselect" execute="registrationEdit_enableButtons()"/>
-					<p:ajax event="filter" oncomplete="PF('registrationTable').unselectAllRows()"/>
+					<pe:javascript event="rowSelect" execute="registrationEdit.enableButtons()"/>
+					<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons()"/>
+					<p:ajax event="filter" oncomplete="PF('registrationTable').unselectAllRows(); registrationEdit.enableButtons()"/>
 
 					<p:column headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry, bundle)}" filterMatchMode="contains" filterStyle="width: 80%">
 						<h:outputText value="#{registrationBean.getRaceString(entry, bundle)}"/>
@@ -212,9 +183,7 @@
 
 			</h:form>
 
-			<h:outputScript>
-				registrationEdit_enableButtons();
-			</h:outputScript>
+			<h:outputScript>registrationEdit.enableButtons();</h:outputScript>
 
 		</ui:define>
 	</ui:composition>

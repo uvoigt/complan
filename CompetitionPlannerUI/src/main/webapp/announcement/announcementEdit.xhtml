@@ -76,9 +76,9 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<div class="ui-g">
 						<p:commandButton value="#{bundle.setStatus}" action="#{announcementBean.setStatus('announced')}"
-							process="announcementId @this" widgetVar="btnAnnounce" onsuccess="announcementEdit_enableStatusButtons(1)"/>
+							process="announcementId @this" widgetVar="btnAnnounce" onsuccess="announcementEdit._enableButtons(1)"/>
 						<p:commandButton value="#{bundle.revokeStatus}" action="#{announcementBean.setStatus('created')}"
-							process="announcementId @this" widgetVar="btnRevoke" onsuccess="announcementEdit_enableStatusButtons(0)"
+							process="announcementId @this" widgetVar="btnRevoke" onsuccess="announcementEdit.enableButtons(0)"
 							style="margin-left: 10px" rendered="#{authBean.inRole('Tester')}"/>
 						<p:commandButton value="#{bundle.testPdf}" action="#{announcementBean.uploadBean.create(null, announcement)}"
 							process="@form" style="margin-left: 10px"
@@ -89,14 +89,7 @@
 					</div>
 				</div>
 			</div>
-			<h:outputScript>
-				announcementEdit_enableStatusButtons(#{announcement.id == null ? -1 : announcement.status == "created" ? 0 : 1});
-				$(editForm).submit(function(e) {
-					setTimeout(function() {
-						$(editForm).find(".ui-submit-param").remove();
-					}, 10);
-				});
-			</h:outputScript>
+			<h:outputScript>announcementEdit.init().enableButtons(#{announcement.id == null ? -1 : announcement.status == "created" ? 0 : 1});</h:outputScript>
 
 			<pe:ckEditor value="#{announcement.text}" widgetVar="annEditor"
 				customConfig="javax.faces.resource/editorConfig.js.xhtml?ln=js"

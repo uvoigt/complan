@@ -20,7 +20,7 @@
 				<p:remoteCommand global="false" name="checkExpr" action="#{programOptionsBean.checkExpr()}"
 					process="@this expr" update="exprStatus" partialSubmit="true"/>
 				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0" legend="#{bundle.options}" widgetVar="optionsSet">
-					<pe:javascript event="toggle" execute="programEdit_initExpr()"/>
+					<pe:javascript event="toggle" execute="programEdit.initExpr()"/>
 					<h:panelGroup styleClass="ui-g" layout="block">
 						<h:panelGroup layout="block" style="width: 100%">
 							<p:inputTextarea id="expr" value="#{programOptionsBean.program.options.expr}" style="width: 100%" rows="10" widgetVar="expr"
@@ -109,9 +109,7 @@
 
 			</h:form>
 
-			<h:outputScript>
-				PF("swapRaces").disable();
-			</h:outputScript>
+			<h:outputScript>PF("swapRaces").disable();</h:outputScript>
 
 		</ui:define>
 	</ui:composition>

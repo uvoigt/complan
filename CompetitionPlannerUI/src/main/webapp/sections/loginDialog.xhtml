@@ -7,9 +7,7 @@
 <head />
 <body>
 	<ui:composition>
-		<h:outputScript>
-			setupAjax();
-		</h:outputScript>
+		<h:outputScript>setupAjax();</h:outputScript>
 		<p:dialog widgetVar="loginDlg" id="loginDialog" header="#{messages.loginTitle}" showEffect="clip" hideEffect="clip"
 				responsive="true" draggable="false" modal="true" closable="false" resizable="false" appendTo="body"
 				onShow="PF('loginDlg').initPosition(); message()">
@@ -21,22 +19,17 @@
 						<p:column>
 							<h:outputText value="#{messages.loginName}"/>
 						</p:column>
-						<p:column>
-							<input type="text" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" autocomplete="off" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/>
-						</p:column>
+						<p:column><input type="text" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" autocomplete="off" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
 					</p:row>
 					<p:row>
 						<p:column>
 							<h:outputText value="#{messages.loginPass}"/>
 						</p:column>
-						<p:column>
-							<input type="password" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/>
-						</p:column>
+						<p:column><input type="password" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
 					</p:row>
 					<p:row>
-						<p:column colspan="2" style="text-align: right">
-							<a href="passwordreset" class="passwordRecovery" onclick="sendRecovery('#{messages.loginUserMsg}', '#{messages.loginUserError}'); return false;"><h:outputText value="#{messages.loginRecovery}"/></a>
-						</p:column>
+						<p:column colspan="2"
+							style="text-align: right"><a href="passwordreset" class="passwordRecovery" onclick="sendRecovery('#{messages.loginUserMsg}', '#{messages.loginUserError}'); return false;"><h:outputText value="#{messages.loginRecovery}"/></a></p:column>
 					</p:row>
 				</p:panelGrid>
 				<h:panelGroup layout="block" style="width: 100%; text-align: center;">

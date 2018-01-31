@@ -13,7 +13,6 @@
 
 			<h:form id="editForm">
 
-				<p:hotkey bind="esc" action="#{startseiteBean.setMainContent(searchLink)}" process="@this" update=":mainContent"/>
 				<ui:insert name="editArea"/>
 
 				<h:panelGroup layout="block" style="padding-top: 1em;">
@@ -31,11 +30,7 @@
 					<p:defaultCommand target="btnSave" />
 				</h:panelGroup>
 
-				<h:outputScript rendered="#{not empty facesContext.messageList}">
-					setTimeout(function() {
-						$(".ui-layout-unit-content").eq(1).scrollTop(0);
-					}, 100);
-				</h:outputScript>
+				<h:outputScript rendered="#{not empty facesContext.messageList}">setTimeout(function() { $(".ui-layout-unit-content").eq(1).scrollTop(0); }, 100);</h:outputScript>
 
 			</h:form>
 		</ui:define>

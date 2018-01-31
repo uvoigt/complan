@@ -31,15 +31,15 @@
 #heading #logout {
 	position: fixed;
 	right: 0;
-	top: 0;
+	top: 1px;
 }
 
 #heading #logout > * {
 	float: left;
 }
 
-#logout #theme {
-	margin-top: 3px;
+.theme {
+	padding: 0 !important;
 }
 
 #logout #userimg {
@@ -84,12 +84,18 @@
 	color: red;
 	border: 1px solid;
 	border-radius: 5px;
-	margin-left: 37%;
-	width: 25%;
-	z-index: 2;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+	height: 3em;
+	width: 15em;
 	text-align: center;
 	font-family: Arial;
 	font-size: 20px;
+	visibility: visible;
 }
 
 .help {
@@ -248,6 +254,17 @@ input[readonly=readonly] {
 	background-image: none;
 }
 
+.regEditTable {
+	padding: 1px !important;
+	vertical-align: top;
+	width: 49%;
+}
+
+.regEditTableMid {
+	padding: 1px !important;
+	vertical-align: middle;
+}
+
 .ui-datalist-header {
 	text-align: left !important;	
 }
@@ -296,7 +313,6 @@ input[readonly=readonly] {
 }
 
 .teamTable tbody, .teamTable tr, .teamTable td {
-	background: none;
 	border: none !important;
 }
 

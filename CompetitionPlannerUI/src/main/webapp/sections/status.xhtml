@@ -9,20 +9,6 @@
 <body>
 	<ui:composition>
 		<p:ajaxStatus onstart="showStatusDialog()" onsuccess="hideStatusDialog()" onerror="hideStatusDialog(); PF('statusErrorDialog').show()"/>
-		<h:outputScript>
-		function showStatusDialog() {
-			statusTimeout = setTimeout(function() {
-				statusTimeout = null;
-				PF('statusDialog').show();
-			}, 500);
-		}
-		function hideStatusDialog() {
-			if (statusTimeout)
-				clearTimeout(statusTimeout);
-			else
-				PF('statusDialog').hide();
-		}
-		</h:outputScript>
 		<p:dialog id="status" widgetVar="statusDialog" modal="true" draggable="false" closable="false"
 				resizable="false" showHeader="false" style="border-radius: 15px" appendTo="body"
 				onShow="PF('statusDialog').initPosition()">
