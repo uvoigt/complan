@@ -18,6 +18,11 @@
 <body onload="document.passform.p1.focus();">
 	<div class="vertical">
 		<div class="horizontal main">
+			<noscript>
+				<div class="modal"></div>
+				<div class="noscript"><f:message key="noscript"/></div>
+			</noscript>
+
 			<form method="post" action="passwordchange?${pageContext.request.queryString}" name="passform">
 				<table>
 					<tbody>
