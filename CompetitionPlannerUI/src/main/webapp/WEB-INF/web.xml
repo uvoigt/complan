@@ -98,7 +98,7 @@
   </servlet-mapping>
   <servlet>
     <servlet-name>PasswordReset</servlet-name>
-    <servlet-class>org.planner.ui.util.RegistryServlet</servlet-class>
+    <servlet-class>org.planner.ui.servlet.RegistryServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>PasswordReset</servlet-name>

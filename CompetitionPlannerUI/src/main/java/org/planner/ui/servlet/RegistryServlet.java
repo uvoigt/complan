@@ -1,4 +1,4 @@
-package org.planner.ui.util;
+package org.planner.ui.servlet;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -19,6 +19,8 @@ import org.apache.commons.lang.mutable.MutableInt;
 import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.RegistryBean;
+import org.planner.ui.util.ImageCreator;
+import org.planner.ui.util.KeepLoggedInAuthenticationMechanism;
 import org.planner.util.CommonMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

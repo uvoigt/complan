@@ -1,4 +1,4 @@
-package org.planner.ui.util;
+package org.planner.ui.servlet;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -110,7 +110,7 @@ public class SubstituteFilter implements Filter {
 			if (pattern.length > 1) {
 				Object[] arguments = new Object[pattern.length - 1];
 				for (int i = 0; i < arguments.length; i++) {
-					arguments[i] = "+" + pattern[i + 1] + "+";
+					arguments[i] = pattern[i + 1];
 				}
 				substitue = MessageFormat.format(substitue, arguments);
 			}

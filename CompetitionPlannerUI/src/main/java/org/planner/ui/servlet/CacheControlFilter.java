@@ -1,4 +1,4 @@
-package org.planner.ui.util;
+package org.planner.ui.servlet;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
