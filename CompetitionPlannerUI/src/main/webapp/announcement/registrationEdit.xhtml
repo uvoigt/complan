@@ -96,7 +96,7 @@
 
 							<f:facet name="header">
 								<h:panelGroup id="resultCount">
-									<h:outputLabel id="resultCountLabel"/>
+									<h:outputLabel id="athletesCountLabel"/>
 								</h:panelGroup>
 								<h:panelGroup id="resultSelected">
 									<h:outputText value=" - "/>
@@ -115,10 +115,10 @@
 							<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons().updateResultSelected()"/>
 							<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible"
 								oncomplete="PF('athletesTable').unselectAllRows(); registrationEdit.enableButtons().checkEmpty().updateResultSelected()"/>
-							<p:ajax event="rowDblselect" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
+							<p:ajax event="rowDblselect" onstart="return !PF('btnAddAthlete').jq.attr('disabled')" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
 
 							<p:column headerText="#{bundle.club}" sortBy="#{user.club.name}" filterBy="#{user.club.name}" filterMatchMode="contains"
-									visible="#{registrationBean.clubVisible}" filterValue="#{authBean.loggedInUser.club.getName()}">
+									visible="#{registrationBean.clubVisible}">
 								<h:outputText value="#{registrationBean.renderClubName(user)}"/>
 							</p:column>
 							<p:column headerText="#{bundle.firstName}" sortBy="#{user.firstName}" filterBy="#{user.firstName}" filterMatchMode="contains">
@@ -132,7 +132,7 @@
 							</p:column>
 							<p:column id="gender" headerText="#{bundle.gender}" sortBy="#{user.gender}" filterBy="#{user.gender}" filterMatchMode="contains">
 								<h:outputText value="#{user.gender.text}"/>
-							<h:outputScript rendered="#{rowIndex == 0}">registrationEdit.updateResultCount(#{registrationBean.athletes.rowCount});</h:outputScript>
+								<h:outputScript rendered="#{rowIndex == 0}">registrationEdit.updateAthletesCount(#{registrationBean.athletes.rowCount});</h:outputScript>
 							</p:column>
 						</p:dataTable>
 					</h:panelGroup>
@@ -147,7 +147,7 @@
 						sortMode="single"
 						selectionMode="single"
 						selection="#{registrationBean.selectedEntry}"
-						rows="1000"
+						rows="1000" rowIndexVar="rowIndex"
 						filterEvent="enter"
 						rowStyleClass="#{entry.race.boatClass.minimalTeamSize gt entry.participants.size() ? 'registrationIncomplete' : ''}">
 
@@ -178,6 +178,7 @@
 								action="#{registrationBean.deleteFromRegistration(entry)}"
 								process="registrationTable"
 								update="registrationTable"/>
+						<h:outputScript rendered="#{rowIndex == 0}">registrationEdit.updateRegistrationsCount(#{registrationBean.registration.entries.size()});</h:outputScript>
 					</p:column>
 				</p:dataTable>
 
