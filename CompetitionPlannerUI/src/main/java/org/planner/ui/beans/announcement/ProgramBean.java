@@ -18,7 +18,6 @@ import org.planner.eo.Program;
 import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
-import org.planner.eo.User;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.UploadBean;
 import org.planner.ui.beans.UploadBean.DownloadHandler;
@@ -30,9 +29,6 @@ import org.planner.ui.util.JsfUtil;
 public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	private static final long serialVersionUID = 1L;
-
-	@Inject
-	private RenderBean renderer;
 
 	@Inject
 	private ProgramOptionsBean options;
@@ -147,6 +143,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	}
 
 	public void generateProgram() {
+		program.getOptions().setExpr(options.getProgram().getOptions().getExpr());
 		service.generateProgram(program);
 		loadProgram(program.getId());
 	}
@@ -154,14 +151,6 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	public void checkProgram() {
 		service.checkProgram(program);
 		loadProgram(program.getId());
-	}
-
-	public String renderAgeGroup(User user) {
-		return renderer.renderAgeGroup(user);
-	}
-
-	public String renderRaceMode(ProgramRace race) {
-		return renderer.renderRaceMode(race);
 	}
 
 	public void swapRaces() {
@@ -172,10 +161,6 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 			loadProgram(program.getId());
 			selectedRaces.clear();
 		}
-	}
-
-	public String renderStartTime(Date date) {
-		return renderer.renderStartTime(date);
 	}
 
 	public List<ProgramRace> getSelectedRaces() {

@@ -55,6 +55,7 @@ import org.planner.util.ExpressionParser.ExpressionException;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
+import org.planner.util.ParserMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,8 +148,9 @@ public class ProgramServiceImpl {
 		private int numRaces;
 		private int remainder;
 		private int numLanesPerRace;
-		private int intoFinal; // 0 keiner, ansonsten die Platzierungen
+		private int directlyIntoFinal; // 0 keiner, ansonsten die Platzierungen
 		private int intoSemiFinal; // 0 keiner, ansonsten die Platzierungen
+		private int fromSemiIntoFinal; // 0 keiner, ansonsten die Platzierungen
 
 		private HeatCalculator(int numLanes, int numTeams, ProgramOptions options) {
 			this.numLanes = numLanes;
@@ -165,18 +167,15 @@ public class ProgramServiceImpl {
 			if (numTeams <= numLanes)
 				return;
 
-			ExpressionParser parser = new ExpressionParser();
+			ExpressionParser parser = new ExpressionParser(ParserMessages.INSTANCE);
 			try {
 				parser.evaluateExpression(options.getExpr(), numTeams, numLanes);
 			} catch (ExpressionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				// throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.error", token,
-				// parser.getIPrsStream().getLine(pos), parser.getIPrsStream().getColumn(pos), expected);
-
+				throw new FachlicheException(messages.getResourceBundle(), "program.parseError", e.getMessage());
 			}
+			directlyIntoFinal = parser.getDirectlyIntoFinal();
 			intoSemiFinal = parser.getIntoSemiFinal();
-			intoFinal = parser.getIntoFinal();
+			fromSemiIntoFinal = parser.getIntoFinal();
 
 			// if (numTeams <= 2 * numLanes) {
 			// // 2 Vorläufe, 1-4 in Endlauf
@@ -199,6 +198,12 @@ public class ProgramServiceImpl {
 			// übrig bleibender Rest
 			remainder = numTeams - numLanesPerRace * numRaces;
 		}
+	}
+
+	private class FollowUpRaces {
+		private final List<ProgramRace> heats = new ArrayList<>();
+		private final List<ProgramRace> semiFinals = new ArrayList<>();
+		private final List<ProgramRace> finals = new ArrayList<>();
 	}
 
 	private static final Logger LOG = LoggerFactory.getLogger(ProgramServiceImpl.class);
@@ -311,7 +316,7 @@ public class ProgramServiceImpl {
 			if (teams == null)
 				continue;
 
-			calculateHeats(numberOfLanes, race, teams, context, heats, instantFinals);
+			int fromSemiIntoFinal = calculateHeats(numberOfLanes, race, teams, context, heats, instantFinals);
 
 			// füge Semifinale hinzu und Finale hinzu
 			int teamsInSemiFinals = 0;
@@ -328,8 +333,7 @@ public class ProgramServiceImpl {
 				semiFinal.setRace(race);
 				semiFinal.setRaceType(RaceType.semiFinal);
 				semiFinal.setNumber(i + 1); // TODO die Nummer muss irgendwie anders sein
-				semiFinal.setIntoFinal(1); // TODO
-				semiFinal.setIntoSemiFinal(0);
+				semiFinal.setIntoFinal(fromSemiIntoFinal);
 
 				semiFinals.add(semiFinal);
 			}
@@ -338,8 +342,6 @@ public class ProgramServiceImpl {
 				ProgramRace theFinal = new ProgramRace();
 				theFinal.setRace(race);
 				theFinal.setRaceType(RaceType.finalA);
-				theFinal.setIntoFinal(1); // TODO
-				theFinal.setIntoSemiFinal(0);
 
 				finals.add(theFinal);
 			}
@@ -374,7 +376,7 @@ public class ProgramServiceImpl {
 		common.save(program);
 	}
 
-	private void calculateHeats(int numberOfLanes, Race race, List<Team> teams, EvalContext context,
+	private int calculateHeats(int numberOfLanes, Race race, List<Team> teams, EvalContext context,
 			List<ProgramRace> heats, List<ProgramRace> instantFinals) {
 
 		if (LOG.isDebugEnabled())
@@ -393,25 +395,27 @@ public class ProgramServiceImpl {
 			if (LOG.isDebugEnabled())
 				LOG.debug("Rennen " + race.getNumber() + " hat einen Endlauf");
 
-			ProgramRace final_ = new ProgramRace();
-			final_.setRace(race);
-			final_.setRaceType(RaceType.finalA);
+			ProgramRace instantFinal = new ProgramRace();
+			instantFinal.setRace(race);
+			instantFinal.setRaceType(RaceType.finalA);
 			// die Zeit wird erst nach den Endläufen eingetragen
 			List<Team> participants = new ArrayList<>(teams);
 			int lane = 1;
 			for (Team team : participants) {
 				team.setLane(lane++);
 			}
-			final_.setParticipants(participants);
-			instantFinals.add(final_);
+			instantFinal.setParticipants(participants);
+			instantFinals.add(instantFinal);
+
+			return 0;
 		} else {
 
 			if (LOG.isDebugEnabled())
 				LOG.debug("Rennen " + race.getNumber() + " hat " + calc.numRaces + " Vorlaeufe, Modus ist "
-						+ (calc.intoFinal > 0
-								? (calc.intoFinal > 1 ? "1 bis " : "") + calc.intoFinal + " in den Endlauf " : " ")
-						+ (calc.intoSemiFinal > 0 ? (calc.intoFinal > 0 ? (calc.intoFinal + 1) : "1") + " bis "
-								+ calc.intoSemiFinal + " in den Zwischenlauf" : ""));
+						+ (calc.directlyIntoFinal > 0 ? (calc.directlyIntoFinal > 1 ? "1 bis " : "")
+								+ calc.directlyIntoFinal + " in den Endlauf " : " ")
+						+ (calc.intoSemiFinal > 0 ? (calc.directlyIntoFinal > 0 ? (calc.directlyIntoFinal + 1) : "1")
+								+ " bis " + calc.intoSemiFinal + " in den Zwischenlauf" : ""));
 
 			int addToSingleRace = 0;
 			if (calc.remainder > 0) {
@@ -427,7 +431,7 @@ public class ProgramServiceImpl {
 				heat.setRaceType(RaceType.heat);
 				heat.setNumber(i + 1);
 				heat.setStartTime(context.nextTime());
-				heat.setIntoFinal(calc.intoFinal);
+				heat.setIntoFinal(calc.directlyIntoFinal);
 				heat.setIntoSemiFinal(calc.intoSemiFinal);
 				int numLanesPerRace = calc.numLanesPerRace;
 				if (addToSingleRace > 0) {
@@ -444,6 +448,8 @@ public class ProgramServiceImpl {
 				heats.add(heat);
 				teamOffset = endOffset;
 			}
+
+			return calc.fromSemiIntoFinal;
 
 			// int raceIntoFinal = 0;
 			// int raceIntoSemiFinal = 0;
@@ -518,6 +524,7 @@ public class ProgramServiceImpl {
 		if (result.isEmpty())
 			return null;
 		Map<BigInteger, ProgramRace> races = new HashMap<>();
+		Map<Integer, FollowUpRaces> racesByNumber = new HashMap<>();
 		Map<BigInteger, Team> teams = new HashMap<>();
 		Map<BigInteger, Club> clubs = new HashMap<>();
 		// so werden die Options mitgeladen
@@ -546,6 +553,20 @@ public class ProgramServiceImpl {
 				race.setRace(r);
 
 				program.getRaces().add(race);
+
+				FollowUpRaces followUpRaces = racesByNumber.get(r.getNumber());
+				if (followUpRaces == null && !race.getRaceType().isFinal()) {
+					followUpRaces = new FollowUpRaces();
+					racesByNumber.put(r.getNumber(), followUpRaces);
+				}
+				if (followUpRaces != null) {
+					if (race.getRaceType() == RaceType.heat)
+						followUpRaces.heats.add(race);
+					else if (race.getRaceType() == RaceType.semiFinal)
+						followUpRaces.semiFinals.add(race);
+					else
+						followUpRaces.finals.add(race);
+				}
 			}
 			BigInteger teamId = (BigInteger) row[10];
 			if (teamId != null) {
@@ -570,6 +591,27 @@ public class ProgramServiceImpl {
 					member.setUser(user);
 				}
 				team.getMembers().add(member);
+			}
+		}
+
+		for (FollowUpRaces followUpRaces : racesByNumber.values()) {
+			if (followUpRaces.semiFinals.size() > 0) {
+				ProgramRace firstSemiFinal = followUpRaces.semiFinals.get(0);
+				for (ProgramRace heat : followUpRaces.heats) {
+					heat.setFollowUpRace(firstSemiFinal);
+				}
+			}
+			if (followUpRaces.finals.size() > 0) {
+				ProgramRace firstFinal = followUpRaces.finals.get(0);
+				if (followUpRaces.semiFinals.size() > 0) {
+					for (ProgramRace semiFinal : followUpRaces.semiFinals) {
+						semiFinal.setFollowUpRace(firstFinal);
+					}
+				} else if (followUpRaces.heats.size() > 0) {
+					for (ProgramRace heat : followUpRaces.heats) {
+						heat.setFollowUpRace(firstFinal);
+					}
+				}
 			}
 		}
 		return program;

@@ -42,23 +42,23 @@ public class RenderBean {
 	}
 
 	public String renderRaceMode(ProgramRace race) {
-		String s = "";
-		if (race.getRaceType() == RaceType.heat) {
+		StringBuilder sb = new StringBuilder();
+		if (race.getRaceType() == RaceType.heat || race.getRaceType() == RaceType.semiFinal) {
 			int intoFinal = race.getIntoFinal();
 			int intoSemiFinal = race.getIntoSemiFinal();
 			if (intoFinal > 0)
-				s = (intoFinal > 1 ? "1. - " : "") + intoFinal + ". in den Endlauf"; // TODO
+				sb.append(intoFinal > 1 ? "1. - " : "").append(intoFinal).append(". in den Endlauf"); // TODO bundle
 			if (intoSemiFinal > 0) {
-				if (s.length() > 0)
-					s += " ";
+				if (sb.length() > 0)
+					sb.append(" ");
 				if (intoFinal == 0)
-					s += "1. - ";
+					sb.append("1. - ");
 				else if (intoSemiFinal > intoFinal + 1)
-					s += (intoFinal + 1) + ". - ";
-				s += intoSemiFinal + ". in den Zwischenlauf"; // TODO
+					sb.append(intoFinal + 1).append(". - ");
+				sb.append(intoSemiFinal).append(". in den Zwischenlauf"); // TODO
 			}
 		}
-		return s;
+		return sb.toString();
 	}
 
 	public String renderAgeGroup(User user) {
@@ -68,7 +68,18 @@ public class RenderBean {
 	}
 
 	public String renderStartTime(Date date) {
-		return new SimpleDateFormat("EEEE").format(date) + " " + DateFormat.getTimeInstance().format(date);
+		return new SimpleDateFormat("EEEE").format(date) + " "
+				+ DateFormat.getTimeInstance(DateFormat.SHORT).format(date);
 	}
 
+	public String renderFollowUpHint(ProgramRace race) {
+		switch (race.getRaceType()) {
+		default:
+			return "";
+		case heat:
+			return messages.format("programs.semiFinalHint", renderStartTime(race.getFollowUpRace().getStartTime()));
+		case semiFinal:
+			return messages.format("programs.finalHint", renderStartTime(race.getFollowUpRace().getStartTime()));
+		}
+	}
 }

@@ -14,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 import org.planner.model.LocalizedEnum;
 import org.planner.util.CommonMessages;
@@ -58,6 +59,9 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 
 	@Column(name = "program_id", insertable = false, updatable = false)
 	private Long programId;
+
+	@Transient
+	private ProgramRace followUpRace;
 
 	public Long getId() {
 		return id;
@@ -109,5 +113,13 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 
 	public Long getProgramId() {
 		return programId;
+	}
+
+	public ProgramRace getFollowUpRace() {
+		return followUpRace;
+	}
+
+	public void setFollowUpRace(ProgramRace followUpRace) {
+		this.followUpRace = followUpRace;
 	}
 }

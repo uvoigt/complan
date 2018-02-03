@@ -30,9 +30,9 @@
 						</h:panelGroup>
 						<h:panelGroup layout="block" styleClass="raceInfo">
 							<h:outputText value="#{race.number}#{not empty race.number ? '. ' : ''}#{race.raceType.text}"/><br /><h:outputText
-									value="#{programBean.renderRaceMode(race)}"/>
+									value="#{renderBean.renderRaceMode(race)}"/>
 						</h:panelGroup>
-						<h:panelGroup layout="block" style="text-align: right">#{programBean.renderStartTime(race.startTime)}</h:panelGroup>
+						<h:panelGroup layout="block" style="text-align: right">#{renderBean.renderStartTime(race.startTime)}</h:panelGroup>
 					</h:panelGroup>
 				</f:facet>
 				<p:column styleClass="numberCol" rendered="#{programBean.showTeams}">
@@ -44,7 +44,7 @@
 						<h:panelGroup style="text-align: left">
 							<h:outputText value="#{member.remark != null ? member.remark : member.user.firstName} "/>
 							<h:outputText value="#{member.user.lastName} "/>
-							<h:outputText value="#{programBean.renderAgeGroup(member.user)}"/>
+							<h:outputText value="#{renderBean.renderAgeGroup(member.user)}"/>
 							<h:outputText value="(#{member.user.club.shortNameOrName})" rendered="#{member.user.club.id != team.club.id and member.remark == null}"/>
 						</h:panelGroup>
 					</p:dataGrid>
@@ -54,6 +54,9 @@
 				</p:column>
 		
 			</p:dataTable>
+
+			<h:outputLabel value="#{renderBean.renderFollowUpHint(race)}"
+				style="font-style: italic" rendered="#{race.raceType == 'heat' or race.raceType == 'semiFinal'}"/>
 
 			<h:outputScript rendered="#{rowIndex == 0}">PF("swapRaces").disable();</h:outputScript>
 
