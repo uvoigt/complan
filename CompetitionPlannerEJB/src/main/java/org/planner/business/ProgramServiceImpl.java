@@ -334,6 +334,7 @@ public class ProgramServiceImpl {
 				semiFinal.setRaceType(RaceType.semiFinal);
 				semiFinal.setNumber(i + 1); // TODO die Nummer muss irgendwie anders sein
 				semiFinal.setIntoFinal(fromSemiIntoFinal);
+				semiFinal.setIntoSemiFinal(0);
 
 				semiFinals.add(semiFinal);
 			}
