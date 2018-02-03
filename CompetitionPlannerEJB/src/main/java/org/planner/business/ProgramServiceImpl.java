@@ -487,18 +487,18 @@ public class ProgramServiceImpl {
 		});
 	}
 
-	public Program getProgram(final Long id, final boolean loadTeams) {
+	public Program getProgram(final Long id) {
 		return dao.executeOperation(new IOperation<Program>() {
 			@Override
 			public Program execute(EntityManager em) {
-				return doGetProgram(em, id, loadTeams);
+				return doGetProgram(em, id);
 			}
 		});
 	}
 
-	private Program doGetProgram(EntityManager em, Long id, boolean loadTeams) {
+	private Program doGetProgram(EntityManager em, Long id) {
 		// in JPQL gibt es eine MultipleBagException
-		StringBuilder sql = new StringBuilder("select " //
+		String sql = "select " //
 				+ "pr.id RaceId, pr.number, pr.startTime, pr.raceType, pr.heatMode, " //
 				+ "r.number RaceNumber, r.gender, r.distance, r.boatClass, r.ageType, " //
 				+ "t.id TeamId, t.lane, " //
@@ -507,22 +507,18 @@ public class ProgramServiceImpl {
 				+ "tu.firstName, tu.lastName, tu.birthDate, " //
 				+ "uc.id UserClubId, uc.shortName UCShort, uc.name UCName " //
 				+ "from Program p " //
-				+ "left outer join Announcement a on p.announcement_id=a.id "
-				+ "left outer join ProgramRace pr on pr.program_id=p.id "
-				+ "left outer join Race r on pr.race_id=r.id ");
-		if (loadTeams)
-			sql.append("left outer join Team t on t.programrace_id=pr.id " //
-					+ "left outer join Club tc on t.club_id=tc.id " //
-					+ "left outer join TeamMember tm on tm.team_id=t.id " //
-					+ "left outer join User tu on tm.user_id=tu.id " //
-					+ "left outer join Club uc on tu.club_id=uc.id ");
-		sql.append("where p.id = :id");
-		Query query = em.createNativeQuery(sql.toString());
+				+ "inner join Announcement a on p.announcement_id=a.id "
+				+ "inner join ProgramRace pr on pr.program_id=p.id " //
+				+ "left outer join Race r on pr.race_id=r.id " //
+				+ "left outer join Team t on t.programrace_id=pr.id " //
+				+ "left outer join Club tc on t.club_id=tc.id " //
+				+ "left outer join TeamMember tm on tm.team_id=t.id " //
+				+ "left outer join User tu on tm.user_id=tu.id " //
+				+ "left outer join Club uc on tu.club_id=uc.id " + "where p.id = :id";
+		Query query = em.createNativeQuery(sql);
 		query.setParameter("id", id);
 		@SuppressWarnings("unchecked")
 		List<Object[]> result = query.getResultList();
-		if (result.isEmpty())
-			return null;
 		Map<BigInteger, ProgramRace> races = new HashMap<>();
 		Map<Integer, FollowUpRaces> racesByNumber = new HashMap<>();
 		Map<BigInteger, Team> teams = new HashMap<>();

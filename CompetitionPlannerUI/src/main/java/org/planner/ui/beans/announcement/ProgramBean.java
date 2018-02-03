@@ -70,7 +70,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	}
 
 	private void loadProgram(Long id) {
-		program = service.getProgram(id, showTeams);
+		program = service.getProgram(id);
 		options.setProgram(program);
 	}
 

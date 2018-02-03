@@ -98,7 +98,7 @@ public interface ServiceFacade extends IResultProvider {
 
 	void generateProgram(Program program);
 
-	Program getProgram(Long id, boolean loadTeams);
+	Program getProgram(Long id);
 
 	// TODO temporär
 	void checkProgram(Program program);

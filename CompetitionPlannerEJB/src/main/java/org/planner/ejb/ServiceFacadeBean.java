@@ -251,8 +251,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public Program getProgram(Long id, boolean loadTeams) {
-		return program.getProgram(id, loadTeams);
+	public Program getProgram(Long id) {
+		return program.getProgram(id);
 	}
 
 	@Override
