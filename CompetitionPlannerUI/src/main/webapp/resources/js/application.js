@@ -119,11 +119,10 @@ var registrationEdit = {
 			updateResultCount(0);
 		return this;
 	},
-	updateResultCount: function(count) {
+	updateAthletesCount: function(count) {
 		if (count == undefined)
 			count = PF("athletesTable").tbody.children().length;
-		var l = $("[id$=resultCountLabel]");
-		l.text("{msg:registrations.athletesCount, xxx}".replace(/xxx/, count));
+		$("[id$=athletesCountLabel]").text("{msg:registrations.athletesCount, xxx}".replace(/xxx/, count));
 		return this;
 	},
 	updateResultSelected: function() {
@@ -144,6 +143,11 @@ var registrationEdit = {
 		var columnHeader = table.thead.children("tr").find("th:nth-child(" + index + ")");
 		columnHeader.toggleClass("ui-helper-hidden");
 		table.tbody.children("tr").find("td:nth-child(" + index + ")").toggleClass("ui-helper-hidden");
+	},
+	updateRegistrationsCount: function(count) {
+		if (count == undefined)
+			count = PF("registrationTable").tbody.children().length;
+		$("[id$=registrationsCountLabel]").text("{msg:registrations.athletesCount, xxx}".replace(/xxx/, count));
 	}
 };
 var programEdit = {
@@ -173,6 +177,12 @@ var programEdit = {
 			expr.search(text);
 			expr.query = "";
 		});
+	},
+	evalExpr: function() {
+		if (window.evaluateExpression) {
+			var result = evaluateExpression(PF("expr").jq.val());
+			PF("exprStatus").jq.val(result);
+		}
 	},
 	toggleRaceSelection: function(checkbox) {
 		var pt = PF("programTable");

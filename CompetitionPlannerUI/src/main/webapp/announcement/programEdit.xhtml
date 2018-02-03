@@ -17,15 +17,13 @@
 
 			<h:form>
 
-				<p:remoteCommand global="false" name="checkExpr" action="#{programOptionsBean.checkExpr()}"
-					process="@this expr" update="exprStatus" partialSubmit="true"/>
 				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0" legend="#{bundle.options}" widgetVar="optionsSet">
 					<pe:javascript event="toggle" execute="programEdit.initExpr()"/>
 					<h:panelGroup styleClass="ui-g" layout="block">
 						<h:panelGroup layout="block" style="width: 100%">
 							<p:inputTextarea id="expr" value="#{programOptionsBean.program.options.expr}" style="width: 100%" rows="10" widgetVar="expr"
-								completeMethod="#{programOptionsBean.suggestExpr}" minQueryLength="100" onkeyup="checkExpr()"/>
-							<p:inputText id="exprStatus" readonly="true" style="width: 100%; color: red" value="#{programOptionsBean.exprStatus}"/>
+								completeMethod="#{programOptionsBean.suggestExpr}" minQueryLength="100" onkeyup="programEdit.evalExpr()"/>
+							<p:inputText widgetVar="exprStatus" readonly="true" style="width: 100%; color: red"/>
 						</h:panelGroup>
 						<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.heatMode}"/></div>
 						<h:panelGroup styleClass="ui-g-12 ui-md-6 ui-lg-4">

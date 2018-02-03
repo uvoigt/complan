@@ -1,7 +1,7 @@
 package org.planner.util;
 
 import org.junit.Test;
-import org.planner.util.LogUtil.FachlicheException;
+import org.planner.util.ExpressionParser.ExpressionException;
 
 import junit.framework.Assert;
 
@@ -141,18 +141,18 @@ public class ParserTests {
 	}
 
 	private void assertEquals(String s, int numTeams, int numLanes, int intoFinal, int intoSemiFinal) throws Exception {
-		ExpressionParser parser = new ExpressionParser();
+		ExpressionParser parser = new ExpressionParser(ParserMessages.INSTANCE);
 		parser.evaluateExpression(s, numTeams, numLanes);
 		Assert.assertEquals(intoFinal, parser.getIntoFinal());
 		Assert.assertEquals(intoSemiFinal, parser.getIntoSemiFinal());
 	}
 
 	private void assertFail(String s, int numTeams, int numLanes) throws Exception {
-		ExpressionParser parser = new ExpressionParser();
+		ExpressionParser parser = new ExpressionParser(ParserMessages.INSTANCE);
 		try {
 			parser.evaluateExpression(s, numTeams, numLanes);
 			Assert.fail("keine exception");
-		} catch (FachlicheException e) {
+		} catch (ExpressionException e) {
 		}
 	}
 }

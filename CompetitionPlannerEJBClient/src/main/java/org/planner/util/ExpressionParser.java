@@ -1,17 +1,12 @@
 package org.planner.util;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
-
-import org.planner.util.LogUtil.FachlicheException;
-import org.planner.util.LogUtil.TechnischeException;
 
 public class ExpressionParser {
 	public static class ExNode extends SimpleNode {
@@ -37,11 +32,18 @@ public class ExpressionParser {
 	}
 
 	private static class Visitor extends ParserDefaultVisitor {
+
+		private final ParserMessages messages;
+
+		public Visitor(ParserMessages messages) {
+			this.messages = messages;
+		}
+
 		private IntegerProperty doGetProperty(String name, Object data) {
 			@SuppressWarnings("unchecked")
 			IntegerProperty property = ((Map<String, IntegerProperty>) data).get(name);
 			if (property == null)
-				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.unknownVariable", name);
+				throw new RuntimeException(messages.unknownVariable(name));
 			return property;
 		}
 
@@ -53,7 +55,7 @@ public class ExpressionParser {
 		private void setProperty(String name, int value, Object data) {
 			IntegerProperty property = doGetProperty(name, data);
 			if (property.readonly)
-				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.readonlyVariable", name);
+				throw new RuntimeException(messages.readonlyVariable(name));
 			property.value = value;
 		}
 
@@ -80,8 +82,7 @@ public class ExpressionParser {
 		public Object visit(If node, Object data) {
 			Object result = node.children[0].jjtAccept(this, data);
 			if (!(result instanceof Boolean))
-				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleBoolean",
-						getNodeValue(node.children[0]));
+				throw new RuntimeException(messages.incompatibleBoolean(getNodeValue(node.children[0])));
 			if ((Boolean) result)
 				node.children[1].jjtAccept(this, data);
 			return result;
@@ -121,8 +122,7 @@ public class ExpressionParser {
 
 		private boolean equality(Object o1, Object o2, String op) {
 			if (o1.getClass() != o2.getClass())
-				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleRelation", o1,
-						o2);
+				throw new RuntimeException(messages.incompatibleRelation(o1, o2));
 			switch (op) {
 			default:
 				throw new IllegalArgumentException();
@@ -147,8 +147,7 @@ public class ExpressionParser {
 
 		private boolean comparison(Object o1, Object o2, String op) {
 			if (!(o1 instanceof Integer && o2 instanceof Integer))
-				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleRelation", o1,
-						o2);
+				throw new RuntimeException(messages.incompatibleRelation(o1, o2));
 			switch (op) {
 			default:
 				throw new IllegalArgumentException();
@@ -177,7 +176,7 @@ public class ExpressionParser {
 
 		private int addition(Object o1, Object o2, String op) {
 			if (!(o1 instanceof Integer) || !(o2 instanceof Integer))
-				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleAdd", o1, o2);
+				throw new RuntimeException(messages.incompatibleAdd(o1, o2));
 			switch (op) {
 			default:
 				throw new IllegalArgumentException();
@@ -202,8 +201,7 @@ public class ExpressionParser {
 
 		private int multiplication(Object o1, Object o2, String op) {
 			if (!(o1 instanceof Integer && o2 instanceof Integer))
-				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.incompatibleMultiply", o1,
-						o2);
+				throw new RuntimeException(messages.incompatibleMultiply(o1, o2));
 			switch (op) {
 			default:
 				throw new IllegalArgumentException();
@@ -244,8 +242,7 @@ public class ExpressionParser {
 			try {
 				return Integer.valueOf(node.jjtGetValue().toString());
 			} catch (NumberFormatException e) {
-				throw new FachlicheException(CommonMessages.getResourceBundle(), "exprParser.invalidNumber",
-						node.jjtGetValue());
+				throw new RuntimeException(messages.invalidNumber(node.jjtGetValue()));
 			}
 		}
 
@@ -269,13 +266,13 @@ public class ExpressionParser {
 		}
 	}
 
-	public static class ExpressionException extends FachlicheException {
+	public static class ExpressionException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 
 		private List<String> expectings;
 
-		public ExpressionException(ResourceBundle bundle, String key, List<String> expectings, Object... args) {
-			super(bundle, key, args);
+		public ExpressionException(String message, List<String> expectings) {
+			super(message);
 			this.expectings = expectings;
 		}
 
@@ -284,55 +281,68 @@ public class ExpressionParser {
 		}
 	}
 
-	public static void main(String args[]) throws Exception {
-		InputStream in = args.length > 0 ? new FileInputStream(args[0]) : System.in;
-		Parser t = new Parser(in);
-		try {
-			SimpleNode n = t.Start();
-			Visitor visitor = new Visitor();
-			Map<String, IntegerProperty> props = new HashMap<>();
-			props.put("AnzahlBahnen", new IntegerProperty(9, true));
-			props.put("AnzahlMeldungen", new IntegerProperty(12, true));
-			props.put("InDenZwischenLauf", new IntegerProperty(0, false));
-			props.put("InDenEndlauf", new IntegerProperty(0, false));
-			n.jjtAccept(visitor, props);
-			System.out.println(props);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	public interface ParserMessages {
+		String unknownVariable(String var);
+
+		String readonlyVariable(String var);
+
+		String aNumber();
+
+		String eof();
+
+		String parseError(String details, int line, int column, String expectings);
+
+		String unexpectedSymbol(Object symbol);
+
+		String unexpectedEof();
+
+		String unexpectedChar(char c);
+
+		String incompatibleRelation(Object left, Object right);
+
+		String incompatibleAdd(Object left, Object right);
+
+		String incompatibleMultiply(Object left, Object right);
+
+		String incompatibleBoolean(Object val);
+
+		String invalidNumber(Object num);
+
+		String or();
 	}
 
-	public static List<String> getCompletion(String expr) {
-		Parser parser = new Parser(new java.io.StringReader(expr));
+	public static List<String> getCompletion(String expr, ParserMessages messages) {
+		Parser parser = new Parser(new StringReader(expr));
 		List<String> expectings = new ArrayList<>();
 		try {
 			parser.Completion();
 			throw parser.generateParseException();
 		} catch (ParseException e) {
-			createExpectings(expectings, e, false, parser.inAssignment);
+			createExpectings(expectings, e, false, parser.inAssignment, messages);
 		} catch (TokenMgrError e) {
 		}
 		return expectings;
 	}
 
 	private static void createExpectings(List<String> expectings, ParseException e, boolean withSpecialTokens,
-			boolean inAssignment) {
+			boolean inAssignment, ParserMessages messages) {
 		for (int[] is : e.expectedTokenSequences) {
 			int tok = is[0];
 			if (tok == ParserConstants.INTEGER_LITERAL) {
 				if (withSpecialTokens)
-					expectings.add(CommonMessages.getMessage("exprParser.aNumber"));
+					expectings.add(messages.aNumber());
 			} else if (tok == ParserConstants.IDENTIFIER) {
 				if (inAssignment) {
-					expectings.add("InDenEndlauf");
+					expectings.add("DirektInDenEndlauf");
 					expectings.add("InDenZwischenLauf");
+					expectings.add("InDenEndlauf");
 				} else {
 					expectings.add("AnzahlBahnen");
 					expectings.add("AnzahlMeldungen");
 				}
 			} else if (tok == ParserConstants.EOF) {
 				if (withSpecialTokens)
-					expectings.add(CommonMessages.getMessage("exprParser.eof"));
+					expectings.add(messages.eof());
 			} else {
 				String s = e.tokenImage[tok];
 				s = s.substring(1, s.length() - 1);
@@ -343,13 +353,13 @@ public class ExpressionParser {
 		}
 	}
 
-	public static String createExpectingsMessage(List<String> expectings) {
+	private String createExpectingsMessage(List<String> expectings) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < expectings.size(); i++) {
 			String expecting = expectings.get(i);
 			if (sb.length() > 0) {
 				if (i == expectings.size() - 1)
-					sb.append(" ").append(CommonMessages.getMessage("or")).append(" ");
+					sb.append(" ").append(messages.or()).append(" ");
 				else
 					sb.append(", ");
 			}
@@ -358,42 +368,57 @@ public class ExpressionParser {
 		return sb.toString();
 	}
 
+	private int directlyIntoFinal;
 	private int intoSemiFinal;
 	private int intoFinal;
 
-	public void evaluateExpression(String expr, int numTeams, int numLanes) {
-		Parser parser = new Parser(new java.io.StringReader(expr));
+	private final ParserMessages messages;
+
+	public ExpressionParser(ParserMessages messages) {
+		this.messages = messages;
+	}
+
+	public void evaluateExpression(String expr, int numTeams, int numLanes) throws ExpressionException {
+		Parser parser = new Parser(new StringReader(expr));
 		try {
 			SimpleNode ast = parser.Start();
 			Map<String, IntegerProperty> props = new HashMap<>();
+
 			IntegerProperty AnzahlBahnen = new IntegerProperty(numLanes, true);
 			IntegerProperty AnzahlMeldungen = new IntegerProperty(numTeams, true);
+			IntegerProperty DirektInDenEndlauf = new IntegerProperty(0, false);
 			IntegerProperty InDenZwischenLauf = new IntegerProperty(0, false);
 			IntegerProperty InDenEndlauf = new IntegerProperty(0, false);
+
 			props.put("AnzahlBahnen", AnzahlBahnen);
 			props.put("AnzahlMeldungen", AnzahlMeldungen);
+			props.put("DirektInDenEndlauf", DirektInDenEndlauf);
 			props.put("InDenZwischenLauf", InDenZwischenLauf);
 			props.put("InDenEndlauf", InDenEndlauf);
-			ast.jjtAccept(new Visitor(), props);
-			intoFinal = InDenEndlauf.value;
+
+			ast.jjtAccept(new Visitor(messages), props);
+			directlyIntoFinal = DirektInDenEndlauf.value;
 			intoSemiFinal = InDenZwischenLauf.value;
+			intoFinal = InDenEndlauf.value;
+
 		} catch (ParseException e) {
 			List<String> expectings = new ArrayList<>();
-			createExpectings(expectings, e, true, parser.inAssignment);
+			createExpectings(expectings, e, true, parser.inAssignment, messages);
 			Token token = e.currentToken.next;
-			String detailMsg = CommonMessages.getFormattedMessage("exprParser.unexpectedSymbol", token);
+			String detailMsg = messages.unexpectedSymbol(token);
 			if (token.kind == ParserConstants.EOF)
-				detailMsg = CommonMessages.getMessage("exprParser.unexpectedEof");
-			throw new ExpressionException(CommonMessages.getResourceBundle(), "exprParser.parseError", expectings,
-					detailMsg, token.beginLine, token.beginColumn, createExpectingsMessage(expectings));
+				detailMsg = messages.unexpectedEof();
+			throw new ExpressionException(messages.parseError(detailMsg, token.beginLine, token.beginColumn,
+					createExpectingsMessage(expectings)), expectings);
 		} catch (TokenMgrError e) {
-			throw new ExpressionException(CommonMessages.getResourceBundle(), "exprParser.unexpectedChar", null,
-					(char) parser.token_source.curChar);
+			throw new ExpressionException(messages.unexpectedChar((char) parser.token_source.curChar), null);
 		} catch (Exception e) {
-			if (e instanceof FachlicheException)
-				throw e;
-			throw new TechnischeException(e.getMessage(), e);
+			throw new ExpressionException(e.getMessage(), null);
 		}
+	}
+
+	public int getDirectlyIntoFinal() {
+		return directlyIntoFinal;
 	}
 
 	public int getIntoSemiFinal() {

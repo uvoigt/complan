@@ -103,12 +103,13 @@
 						<phase>generate-sources</phase>
 						<configuration>
 							<encoding>${project.build.sourceEncoding}</encoding>
-							<sourceDirectory>src/main/java</sourceDirectory>
+							<sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
 							<includes>
 								<include>**/*.java</include>
 							</includes>
 							<excludes>
 								<exclude>org/planner/util/ExpressionParser.java</exclude>
+								<exclude>org/planner/util/ParserMessages.java</exclude>
 							</excludes>
 							<outputDirectory>${project.build.directory}/generated-sources/eclipse</outputDirectory>
 						</configuration>
@@ -134,6 +135,35 @@
 						</manifest>
 					</archive>
 				</configuration>
+			</plugin>
+
+			<!-- kopiert die Java-Dateien des Parsers für GWT-compile -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.6</version>
+				<executions>
+					<execution>
+						<id>copy-additional-resources</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.outputDirectory}</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.build.directory}/generated-sources/javacc/</directory>
+									<include>**/*</include>
+								</resource>
+								<resource>
+									<directory>${project.build.sourceDirectory}</directory>
+									<include>org/planner/util/ExpressionParser.java</include>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 		</plugins>
