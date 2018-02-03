@@ -1,8 +1,18 @@
-Wenn AnzahlMeldungen <= 2 * AnzahlBahnen Dann InDenEndlauf = 4
+/* Qualifikationsmodus und Setzsystem bei Deutschen Meisterschaften */
+Wenn AnzahlMeldungen <= 18 Dann
+	DirektInDenEndlauf = 3, InDenZwischenLauf = 7, InDenEndlauf = 3
 Ansonsten
-Wenn AnzahlMeldungen <= 3 * AnzahlBahnen Dann InDenEndlauf = 3
+Wenn AnzahlMeldungen <= 27 Dann
+	DirektInDenEndlauf = 2, InDenZwischenLauf = 5, InDenEndlauf = 3
 Ansonsten
-Wenn AnzahlMeldungen <= 4 * AnzahlBahnen Dann InDenZwischenLauf = 4, AnzahlVorläufe = 4
+Wenn AnzahlMeldungen <= 36 Dann
+	InDenZwischenLauf = 6, InDenEndlauf = 3
 Ansonsten
-Wenn AnzahlMeldungen <= 5 * AnzahlBahnen Dann InDenZwischenLauf = 3, AnzahlVorläufe = 5
-
+Wenn AnzahlMeldungen <= 45 Dann
+	InDenZwischenLauf = 5, InDenEndlauf = 3
+Ansonsten
+Wenn AnzahlMeldungen <= 54 Dann
+	InDenZwischenLauf = 4, InDenEndlauf = 3
+Ansonsten
+Wenn AnzahlMeldungen <= 63 Dann
+	InDenZwischenLauf = 3, InDenEndlauf = 3
