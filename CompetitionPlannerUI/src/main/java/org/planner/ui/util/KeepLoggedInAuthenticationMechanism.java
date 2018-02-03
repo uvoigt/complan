@@ -2,6 +2,7 @@ package org.planner.ui.util;
 
 import static io.undertow.UndertowMessages.MESSAGES;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Map;
 
@@ -105,6 +106,15 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 				LOG.debug("Added new authentication cookie " + newCookieValue);
 		}
 		saveLastLogonTime();
+
+		// da wir durch saveOriginalRequest=false keinen Redirect senden,
+		// wird für den Ajax-Caller eine leere XML-Struktur zurückgegeben
+		// das ist hauptsächlich ein FF-Problem
+		try {
+			exchange.getOutputStream().write("<ok/>".getBytes());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 		super.handleRedirectBack(exchange);
 	}
 
