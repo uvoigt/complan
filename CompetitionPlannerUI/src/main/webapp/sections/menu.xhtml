@@ -10,70 +10,7 @@
 	<ui:composition>
 		<h:panelGroup id="leftMenuContainer" layout="block">
 			<h:form id="leftMenu">
-				<ui:param name="bundle" value="#{messages.bundle('menu')}"/>
-				<p:menu my="left top" toggleable="true">
-					<p:menuitem value="#{bundle.myprofile}"
-							action="#{startseiteBean.setMainContentAndReset('/masterdata/myprofile.xhtml')}"
-							process="@this"
-							update=":mainContent"
-							rendered="#{authBean.inRole('User')}"
-							onclick="selectSidebarLink(this)"
-							oncomplete="navItemSelected()"/>
-					<p:menuitem value="#{bundle.myclub}"
-							action="#{startseiteBean.setMainContentAndReset('/masterdata/myclub.xhtml')}"
-							process="@this"
-							update=":mainContent"
-							rendered="#{authBean.inRole('User')}"
-							onclick="selectSidebarLink(this)"
-							oncomplete="navItemSelected()"/>
-					<p:menuitem value="#{bundle.announcement}"
-							action="#{startseiteBean.setMainContentAndReset('/announcement/announcements.xhtml')}"
-							process="@this"
-							update=":mainContent"
-							rendered="#{authBean.inRole('User')}"
-							onclick="selectSidebarLink(this)"
-								oncomplete="navItemSelected()"/>
-					<p:menuitem value="#{bundle.registration}"
-							action="#{startseiteBean.setMainContentAndReset('/announcement/registrations.xhtml')}"
-							process="@this"
-							update=":mainContent"
-							rendered="#{authBean.inRole('User')}"
-							onclick="selectSidebarLink(this)"
-							oncomplete="navItemSelected()"/>
-					<p:menuitem value="#{bundle.program}"
-							action="#{startseiteBean.setMainContentAndReset('/announcement/programs.xhtml')}"
-							process="@this"
-							update=":mainContent"
-							rendered="#{authBean.inRole('User')}"
-							onclick="selectSidebarLink(this)"
-							oncomplete="navItemSelected()"/>
-					<p:menuitem value="#{bundle.users}"
-							action="#{startseiteBean.setMainContentAndReset('/masterdata/users.xhtml')}"
-							process="@this"
-							update=":mainContent"
-							rendered="#{authBean.inRole('Admin', 'Sportwart')}"
-							onclick="selectSidebarLink(this)"
-							oncomplete="navItemSelected()"/>
-					<p:menuitem value="#{bundle.clubs}"
-							action="#{startseiteBean.setMainContentAndReset('/masterdata/clubs.xhtml')}"
-							process="@this"
-							update=":mainContent"
-							rendered="#{authBean.inRole('Admin')}"
-							onclick="selectSidebarLink(this)"
-							oncomplete="navItemSelected()"/>
-					<p:menuitem value="#{bundle.roles}"
-							action="#{startseiteBean.setMainContentAndReset('/masterdata/roles.xhtml')}"
-							process="@this"
-							update=":mainContent"
-							rendered="#{authBean.inRole('Admin')}"
-							onclick="selectSidebarLink(this)"
-							oncomplete="navItemSelected()"/>
-					<p:menuitem value="#{bundle.help}"
-							action="#{startseiteBean.setHelpVisible(true)}"
-							process="@this"
-							update="help"
-							oncomplete="toggleHelp()"/>
-				</p:menu>
+				<p:menu my="left top" toggleable="true" model="#{startseiteBean.menu}"/>
 			</h:form>
 		</h:panelGroup>
 	</ui:composition>

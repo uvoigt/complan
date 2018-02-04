@@ -25,6 +25,10 @@ import org.planner.ui.beans.common.AuthBean;
 import org.planner.ui.util.JsfUtil;
 import org.planner.util.LoggingInterceptor.Silent;
 import org.primefaces.PrimeFaces;
+import org.primefaces.model.menu.DefaultMenuItem;
+import org.primefaces.model.menu.DefaultMenuModel;
+import org.primefaces.model.menu.MenuElement;
+import org.primefaces.model.menu.MenuModel;
 
 @Named
 @RequestScoped
@@ -49,8 +53,12 @@ public class StartseiteBean implements Serializable {
 
 	private boolean identityWritten;
 
+	private String mainContent;
+
 	@Silent
 	public String getMainContent() {
+		if (mainContent != null)
+			return mainContent;
 
 		// prüfe auf erste Anmeldung
 		FacesContext ctx = FacesContext.getCurrentInstance();
@@ -76,10 +84,12 @@ public class StartseiteBean implements Serializable {
 		}
 		if (mainContent != null) {
 			JsfUtil.setViewVariable("mainContent", mainContent);
-			return mainContent;
 		} else {
-			return "/sections/start.xhtml";
+			mainContent = "/sections/start.xhtml";
 		}
+		if (ctx.getCurrentPhaseId() == PhaseId.RENDER_RESPONSE)
+			this.mainContent = mainContent;
+		return mainContent;
 	}
 
 	public void setMainContent(String mainContent) {
@@ -130,6 +140,51 @@ public class StartseiteBean implements Serializable {
 		} catch (Exception e) {
 			throw new IllegalArgumentException(e);
 		}
+	}
+
+	public MenuModel getMenu() {
+		MenuModel menu = new DefaultMenuModel();
+		Messages bundle = messages.bundle("menu");
+		int id = 0;
+		menu.addElement(
+				createMenuItem(id++, bundle.get("myprofile"), "/masterdata/myprofile.xhtml", auth.inRole("User")));
+		menu.addElement(createMenuItem(id++, bundle.get("myclub"), "/masterdata/myclub.xhtml", auth.inRole("User")));
+		menu.addElement(createMenuItem(id++, bundle.get("announcement"), "/announcement/announcements.xhtml",
+				auth.inRole("User")));
+		menu.addElement(createMenuItem(id++, bundle.get("registration"), "/announcement/registrations.xhtml",
+				auth.inRole("User")));
+		menu.addElement(
+				createMenuItem(id++, bundle.get("program"), "/announcement/programs.xhtml", auth.inRole("User")));
+		menu.addElement(createMenuItem(id++, bundle.get("users"), "/masterdata/users.xhtml",
+				auth.inRole("Admin", "Sportwart")));
+		menu.addElement(createMenuItem(id++, bundle.get("clubs"), "/masterdata/clubs.xhtml", auth.inRole("Admin")));
+		menu.addElement(createMenuItem(id++, bundle.get("roles"), "/masterdata/roles.xhtml", auth.inRole("Admin")));
+
+		DefaultMenuItem item = new DefaultMenuItem(bundle.get("help"));
+		item.setId(Integer.toString(id));
+		item.setCommand("#{startseiteBean.setHelpVisible(true)}");
+		item.setProcess("@this");
+		item.setUpdate("help");
+		item.setPartialSubmit(true);
+		item.setOncomplete("toggleHelp()");
+		menu.addElement(item);
+
+		return menu;
+	}
+
+	private MenuElement createMenuItem(int id, String text, String path, boolean rendered) {
+		DefaultMenuItem item = new DefaultMenuItem(text);
+		item.setId(Integer.toString(id));
+		item.setCommand("#{startseiteBean.setMainContentAndReset('" + path + "')}");
+		item.setProcess("@this");
+		item.setUpdate("mainContent");
+		item.setPartialSubmit(true);
+		item.setRendered(rendered);
+		item.setOnclick("selectSidebarLink(this)");
+		item.setOncomplete("navItemSelected()");
+		if (getMainContent().equals(path))
+			item.setStyleClass("ui-state-active");
+		return item;
 	}
 
 	public String getTheme() {
