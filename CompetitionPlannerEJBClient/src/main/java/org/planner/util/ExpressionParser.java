@@ -73,7 +73,7 @@ public class ExpressionParser {
 		@Override
 		public Object visit(IfElse node, Object data) {
 			Object resultFromIf = node.children[0].jjtAccept(this, data);
-			if (Boolean.FALSE.equals(resultFromIf) && node.jjtGetNumChildren() > 1)
+			if (((Boolean) resultFromIf) && node.jjtGetNumChildren() > 1)
 				node.children[1].jjtAccept(this, data);
 			return resultFromIf;
 		}
