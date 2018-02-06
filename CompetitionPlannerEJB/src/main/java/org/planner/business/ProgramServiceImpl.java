@@ -470,19 +470,22 @@ public class ProgramServiceImpl {
 		}
 	}
 
-	public void swapRaces(final ProgramRace r1, final ProgramRace r2) {
-		common.checkWriteAccess(r1, Operation.save);
-		common.checkWriteAccess(r2, Operation.save);
+	public void swapRaces(ProgramRace r1, ProgramRace r2) {
+		// lade die unvollständigen Races
+		final ProgramRace race1 = common.getById(ProgramRace.class, r1.getId(), 0);
+		final ProgramRace race2 = common.getById(ProgramRace.class, r2.getId(), 0);
+		common.checkWriteAccess(race1, Operation.save);
+		common.checkWriteAccess(race2, Operation.save);
 
-		Date st1 = r1.getStartTime();
-		r1.setStartTime(r2.getStartTime());
-		r2.setStartTime(st1);
+		Date st1 = race1.getStartTime();
+		race1.setStartTime(race2.getStartTime());
+		race2.setStartTime(st1);
 		// man könnte natürlich auch save anpassem...
 		dao.executeOperation(new IOperation<Void>() {
 			@Override
 			public Void execute(EntityManager em) {
-				em.merge(r1);
-				em.merge(r2);
+				em.merge(race1);
+				em.merge(race2);
 				return null;
 			}
 		});
@@ -515,7 +518,9 @@ public class ProgramServiceImpl {
 				+ "left outer join Club tc on t.club_id=tc.id " //
 				+ "left outer join TeamMember tm on tm.team_id=t.id " //
 				+ "left outer join User tu on tm.user_id=tu.id " //
-				+ "left outer join Club uc on tu.club_id=uc.id " + "where p.id = :id";
+				+ "left outer join Club uc on tu.club_id=uc.id " //
+				+ "where p.id = :id " //
+				+ "order by pr.startTime";
 		Query query = em.createNativeQuery(sql);
 		query.setParameter("id", id);
 		@SuppressWarnings("unchecked")
@@ -526,6 +531,8 @@ public class ProgramServiceImpl {
 		Map<BigInteger, Club> clubs = new HashMap<>();
 		// so werden die Options mitgeladen
 		Program program = em.find(Program.class, id);
+		if (program == null)
+			throw new FachlicheException(messages.getResourceBundle(), "program.notfound");
 		em.detach(program);
 		program.setRaces(new ArrayList<ProgramRace>());
 		for (Object[] row : result) {
