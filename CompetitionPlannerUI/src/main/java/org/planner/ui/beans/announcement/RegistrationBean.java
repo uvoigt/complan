@@ -29,6 +29,7 @@ import org.planner.model.IResultProvider;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.AbstractEditBean;
+import org.planner.ui.beans.BenutzerEinstellungen;
 import org.planner.ui.beans.ColumnHandler;
 import org.planner.ui.beans.ColumnHandler.Column;
 import org.planner.ui.beans.Messages;
@@ -49,6 +50,9 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	@Inject
 	private ColumnHandler columnHandler;
 
+	@Inject
+	private BenutzerEinstellungen einstellungen;
+
 	private Registration registration;
 
 	private List<Race> races;
@@ -67,6 +71,8 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 
 	private DataTable registrationTable;
 
+	private String remark;
+
 	@Override
 	@PostConstruct
 	public void init() {
@@ -80,6 +86,8 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 				loadRegistration(id);
 			JsfUtil.setViewVariable("id", id);
 		}
+
+		remark = einstellungen.getTypedValue("requestMsg", String.class, JsfUtil.getScopedBundle().get("requestMsg"));
 	}
 
 	@Override
@@ -208,12 +216,12 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		entry.setParticipants(participants);
 	}
 
-	public void addRequest(Messages bundle) {
+	public void addRequest() {
 		if (selectedEntry != null) {
 			List<RegEntry> entries = new ArrayList<>(1);
 			entries.add(selectedEntry);
 			Participant request = new Participant();
-			request.setRemark(bundle.get("requestMsg"));
+			request.setRemark(remark);
 			selectedEntry.setParticipants(Arrays.asList(request));
 			service.saveRegEntries(registration.getId(), entries);
 			showEffect = true;
@@ -298,6 +306,19 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 
 	public void setRegistrationTable(DataTable registrationTable) {
 		this.registrationTable = registrationTable;
+	}
+
+	public String getRemark() {
+		return remark;
+	}
+
+	public void setRemark(String remark) {
+		if (remark != null && !remark.equals(this.remark)) {
+			if (remark.length() > 50)
+				remark = remark.substring(0, 50);
+			einstellungen.setValue("requestMsg", remark);
+		}
+		this.remark = remark;
 	}
 
 	public Object renderClubName(Map<String, Object> user) {

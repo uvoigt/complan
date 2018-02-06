@@ -16,7 +16,7 @@
 
 		<ui:define name="content">
 
-			<h:form>
+			<h:form id="main">
 
 				<h:panelGrid columns="3" columnClasses="regEditTable, regEditTableMid, regEditTable" cellpadding="0" cellspacing="0">
 					<p:dataTable id="racesTable" widgetVar="racesTable"
@@ -38,6 +38,7 @@
 
 						<pe:javascript event="rowSelect" execute="PF('registrationTable').unselectAllRows(); registrationEdit.enableButtons()"/>
 						<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons()"/>
+						<pe:javascript event="rowDblselect" execute="registrationEdit.copyFilters(true)"/>
 						<p:ajax event="filter" oncomplete="PF('racesTable').unselectAllRows(); registrationEdit.enableButtons()"/>
 
 						<p:column headerText="#{bundle.number}" sortBy="#{race.number}" filterBy="#{race.number}" filterMatchMode="exact">
@@ -58,14 +59,12 @@
 					</p:dataTable>
 
 					<h:panelGroup>
-						<p:button icon="ui-icon-circle-arrow-e" title="#{bundle.copyFilter}"
-							onclick="registrationEdit.copyFilters(); return false;"
+						<p:commandButton type="button" icon="ui-icon-circle-arrow-e" title="#{bundle.copyFilter}"
+							onclick="registrationEdit.copyFilters()"
 							style="margin-bottom: 1em"/>
-						<p:commandButton icon="ui-icon-person" title="#{bundle.addRequest}"
+						<p:commandButton type="button" icon="ui-icon-person" title="#{bundle.addRequest}"
+							onclick="PF('remarkDlg').show()"
 							widgetVar="btnAddRequest"
-							action="#{registrationBean.addRequest(bundle)}"
-							process="@form"
-							update="registrationTable"
 							style="margin-bottom: 1em"/>
 						<p:commandButton icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
 							widgetVar="btnAddAthlete"
@@ -115,7 +114,8 @@
 							<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons().updateResultSelected()"/>
 							<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible"
 								oncomplete="PF('athletesTable').unselectAllRows(); registrationEdit.enableButtons().checkEmpty().updateResultSelected()"/>
-							<p:ajax event="rowDblselect" onstart="return !PF('btnAddAthlete').jq.attr('disabled')" listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
+							<p:ajax event="rowDblselect" onstart="return !PF('btnAddAthlete').jq.attr('disabled')"
+								listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
 
 							<p:column headerText="#{bundle.club}" sortBy="#{user.club.name}" filterBy="#{user.club.name}" filterMatchMode="contains"
 									visible="#{registrationBean.clubVisible}">
@@ -181,10 +181,25 @@
 						<h:outputScript rendered="#{rowIndex == 0}">registrationEdit.updateRegistrationsCount(#{registrationBean.registration.entries.size()});</h:outputScript>
 					</p:column>
 				</p:dataTable>
-
 			</h:form>
 
-			<h:outputScript>registrationEdit.enableButtons();</h:outputScript>
+			<p:dialog appendTo="body" widgetVar="remarkDlg" header="#{bundle.requestMsg}" closeOnEscape="true" styleClass="remarkDlg" modal="true">
+				<h:form>
+					<h:panelGroup layout="block" styleClass="ui-dialog-content">
+						<p:inputText id="remark" value="#{registrationBean.remark}" style="width: 100%" maxlength="50"/>
+					</h:panelGroup>
+					<h:panelGroup layout="block" styleClass="ui-dialog-buttonpane">
+						<p:commandButton value="#{messages.ok}" styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+							partialSubmit="true"
+							process="@this main:registrationTable remark" update="main:registrationTable"
+							action="#{registrationBean.addRequest()}" oncomplete="PF('remarkDlg').hide()"/>
+						<p:commandButton value="#{messages.cancel}" type="button" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
+							onclick="PF('remarkDlg').hide()" />
+					</h:panelGroup>
+				</h:form>
+			</p:dialog>
+
+			<h:outputScript>registrationEdit.enableButtons()</h:outputScript>
 
 		</ui:define>
 	</ui:composition>
