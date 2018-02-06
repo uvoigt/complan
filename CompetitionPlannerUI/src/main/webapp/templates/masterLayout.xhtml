@@ -23,28 +23,29 @@
 <h:body id="body">
 	<p:layout fullPage="true" widgetVar="layout">
 		<p:layoutUnit position="north">
-			<ui:insert name="heading">
+			<h:form prependId="false">
+				<f:passThroughAttribute name="autocomplete" value="off"/>
 				<ui:include src="/sections/header.xhtml" />
-			</ui:insert>
+			</h:form>
 		</p:layoutUnit>
 		<p:layoutUnit position="center">
-			<p:growl id="messagesPopup" showDetail="true" showSummary="false"/>
-			<ui:insert name="loginDialog">
-				<ui:include src="/sections/loginDialog.xhtml"/>
-			</ui:insert>
-			<ui:insert name="confirmDialog">
-				<ui:include src="/sections/confirmDialog.xhtml"/>
-			</ui:insert>
-			<ui:insert name="errorDialog">
-				<ui:include src="/sections/errorDialog.xhtml"/>
-			</ui:insert>
-			<ui:insert name="ajaxStatus">
-				<ui:include src="/sections/status.xhtml"/>
-			</ui:insert>
 			<h:panelGroup id="contentGroup" layout="block">
-				<ui:insert name="menu">
+
+				<h:form prependId="false">
+					<p:growl id="messagesPopup" showDetail="true" showSummary="false"/>
+					<ui:include src="/sections/loginDialog.xhtml"/>
+					<ui:include src="/sections/confirmDialog.xhtml"/>
+					<ui:include src="/sections/errorDialog.xhtml"/>
+					<ui:include src="/sections/status.xhtml"/>
+					<ui:include src="/sections/help.xhtml"/>
 					<ui:include src="/sections/menu.xhtml" />
-				</ui:insert>
+
+					<h:panelGroup rendered="false">
+						<pe:ckEditor/>
+						<p:inputSwitch />
+						<p:fileUpload />
+					</h:panelGroup>
+				</h:form>
 
 				<ui:insert name="noscript"><noscript><div class="noscript">#{messages.noscript}</div></noscript></ui:insert>
 
@@ -56,30 +57,10 @@
 					<ui:include src="#{startseiteBean.mainContent}" />
 
 				</h:panelGroup>
-				<h:form rendered="false">
-					<pe:ckEditor/>
-					<p:inputSwitch />
-					<p:fileUpload />
-				</h:form>
 
 			</h:panelGroup>
 		</p:layoutUnit>
 	</p:layout>
-	<h:panelGroup id="helpUI" layout="block" styleClass="help ui-widget ui-widget-content">
-		<h:panelGroup layout="block" styleClass="ui-layout-unit-header ui-widget-header ui-corner-all">
-			<h:panelGroup styleClass="ui-layout-unit-header-title"><h:outputText value="#{messages.help}"/></h:panelGroup>
-			<h:form style="float: right">
-				<p:commandLink action="#{startseiteBean.setHelpVisible(false)}"
-						oncomplete="toggleHelp(false)" title="#{messages.labelClose}"
-						styleClass="ui-layout-unit-header-icon ui-state-default ui-corner-all">
-					<span class="ui-icon ui-icon-close"></span>
-				</p:commandLink>
-			</h:form>
-		</h:panelGroup>
-		<p:fieldset id="help">
-			<h:outputText value="#{startseiteBean.help}" escape="false"/>
-		</p:fieldset>
-	</h:panelGroup>
-	<ui:debug rendered="#{facesContext.application.projectStage == 'Development'}"/>
+	<ui:debug rendered="#{facesContext.application.projectStage == 'Development'}" hotkey="y"/>
 </h:body>
 </html>

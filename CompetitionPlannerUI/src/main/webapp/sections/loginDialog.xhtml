@@ -7,36 +7,31 @@
 <head />
 <body>
 	<ui:composition>
-		<h:outputScript>setupAjax();</h:outputScript>
-		<p:dialog widgetVar="loginDlg" id="loginDialog" header="#{messages.loginTitle}" showEffect="clip" hideEffect="clip"
+		<p:dialog widgetVar="loginDlg" id="loginDlg" header="#{messages.loginTitle}" showEffect="clip" hideEffect="clip"
 				responsive="true" draggable="false" modal="true" closable="false" resizable="false" appendTo="body"
 				onShow="PF('loginDlg').initPosition(); message()">
-			<h:form>
-				<h:panelGroup layout="block" styleClass="loginError loginNoUser loginMessage">
-				</h:panelGroup>
-				<p:panelGrid cellpadding="5" cellspacing="10" styleClass="loginTable">
-					<p:row>
-						<p:column>
-							<h:outputText value="#{messages.loginName}"/>
-						</p:column>
-						<p:column><input type="text" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" autocomplete="off" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
-					</p:row>
-					<p:row>
-						<p:column>
-							<h:outputText value="#{messages.loginPass}"/>
-						</p:column>
-						<p:column><input type="password" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
-					</p:row>
-					<p:row>
-						<p:column colspan="2"
-							style="text-align: right"><a href="passwordreset" class="passwordRecovery" onclick="sendRecovery('#{messages.loginUserMsg}', '#{messages.loginUserError}'); return false;"><h:outputText value="#{messages.loginRecovery}"/></a></p:column>
-					</p:row>
-				</p:panelGrid>
-				<h:panelGroup layout="block" style="width: 100%; text-align: center;">
-					<p:commandButton value="#{messages.loginSubmit}" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" onclick="sendLogin('#{component.namingContainer.id}')"/>
-				</h:panelGroup>
-			</h:form>
+			<h:panelGroup layout="block" styleClass="loginError loginNoUser loginMessage" />
+			<p:panelGrid cellpadding="5" cellspacing="10" styleClass="loginTable">
+				<p:row>
+					<p:column>
+						<h:outputText value="#{messages.loginName}"/>
+					</p:column>
+					<p:column><input type="text" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" autocomplete="off" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
+				</p:row>
+				<p:row>
+					<p:column>
+						<h:outputText value="#{messages.loginPass}"/>
+					</p:column>
+					<p:column><input type="password" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
+				</p:row>
+				<p:row>
+					<p:column colspan="2"
+						style="text-align: right"><a href="passwordreset" class="passwordRecovery" onclick="sendRecovery(); return false"><h:outputText value="#{messages.loginRecovery}"/></a></p:column>
+				</p:row>
+			</p:panelGrid>
+			<h:panelGroup layout="block" style="width: 100%; text-align: center"><button type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-left ui-confirmdialog-yes" onclick="sendLogin('#{component.namingContainer.id}'); return false"><span class="ui-button-icon-left ui-icon ui-c ui-icon-check"></span><span class="ui-button-text ui-c">#{messages.loginSubmit}</span></button></h:panelGroup>
 		</p:dialog>
+		<h:outputScript>initLoginDialog()</h:outputScript>
 	</ui:composition>
 </body>
 </html>

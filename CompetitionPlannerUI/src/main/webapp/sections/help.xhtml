@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui">
+<head />
+<body>
+	<ui:composition>
+		<h:panelGroup id="helpUI" layout="block" styleClass="help ui-widget ui-widget-content">
+			<h:panelGroup layout="block" styleClass="ui-layout-unit-header ui-widget-header ui-corner-all">
+				<h:panelGroup styleClass="ui-layout-unit-header-title"><h:outputText value="#{messages.help}"/></h:panelGroup>
+				<p:commandLink action="#{startseiteBean.setHelpVisible(false)}"
+						oncomplete="toggleHelp(false)" title="#{messages.labelClose}"
+						process="@this"
+						styleClass="ui-layout-unit-header-icon ui-state-default ui-corner-all"
+						style="float: right">
+					<span class="ui-icon ui-icon-close"></span>
+				</p:commandLink>
+			</h:panelGroup>
+			<p:fieldset id="help">
+				<h:outputText value="#{startseiteBean.help}" escape="false"/>
+			</p:fieldset>
+		</h:panelGroup>
+	</ui:composition>
+</body>
+</html>

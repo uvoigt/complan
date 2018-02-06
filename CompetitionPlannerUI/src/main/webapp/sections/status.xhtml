@@ -20,11 +20,9 @@
 				<h:outputText value="#{messages.statusErrorText}"/>
 			</h:panelGroup>
 			<h:panelGroup layout="block" style="text-align: center">
-				<h:form>
-					<p:commandButton value="#{messages.labelClose}"
-						process="@this"
-						onclick="PF('statusErrorDialog').hide()"/>
-				</h:form>
+				<p:commandButton value="#{messages.labelClose}"
+					process="@this"
+					onclick="PF('statusErrorDialog').hide()"/>
 			</h:panelGroup>
 		</p:dialog>
 	</ui:composition>

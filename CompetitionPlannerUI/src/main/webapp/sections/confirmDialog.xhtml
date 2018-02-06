@@ -8,12 +8,10 @@
 <head />
 <body>
 	<ui:composition>
-		<h:form>
-			<p:confirmDialog global="true" widgetVar="confirmDlg" id="confirmDialog" header="title" message="message" closeOnEscape="true" >
-				<p:commandButton value="#{messages.yes}" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" update=":messagesPopup"/>
-				<p:commandButton value="#{messages.cancel}" type="button" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close" />
-			</p:confirmDialog>
-		</h:form>
+		<p:confirmDialog global="true" widgetVar="confirmDlg" header="title" message="message" closeOnEscape="true">
+			<p:commandButton value="#{messages.yes}" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" update=":messagesPopup"/>
+			<p:commandButton value="#{messages.cancel}" type="button" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close" />
+		</p:confirmDialog>
 	</ui:composition>
 </body>
 </html>
