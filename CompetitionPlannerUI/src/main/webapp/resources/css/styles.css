@@ -102,8 +102,10 @@
 	height: 100%;
 	width: 70%;
 	left: 100%;
+	top: 0;
 	position: fixed;
 	overflow: auto;
+	z-index: 1;
 }
 
 @media only screen and (max-width: 700px) {
@@ -204,7 +206,7 @@ td.hiddenHintCol {
 	cursor: pointer;
 }
 
-#loginDialog_modal {
+#loginDlg_modal {
 	background: black;
 	opacity: .85;
 	filter: Alpha(Opacity=85);
@@ -274,11 +276,11 @@ input[readonly=readonly] {
 }
 
 .teamTable .semiFinal {
-	color: yellow;
+	/* color: yellow; */
 }
 
 .teamTable .finalA {
-	color: red;
+	/* color: red; */
 }
 
 .teamTable .finalB {
