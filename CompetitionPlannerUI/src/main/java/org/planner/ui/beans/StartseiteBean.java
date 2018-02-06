@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
-import java.security.MessageDigest;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.jar.Manifest;
@@ -15,14 +14,13 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.PhaseId;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.common.AuthBean;
 import org.planner.ui.util.JsfUtil;
+import org.planner.ui.util.KeepLoggedInAuthenticationMechanism;
 import org.planner.util.LoggingInterceptor.Silent;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.menu.DefaultMenuItem;
@@ -50,8 +48,6 @@ public class StartseiteBean implements Serializable {
 
 	@Inject
 	private AuthBean auth;
-
-	private boolean identityWritten;
 
 	private String mainContent;
 
@@ -123,23 +119,11 @@ public class StartseiteBean implements Serializable {
 	}
 
 	public String leseBenutzerNamen(String userId) {
-		if (!identityWritten) {
-			identityWritten = true;
-			PrimeFaces.current().executeScript("PrimeFaces.identity='" + getIdentity() + "'");
-		}
 		return service.getUserName(userId);
 	}
 
-	private String getIdentity() {
-		User user = auth.getLoggedInUser();
-		try {
-			MessageDigest sha = MessageDigest.getInstance("SHA-512");
-			byte[] digest = sha
-					.digest((user.getId().toString() + Long.toString(user.getCreateTime().getTime())).getBytes("UTF8"));
-			return DatatypeConverter.printHexBinary(digest);
-		} catch (Exception e) {
-			throw new IllegalArgumentException(e);
-		}
+	public String getIdentity() {
+		return KeepLoggedInAuthenticationMechanism.getIdentity(auth.getLoggedInUser());
 	}
 
 	public MenuModel getMenu() {

@@ -18,33 +18,37 @@ function toggleHelp(show) {
 }
 function sendLogin(formId) {
 	var dlg = PF("loginDlg");
+	var uname = dlg.jq.find("input[type=text]");
+	var upass = dlg.jq.find("input[type=password]");
 	var req = createXMLHttpRequest();
 	req.open("POST", "j_security_check");
 	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
 	req.onreadystatechange = function() {
 		if (req.readyState == 4) {
 			dlg.jq.find("input,button").attr("disabled", false).attr("readonly", false);
-			if (req.status == 200 && req.responseText.indexOf("<title>" + dlg.jq.find("#loginDialog_title").text() + "</title>") == -1) {
+			if (req.status == 200 && req.responseText.indexOf("<title>" + dlg.jq.find("#loginDlg_title").text() + "</title>") == -1) {
 				message("");
+				dlg.cfg.onHide = function() {
+					uname.val("");
+					upass.val("");
+				};
 				dlg.hide();
-				var prevId = PrimeFaces.identity;
-				PrimeFaces.ab({ s: formId, f: formId, u: "leftMenu theme currentUser currentUserMenu", onco: function() {
-					if (prevId != PrimeFaces.identity)
-						PrimeFaces.ab( { s: formId, f: formId, u: "mainContent" });
-				}});
+				var prevId = $("#userimg").attr("class");
+				if (prevId != req.responseText)
+					PrimeFaces.ab( { s: formId, f: formId, p: "@none", u: "currentUser leftMenu theme mainContent", ps: true });
 			} else {
 				message("{msg:loginError}");
 			}
 		}
 	}
 	dlg.jq.find("input,button").attr("disabled", true).attr("readonly", true);
-	req.send("j_username=" + dlg.jq.find("input[type=text]").val() + String.fromCharCode(38) + "j_password=" + dlg.jq.find('input[type=password]').val());
+	req.send("j_username=" + uname.val() + "&j_password=" + upass.val());
 }
-function sendRecovery(userMsg, errorMsg) {
+function sendRecovery() {
 	var dlg = PF("loginDlg");
 	var user = dlg.jq.find("input[type=text]").val();
 	if (user == "") {
-		message(userMsg);
+		message("{msg:loginUserMsg}");
 	} else {
 		var req = createXMLHttpRequest();
 		req.open("POST", "passwordreset?user=" + user);
@@ -53,7 +57,7 @@ function sendRecovery(userMsg, errorMsg) {
 				if (req.status == 200)
 					message(req.responseXML.firstChild.textContent);
 				else
-					message(errorMsg);
+					message("{msg:loginUserError}");
 			}
 		}
 		req.send();
@@ -75,13 +79,31 @@ function setUrlParam(val) {
 	if (history.replaceState)
 		history.replaceState("", "", val);
 }
-var announcementEdit = {
-	init: function() {
-		$(editForm).submit(function(e) {
+function checkEmpty(countLabel) {
+	if ($(".ui-datatable-empty-message").length > 0)
+		updateResultCount(countLabel, 0);
+}
+function updateResultCount(countLabel, count) {
+	if (count == undefined)
+		count = PF("searchTable").tbody.children().length;
+	$("[id$=resultCountLabel]").text(countLabel.replace(/xxx/, count));
+}
+function updateColumnWidth(buttonCount) {
+	$("[id$=aktionenColumn]").css("width", "calc(2.5em * " + buttonCount + " + 10px)");
+}
+function attachSubmitHandler() {
+	if (!main.handlerAttached) {
+		$(main).submit(function(e) {
 			setTimeout(function() {
-				$(editForm).find(".ui-submit-param").remove();
+				$(main).find(".ui-submit-param").remove();
 			}, 10);
 		});
+		main.handlerAttached = true;
+	}
+}
+var announcementEdit = {
+	init: function() {
+		attachSubmitHandler();
 		return this;
 	},
 	enableButtons: function(status) {
@@ -97,6 +119,15 @@ var announcementEdit = {
 			btnRevoke.enable();
 	}
 };
+var racesEdit = {
+	enableButtons: function() {
+		var racesTable = PF("racesTable");
+		if (!racesTable || racesTable.getSelectedRowsCount() == 0)
+			PF("btnRaceDelete").disable();
+		else
+			PF("btnRaceDelete").enable();
+	}
+}
 var registrationEdit = {
 	enableButtons: function() {
 		var racesTable = PF("racesTable");
@@ -116,7 +147,7 @@ var registrationEdit = {
 	},
 	checkEmpty: function() {
 		if ($("[id$=athletesTable] .ui-datatable-empty-message").length > 0)
-			updateResultCount(0);
+			this.updateAthletesCount(0);
 		return this;
 	},
 	updateAthletesCount: function(count) {
@@ -130,12 +161,21 @@ var registrationEdit = {
 		$("[id$=resultSelectedLabel]").text("{msg:registrations.selected, xxx}".replace(/xxx/, count));
 		return this;
 	},
-	copyFilters: function() {
+	copyFilters: function(fromSelection) {
 		var racesTable = PF("racesTable");
 		var athletesTable = PF("athletesTable");
-		var ageType = racesTable.jq.find("[name$=ageType\\:filter]").val();
+		if (fromSelection) {
+			var selectedId = racesTable.jq.find("[id$=racesTable_selection]").val();
+			var row = racesTable.jq.find("tr[data-rk=" + selectedId + "]");
+			var ageType = row.children().eq(2).text();
+			var gender = row.children().eq(3).text();
+			if (gender == "mixed")
+				gender = "";
+		} else {
+			var ageType = racesTable.jq.find("[name$=ageType\\:filter]").val();
+			var gender = racesTable.jq.find("[name$=gender\\:filter]").val();
+		}
 		athletesTable.jq.find("[name$=ageType\\:filter]").val(ageType);
-		var gender = racesTable.jq.find("[name$=gender\\:filter]").val();
 		athletesTable.jq.find("[name$=gender\\:filter]").val(gender);
 		athletesTable.filter();
 	},
@@ -200,15 +240,12 @@ var programEdit = {
 		numChecked == 2 ? PF("swapRaces").enable() : PF("swapRaces").disable();
 	}
 };
-function setupAjax() {
+function initLoginDialog() {
 	$.ajaxSetup({
 		dataFilter: function(data) {
 			if (data.indexOf("{msg:loginTitle}") != -1) {
 				PrimeFaces.debug("Detected unauthenticated request");
-				var dlg = PF("loginDlg");
-				dlg.jq.find("input[type=text]").val("");
-				dlg.jq.find('input[type=password]').val("");
-				dlg.show();
+				PF("loginDlg").show();
 				data = "<?xml version='1.0' encoding='UTF-8'?><partial-response />";
 			}
 			return data;

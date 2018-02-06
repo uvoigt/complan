@@ -3,11 +3,13 @@ package org.planner.ui.util;
 import static io.undertow.UndertowMessages.MESSAGES;
 
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.Calendar;
 import java.util.Map;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.xml.bind.DatatypeConverter;
 
 import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
@@ -24,6 +26,7 @@ import io.undertow.server.handlers.Cookie;
 import io.undertow.server.handlers.CookieImpl;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.servlet.handlers.security.ServletFormAuthenticationMechanism;
+import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 
 public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticationMechanism {
@@ -45,6 +48,17 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 
 	static User getAuthenticatedUser() {
 		return authenticatedUser.get();
+	}
+
+	public static String getIdentity(User user) {
+		try {
+			MessageDigest sha = MessageDigest.getInstance("SHA-512");
+			byte[] digest = sha
+					.digest((user.getId().toString() + Long.toString(user.getCreateTime().getTime())).getBytes("UTF8"));
+			return DatatypeConverter.printHexBinary(digest);
+		} catch (Exception e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 
 	public KeepLoggedInAuthenticationMechanism(FormParserFactory formParserFactory, String name, String loginPage,
@@ -106,12 +120,14 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 				LOG.debug("Added new authentication cookie " + newCookieValue);
 		}
 		saveLastLogonTime();
+		String identity = getIdentity(getService().getLoggedInUser());
 
 		// da wir durch saveOriginalRequest=false keinen Redirect senden,
 		// wird für den Ajax-Caller eine leere XML-Struktur zurückgegeben
 		// das ist hauptsächlich ein FF-Problem
 		try {
-			exchange.getOutputStream().write("<ok/>".getBytes());
+			exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, "text/plain");
+			exchange.getOutputStream().write(identity.getBytes());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

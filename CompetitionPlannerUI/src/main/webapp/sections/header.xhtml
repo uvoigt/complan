@@ -10,20 +10,21 @@
 	<ui:composition>
 		<ui:param name="bundle" value="#{messages.bundle('header')}"/>
 		<h:panelGroup layout="block" id="heading">
-			<div id="menuButton" onclick="$('#leftMenuContainer').toggle('slide')"
+
+			<ui:insert name="menuButton"><div id="menuButton" onclick="$('#leftMenuContainer').toggle('slide')"
 					onmouseover="$(this).addClass('ui-state-hover')" onmouseout="$(this).removeClass('ui-state-hover')"><div>―</div><div>―</div><div>―</div></div>
+			</ui:insert>
+
 			<h:panelGroup id="title" layout="block">
-				<h:form>
-					<p:commandLink action="#{startseiteBean.setMainContent('/sections/start.xhtml')}"
-							update=":mainContent :messages :leftMenu" process="@this" style="outline: none"
-							value="#{bundle.title}">
-					</p:commandLink>
-				</h:form>
+				<p:commandLink action="#{startseiteBean.setMainContent('/sections/start.xhtml')}"
+						update="mainContent messages leftMenu" process="@this" partialSubmit="true"
+						style="outline: none"
+						value="#{bundle.title}">
+				</p:commandLink>
 			</h:panelGroup>
 			<h:panelGroup id="logout" layout="block">
-				<h:form id="theme">
+				<h:panelGroup id="theme">
 					<h:outputScript>PrimeFaces.changeTheme('#{startseiteBean.theme}');</h:outputScript>
-					<f:passThroughAttribute name="autocomplete" value="off"/>
 					<p:panelGrid columns="2" columnClasses="theme, theme" style="margin-right: 1em" styleClass="ui-noborder">
 						<p:outputLabel value="#{bundle.theme}" style="margin-right: 1em"/>
 						<p:selectOneMenu value="#{startseiteBean.theme}" onchange="PrimeFaces.changeTheme(this.options[this.selectedIndex].value);" height="600">
@@ -31,13 +32,14 @@
 							<f:ajax partialSubmit="true"/>
 						</p:selectOneMenu>
 					</p:panelGrid>
-				</h:form>
+				</h:panelGroup>
 				<h:panelGroup id="currentUser">
 					<p:graphicImage id="userimg" value="userimg" alt="" cache="false" stream="false" width="32" height="32"
-						title="#{bundle.format('loggedin', startseiteBean.leseBenutzerNamen(request.remoteUser))}"/>
+						title="#{bundle.format('loggedin', startseiteBean.leseBenutzerNamen(request.remoteUser))}"
+						styleClass="#{startseiteBean.identity}"/>
 					<p:overlayPanel id="currentUserMenu" my="middle top" for="userimg" styleClass="profileMenu" widgetVar="profileMenu" appendToBody="true">
 						<p:graphicImage value="userimg" alt="" cache="false" stream="false" />
-						<ui:insert name="logout"><form action="logout"><a href="javascript:void(0)" onclick="setUrlParam(); $.post('logout').always(function() { location.reload() })"><h:outputText value="#{bundle.logout}"/></a></form></ui:insert>
+						<h:panelGroup style="" layout="block"><a href="javascript:void(0)" onclick="setUrlParam(); $.post('logout').always(function() { location.reload() })"><h:outputText value="#{bundle.logout}"/></a></h:panelGroup>
 					</p:overlayPanel>
 				</h:panelGroup>
 			</h:panelGroup>
