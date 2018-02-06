@@ -24,6 +24,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Club;
@@ -894,6 +895,8 @@ public class BerichtGenerator {
 
 		Font raceFont = new Font(defaultFont);
 		raceFont.setStyle(defaultFont.getStyle() | Font.BOLD);
+		Font italic = new Font(defaultFont);
+		italic.setStyle(defaultFont.getStyle() | Font.ITALIC);
 
 		java.util.List<ProgramRace> races = new ArrayList<>(program.getRaces());
 
@@ -925,7 +928,7 @@ public class BerichtGenerator {
 			int numRows = table.getRows().size();
 
 			addRaceHeader(table, raceFont, dfDay, dfTime, programRace, race);
-			addRaceParticipants(table, programRace, race);
+			addRaceParticipants(table, programRace, race, italic);
 
 			float tableHeight = table.calculateHeights();
 			if (tableHeight / (document.top() - document.bottomMargin()) > 1) {
@@ -935,7 +938,7 @@ public class BerichtGenerator {
 				addToDocument(Chunk.NEXTPAGE);
 				table = createProgramTable();
 				addRaceHeader(table, raceFont, dfDay, dfTime, programRace, race);
-				addRaceParticipants(table, programRace, race);
+				addRaceParticipants(table, programRace, race, italic);
 			}
 		}
 		addToDocument(table);
@@ -996,7 +999,7 @@ public class BerichtGenerator {
 		table.addCell(cell);
 	}
 
-	private void addRaceParticipants(PdfPTable table, ProgramRace programRace, Race race) {
+	private void addRaceParticipants(PdfPTable table, ProgramRace programRace, Race race, Font italic) {
 		java.util.List<Team> participants = programRace.getParticipants();
 		for (int i = 0; i < participants.size(); i++) {
 			Team team = participants.get(i);
@@ -1006,15 +1009,13 @@ public class BerichtGenerator {
 			java.util.List<TeamMember> members = team.getMembers();
 			int normalTeamSize = race.getBoatClass().getMaximalTeamSize();
 			int n = Math.min(normalTeamSize, members.size());
+			int col = 1;
 			for (int j = 0; j < n; j++) {
 				TeamMember member = members.get(j);
 				User user = member.getUser();
 
-				if (j == 2)
-					table.addCell(new Phrase("", defaultFont));
-
 				if (member.getRemark() != null) {
-					table.addCell(new Phrase(member.getRemark(), defaultFont));
+					col = addMemberCell(j, col, table, new Phrase(member.getRemark(), italic), team);
 				} else {
 					String userName = user.getFirstName() + " " + user.getLastName();
 					String ageGroup = renderer.renderAgeGroup(user);
@@ -1022,37 +1023,46 @@ public class BerichtGenerator {
 						userName += " " + ageGroup;
 					if (!team.getClub().getId().equals(user.getClub().getId()))
 						userName += " (" + user.getClub().getShortNameOrName() + ")";
-					table.addCell(new Phrase(userName, defaultFont));
+					col = addMemberCell(j, col, table, new Phrase(userName, defaultFont), team);
 				}
-
-				if (j == 1)
-					table.addCell(new Phrase(team.getClub().getShortName() != null ? team.getClub().getShortName()
-							: team.getClub().getName(), defaultFont));
-				else if (j == 3)
-					table.addCell(new Phrase("", defaultFont));
-			}
-			if (members.size() == 1) {
-				table.addCell(new Phrase("", defaultFont));
-				table.addCell(new Phrase(team.getClub().getShortName() != null ? team.getClub().getShortName()
-						: team.getClub().getName(), defaultFont));
 			}
 			if (members.size() > normalTeamSize) {
 				for (int j = normalTeamSize; j < members.size(); j++) {
 					TeamMember member = members.get(j);
 					User user = member.getUser();
 
-					PdfPCell cell = new PdfPCell(
-							new Phrase("Ersatz: " + user.getFirstName() + " " + user.getLastName(), defaultFont));
-					cell.setColspan(2);
-					cell.disableBorderSide(Rectangle.BOX);
-					cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-					table.addCell(cell);
-					table.addCell(new Phrase("", defaultFont));
-					table.addCell(new Phrase("", defaultFont));
-					// TODO das klappt bisher nur für einen
+					col = addMemberCell(j, col, table,
+							new Phrase("Ersatz: " + user.getFirstName() + " " + user.getLastName(), italic), team);
 				}
 			}
+			if (col > 0 && col < 3) {
+				col = addMemberCell(members.size(), col, table, new Phrase("", defaultFont), team);
+			}
 		}
+		String hint = renderer.renderFollowUpHint(programRace);
+		if (StringUtils.isNotEmpty(hint)) {
+			PdfPCell cell = new PdfPCell(new Phrase(hint, italic));
+			cell.setColspan(4);
+			cell.disableBorderSide(Rectangle.BOX);
+			table.addCell(cell);
+		}
+	}
+
+	private int addMemberCell(int offset, int col, PdfPTable table, Phrase phrase, Team team) {
+		if (col == 0) {
+			table.addCell(new Phrase("", defaultFont));
+			col++;
+		}
+		table.addCell(phrase);
+		col++;
+		if (col == 3) {
+			if (offset < 2)
+				table.addCell(new Phrase(team.getClub().getShortNameOrName(), defaultFont));
+			else
+				table.addCell(new Phrase("", defaultFont));
+			col = 0;
+		}
+		return col;
 	}
 
 	private PdfPCell createProgramTitle(String name, Date date) {
