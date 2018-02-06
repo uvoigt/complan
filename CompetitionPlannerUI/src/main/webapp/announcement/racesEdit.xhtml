@@ -86,23 +86,13 @@
 							action="#{racesEditBean.delete()}"
 							process="@this racesTable announcementId" update="racesTable"
 							onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('raceComfirmMsg', 'xxx')}'.replace(/xxx/, PF('racesTable').getSelectedRowsCount()))"
-							oncomplete="enableButtons()">
+							oncomplete="racesEdit.enableButtons()">
 						<p:confirm icon=""/>
 					</p:commandButton>
 					<p:commandButton value="#{messages.backToOverview}"
 							action="#{startseiteBean.setMainContent('/announcement/announcements.xhtml')}"
 							process="@this" update="mainContent"/>
 				</p:panelGrid>
-
-				<h:outputScript>
-					function enableButtons() {
-						var racesTable = PF("racesTable");
-						if (!racesTable || racesTable.getSelectedRowsCount() == 0)
-							PF("btnRaceDelete").disable();
-						else
-							PF("btnRaceDelete").enable();
-					}
-				</h:outputScript>
 
 				<p:dataTable id="racesTable" widgetVar="racesTable"
 						var="race" rowKey="#{race.id}"
@@ -122,13 +112,13 @@
 					</f:facet>
 
 					<p:ajax event="sort" process="@form:announcementId"/>
-					<p:ajax event="toggleSelect" oncomplete="enableButtons()"/>
-					<p:ajax event="rowSelect" oncomplete="enableButtons()"/>
-					<p:ajax event="rowUnselect" oncomplete="enableButtons()"/>
-					<p:ajax event="rowSelectCheckbox" oncomplete="enableButtons()"/>
-					<p:ajax event="rowUnselectCheckbox" oncomplete="enableButtons()"/>
+					<p:ajax event="toggleSelect" oncomplete="racesEdit.enableButtons()"/>
+					<p:ajax event="rowSelect" oncomplete="racesEdit.enableButtons()"/>
+					<p:ajax event="rowUnselect" oncomplete="racesEdit.enableButtons()"/>
+					<p:ajax event="rowSelectCheckbox" oncomplete="racesEdit.enableButtons()"/>
+					<p:ajax event="rowUnselectCheckbox" oncomplete="racesEdit.enableButtons()"/>
 					<p:ajax event="cellEdit" listener="#{racesEditBean.onCellEdit}" process="@form:announcementId racesTable"/>
-	
+
 					<p:column selectionMode="multiple" style="width:16px;text-align:center"/>
 					<p:column headerText="#{bundle.day}" sortBy="#{racesEditBean.getRaceDay(race.day)}">
 						<h:outputText value="#{racesEditBean.getRaceDay(race.day)}"/>
@@ -159,9 +149,7 @@
 					</p:column>
 				</p:dataTable>
 
-				<h:outputScript>
-					setTimeout(enableButtons, 500);
-				</h:outputScript>
+				<h:outputScript>racesEdit.enableButtons()</h:outputScript>
 			</h:form>
 		</ui:define>
 	</ui:composition>
