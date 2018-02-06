@@ -28,7 +28,7 @@ public class UploadBean {
 	public interface DownloadHandler {
 		void handleDownload(OutputStream out, String typ, Object selection) throws Exception;
 
-		String getDownloadFileName(Object selection);
+		String getDownloadFileName(String typ, Object selection);
 	}
 
 	public interface UploadHandler {
@@ -84,7 +84,7 @@ public class UploadBean {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		String name;
 		try {
-			name = downloadHandler.getDownloadFileName(selection);
+			name = downloadHandler.getDownloadFileName(typ, selection);
 			downloadHandler.handleDownload(out, typ, selection);
 		} catch (Exception e) {
 			FacesContext.getCurrentInstance().validationFailed();
@@ -112,8 +112,10 @@ public class UploadBean {
 
 		externalContext.setResponseContentType(contentType);
 		externalContext.setResponseCharacterEncoding(encoding);
+		if (content != null)
+			externalContext.setResponseContentLength(content.bytes.length);
 		externalContext.setResponseHeader("Content-Disposition", contentDispositionValue + ";filename=\""
-				+ (content != null ? content.name : downloadHandler.getDownloadFileName(selection)) + "\"");
+				+ (content != null ? content.name : downloadHandler.getDownloadFileName(typ, selection)) + "\"");
 
 		if (RequestContext.getCurrentInstance().isSecure()) {
 			externalContext.setResponseHeader("Cache-Control", "public");

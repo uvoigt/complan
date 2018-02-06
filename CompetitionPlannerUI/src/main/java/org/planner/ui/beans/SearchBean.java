@@ -147,8 +147,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	@Override
-	public String getDownloadFileName(Object selection) {
-		String typ = (String) JsfUtil.getContextVariable("typ");
+	public String getDownloadFileName(String typ, Object selection) {
 		String timestamp = DateFormat.getDateTimeInstance().format(new Date());
 		timestamp = timestamp.replace(' ', '_');
 		return typ + "_" + timestamp + ".csv";
@@ -176,6 +175,11 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		String typ = (String) JsfUtil.getContextVariable("typ");
 		String propertyName = "numrows." + typ;
 		return settings.getTypedValue(propertyName, Integer.class, 50);
+	}
+
+	public int getLastRow() {
+		int min = Math.min(dataModel.getRowCount(), getNumberOfRows()) - 1;
+		return min;
 	}
 
 	public List<ColumnModel> getColumns(String typ) throws Exception {
@@ -363,9 +367,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		return buttonCount;
 	}
 
-	public int getMaxButtonCount() {
-		UIComponent datatable = FacesContext.getCurrentInstance().getViewRoot()
-				.findComponent("datenForm:suchErgebnisTable");
+	public int getMaxButtonCount(UIComponent datatable) {
 		return ((MutableInt) datatable.getAttributes().get("maxButtons")).intValue();
 	}
 }

@@ -79,7 +79,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	}
 
 	@Override
-	public String getDownloadFileName(Object selection) {
+	public String getDownloadFileName(String typ, Object selection) {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selection, "id");
 		loadProgram(id);

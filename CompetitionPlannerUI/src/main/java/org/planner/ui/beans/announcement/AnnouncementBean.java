@@ -221,10 +221,10 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 	}
 
 	@Override
-	public String getDownloadFileName(Object selection) {
+	public String getDownloadFileName(String typ, Object selection) {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		// unterscheide die beiden Use-Cases Aufruf von der Suchseite und Aufruf von der Edit-Seite
-		if (ctx.getExternalContext().getRequestParameterMap().containsKey("editForm")) {
+		if ("edit".equals(typ)) {
 			// das ist bei Neuanlage einer Ausschreibung
 			if (announcement.getClub() == null) {
 				Club club = auth.getLoggedInUser().getClub();
