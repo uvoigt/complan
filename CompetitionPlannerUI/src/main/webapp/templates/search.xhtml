@@ -14,25 +14,9 @@
 	<ui:param name="renderNewButtonValue" value="#{renderNewButton != null ? renderNewButton : true}"/>
 	<ui:param name="renderCopyButtonValue" value="#{renderCopyButton != null ? renderCopyButton : true}"/>
 
-	<h:form id="datenForm" onkeypress="if (event.keyCode == 13) return false;">
+	<h:outputScript>$(".ui-columntoggler").remove()</h:outputScript>
 
-		<h:outputScript>
-		function checkEmpty() {
-			if ($(".ui-datatable-empty-message").length > 0)
-				updateResultCount(0);
-		}
-		function updateResultCount(count) {
-			if (count == undefined)
-				count = PF("suchErgebnisTable").tbody.children().length;
-			var l = $("[id*=resultCountLabel]");
-			l.text('#{bundle.format("count", "xxx")}'.replace(/xxx/, count));
-		}
-		function updateColumnWidth(buttonCount) {
-			$("[id*=aktionenColumn]").css("width", "calc(2.5em * " + buttonCount + " + 10px)");
-		}
-		$(".ui-columntoggler").remove();
-		
-		</h:outputScript>
+	<h:form id="main">
 
 		<h:panelGrid columns="2" width="100%">
 			<h:panelGroup layout="block" style="margin: 5px; float: left">
@@ -42,8 +26,9 @@
 					update=":mainContent"
 					style="margin-right: 5px"
 					rendered="#{renderCrudButtonsValue and renderNewButtonValue}"/>
-	
+
 				<ui:insert name="buttonExt"/>
+
 			</h:panelGroup>
 			<h:panelGroup layout="block" style="margin: 5px; float: right" rendered="#{renderDownloadPanel}">
 				<p:commandButton value="#{bundle.download}"
@@ -53,7 +38,7 @@
 				</p:commandButton>
 				<h:panelGroup layout="block" style="float: left">
 					<p:fileUpload fileUploadListener="#{uploadBean.upload}"
-							update="importPanel suchErgebnisTable"
+							update="importPanel searchTable"
 							multiple="true"
 							label="#{bundle.chooseUpload}"
 							uploadLabel="#{bundle.upload}"
@@ -63,7 +48,7 @@
 						<p:outputLabel value="#{bundle.format('uploaded', uploadBean.uploadedSize)}"/>
 						<p:commandButton value="#{bundle.process}" action="#{uploadBean.processUploaded}"
 								process="@this"
-								update="importPanel :leftMenu suchErgebnisTable"
+								update="importPanel :leftMenu searchTable"
 								disabled="#{uploadBean.uploadedSize == 0}"/>
 						<p:commandButton value="#{messages.delete}" action="#{uploadBean.deleteUploaded}"
 								process="@this"
@@ -74,7 +59,7 @@
 			</h:panelGroup>
 		</h:panelGrid>
 
-		<p:dataTable id="suchErgebnisTable" widgetVar="suchErgebnisTable"
+		<p:dataTable id="searchTable" widgetVar="searchTable"
 				var="item" rowKey="#{item.id}" rowIndexVar="rowIndex"
 				value="#{searchBean.getDataModel(typ)}"
 				lazy="true" paginator="true" paginatorAlwaysVisible="false"
@@ -90,7 +75,7 @@
 			</f:facet>
 
 			<p:ajax event="page" listener="#{searchBean.onPagination}"/>
-			<p:ajax event="filter" listener="#{searchBean.onFilter}" oncomplete="checkEmpty()"/>
+			<p:ajax event="filter" listener="#{searchBean.onFilter}" oncomplete="checkEmpty('#{bundle.format('count', 'xxx')}')"/>
 			<p:ajax event="sort" listener="#{searchBean.onSort}"/>
 			<p:ajax event="rowDblselect" listener="#{searchBean.bearbeiten(bearbeitenLink, typ, editBean)}"
 					process="@form" update="mainContent" disabled="#{doubleClickDisabled != null ? doubleClickDisabled : false}"/>
@@ -104,10 +89,7 @@
 				<f:facet name="header">
 					<h:outputText value="#{column.header}"/>
 				</f:facet>
-				<ui:param name="wert" value="#{searchBean.render(item, column)}"/>
-				<ui:param name="isImage" value="#{wert.startsWith('data:image')}"/>
-				<h:graphicImage value="#{wert}" rendered="#{isImage}"/>
-				<h:outputText value="#{wert}" rendered="#{!isImage}"/>
+				<h:outputText value="#{searchBean.render(item, column)}"/>
 			</p:columns>
 			<!--  diese column is ggf. nicht sichtbar.. dann ist der Property-Value null -->
 			<ui:param name="firstProperty" value="#{searchBean.getColumns(typ)[0].property}"/>
@@ -116,12 +98,12 @@
 				<f:facet name="header">
 					<h:outputText value="#{messages.tableHeaderActions}"/>
 					<p:commandButton id="toggler" type="button" title="Spalten" style="float:right" icon="ui-icon-calculator" />
-					<p:columnToggler datasource="suchErgebnisTable" trigger="toggler" widgetVar="toggler">
-						<p:ajax event="toggle" listener="#{searchBean.columnChooserListener}" update="suchErgebnisTable" onstart="PF('toggler').hide()"/>
+					<p:columnToggler datasource="searchTable" trigger="toggler" widgetVar="toggler">
+						<p:ajax event="toggle" listener="#{searchBean.columnChooserListener}" update="searchTable" onstart="PF('toggler').hide()"/>
 					</p:columnToggler>
 				</f:facet>
 
-				<p:commandButton id="bearbeitenButton" icon="ui-icon-pencil" title="#{bundle.modify}"
+				<p:commandButton icon="ui-icon-pencil" title="#{bundle.modify}"
 						action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
 						process="@form"
 						update=":mainContent"
@@ -138,19 +120,15 @@
 				<p:commandButton icon="ui-icon-trash" title="#{bundle.delete}"
 						action="#{searchBean.loeschen(typ, item.id)}"
 						process="@this"
-						update="suchErgebnisTable messagesPopup"
+						update="searchTable messagesPopup"
 						rendered="#{renderCrudButtonsValue}"
 						onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"
-						style="float: right;">
+						style="float: right">
 					<p:confirm icon=""/>
 				</p:commandButton>
 				<h:panelGroup layout="block" id="rowInfo" styleClass="hiddenHint"/>
-				<h:outputScript rendered="#{rowIndex == 0}">
-					updateResultCount(#{searchBean.getDataModel(typ).rowCount});
-				</h:outputScript>
-				<h:outputScript rendered="#{rowIndex == (searchBean.getDataModel(typ).rowCount - 1)}">
-					updateColumnWidth(#{searchBean.getMaxButtonCount()});
-				</h:outputScript>
+				<h:outputScript rendered="#{rowIndex == 0}">updateResultCount('#{bundle.format("count", "xxx")}', #{searchBean.getDataModel(typ).rowCount})</h:outputScript>
+				<h:outputScript rendered="#{rowIndex == searchBean.lastRow}">updateColumnWidth(#{searchBean.getMaxButtonCount(component.parent.parent)})</h:outputScript>
 			</p:column>
 		</p:dataTable>
 
@@ -158,18 +136,10 @@
 			<p:commandButton widgetVar="pdfButton" style="display: none"
 					action="#{uploadBean.download(null, 'application/pdf', null, null)}"
 					ajax="false" process="@this"/>
-	
-			<h:outputScript>
-				$(datenForm).submit(function(e) {
-					setTimeout(function() {
-						$(datenForm).find(".ui-submit-param").remove();
-					}, 10);
-				});
-			</h:outputScript>
+
+			<h:outputScript>attachSubmitHandler()</h:outputScript>
 		</h:panelGroup>
-
 	</h:form>
-
 </ui:define>
 </ui:composition>
 </body>

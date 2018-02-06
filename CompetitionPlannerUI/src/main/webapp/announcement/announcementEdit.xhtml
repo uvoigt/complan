@@ -80,9 +80,9 @@
 						<p:commandButton value="#{bundle.revokeStatus}" action="#{announcementBean.setStatus('created')}"
 							process="announcementId @this" widgetVar="btnRevoke" onsuccess="announcementEdit.enableButtons(0)"
 							style="margin-left: 10px" rendered="#{authBean.inRole('Tester')}"/>
-						<p:commandButton value="#{bundle.testPdf}" action="#{announcementBean.uploadBean.create(null, announcement)}"
+						<p:commandButton value="#{bundle.testPdf}" action="#{announcementBean.uploadBean.create('edit', announcement)}"
 							process="@form" style="margin-left: 10px"
-							oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('editForm',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
+							oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('main',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
 						<p:commandButton widgetVar="pdfButton" style="display: none"
 							action="#{announcementBean.uploadBean.download(null, 'application/pdf', null, null)}"
 							ajax="false" process="@this"/>

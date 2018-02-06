@@ -11,7 +11,7 @@
 
 			<ui:param name="canSave" value="#{true}"/>
 
-			<h:form id="editForm">
+			<h:form id="main">
 
 				<ui:insert name="editArea"/>
 
@@ -30,7 +30,7 @@
 					<p:defaultCommand target="btnSave" />
 				</h:panelGroup>
 
-				<h:outputScript rendered="#{not empty facesContext.messageList}">setTimeout(function() { $(".ui-layout-unit-content").eq(1).scrollTop(0); }, 100);</h:outputScript>
+				<h:outputScript rendered="#{not empty facesContext.messageList}">setTimeout(function() { $(".ui-layout-unit-content").eq(1).scrollTop(0); }, 100)</h:outputScript>
 
 			</h:form>
 		</ui:define>

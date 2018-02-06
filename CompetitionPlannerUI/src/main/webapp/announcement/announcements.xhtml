@@ -25,7 +25,8 @@
 			<p:commandButton icon="ui-icon-print" title="#{bundle.createPdf}"
 					action="#{announcementBean.uploadBean.create(null, item)}"
 					process="@this"
-					oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('datenForm',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
+					partialSubmit="true"
+					oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('main',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
 			<p:commandButton icon="ui-icon-comment" title="#{bundle.register}"
 					action="#{registrationBean.createRegistration(item)}"
 					process="@this"
