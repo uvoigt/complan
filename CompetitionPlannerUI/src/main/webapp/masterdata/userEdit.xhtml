@@ -16,9 +16,7 @@
 		<ui:param name="user" value="#{userBean.user}"/>
 
 		<ui:define name="editArea">
-			<h:outputScript>
-				$(".ui-selectonemenu-panel:gt(0)").remove();
-			</h:outputScript>
+			<h:outputScript>$("[id$=clubSelection_panel]:gt(0)").remove()</h:outputScript>
 
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.userId}"/></div>
@@ -80,7 +78,7 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<c:choose>
 						<c:when test="#{authBean.inRole('Admin')}">
-							<p:selectOneMenu value="#{userBean.clubId}" validator="#{userBean.validateClub(component)}"
+							<p:selectOneMenu id="clubSelection" value="#{userBean.clubId}" validator="#{userBean.validateClub(component)}"
 									validatorMessage="#{bundle.format('fieldValidation', bundle.club)}">
 								<f:selectItems value="#{userBean.clubs}" var="club" itemValue="#{club.id}" itemLabel="#{club.name}"/>
 							</p:selectOneMenu>
