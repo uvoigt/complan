@@ -110,6 +110,12 @@
             <logger category="org.planner">
                 <level name="DEBUG"/>
             </logger>
+            <logger category="org.planner.ejb.ServiceFacadeBean">
+                <level name="INFO"/>
+            </logger>
+            <logger category="javax.enterprise.resource.webcontainer.jsf.lifecycle">
+                <level name="ERROR"/>
+            </logger>
             <root-logger>
                 <level name="INFO"/>
                 <handlers>
