@@ -212,6 +212,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	public void setStatus(AnnouncementStatus status) {
 		service.setAnnouncementStatus(announcement.getId(), status);
+		announcement.setStatus(status);
 		FacesContext.getCurrentInstance().addMessage(null,
 				new FacesMessage(null, messages.get("announcements.statusSet_" + status)));
 	}

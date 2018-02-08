@@ -4,6 +4,7 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
 	xmlns:p="http://primefaces.org/ui"
 	xmlns:pe="http://primefaces.org/ui/extensions">
 
@@ -16,7 +17,7 @@
 
 		<ui:define name="editArea">
 
-			<h:inputHidden id="announcementId" value="#{announcement.id}"/>
+			<ui:param name="canSave" value="#{announcement.status != 'announced'}"/>
 
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.name}"/></div>
@@ -76,9 +77,11 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<div class="ui-g">
 						<p:commandButton value="#{bundle.setStatus}" action="#{announcementBean.setStatus('announced')}"
-							process="announcementId @this" widgetVar="btnAnnounce" onsuccess="announcementEdit._enableButtons(1)"/>
+							process="@this" update="buttons" partialSubmit="true" widgetVar="btnAnnounce"
+							onsuccess="announcementEdit.enableButtons(1)"/>
 						<p:commandButton value="#{bundle.revokeStatus}" action="#{announcementBean.setStatus('created')}"
-							process="announcementId @this" widgetVar="btnRevoke" onsuccess="announcementEdit.enableButtons(0)"
+							process="@this" update="buttons" partialSubmit="true" widgetVar="btnRevoke"
+							onsuccess="announcementEdit.enableButtons(0)"
 							style="margin-left: 10px" rendered="#{authBean.inRole('Tester')}"/>
 						<p:commandButton value="#{bundle.testPdf}" action="#{announcementBean.uploadBean.create('edit', announcement)}"
 							process="@form" style="margin-left: 10px"
