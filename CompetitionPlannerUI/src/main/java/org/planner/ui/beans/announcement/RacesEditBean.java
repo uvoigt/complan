@@ -11,7 +11,6 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
-import javax.faces.component.UIInput;
 import javax.faces.validator.ValidatorException;
 import javax.inject.Named;
 
@@ -48,12 +47,13 @@ public class RacesEditBean extends AbstractEditBean {
 
 	private List<Integer> distances;
 
-	private UIInput hiddenAnnouncementId;
-
+	@Override
 	@PostConstruct
 	@SuppressWarnings("unchecked")
 	public void init() {
 		announcementId = getIdFromRequestParameters();
+		if (announcementId == null)
+			announcementId = (Long) JsfUtil.getViewVariable("id");
 		selectedRaces = new ArrayList<>();
 		distances = (List<Integer>) JsfUtil.getViewVariable("distances");
 		if (distances == null) {
@@ -67,27 +67,6 @@ public class RacesEditBean extends AbstractEditBean {
 		JsfUtil.setViewVariable("distances", distances);
 	}
 
-	public Long getAnnouncementId() {
-		if (announcementId != null)
-			return announcementId;
-		Object value = hiddenAnnouncementId.getSubmittedValue();
-		if (value != null)
-			announcementId = Long.valueOf((String) value);
-		return announcementId;
-	}
-
-	public void setAnnouncementId(Long announcementId) {
-		this.announcementId = announcementId;
-	}
-
-	public UIInput getHiddenAnnouncementId() {
-		return hiddenAnnouncementId;
-	}
-
-	public void setHiddenAnnouncementId(UIInput hiddenAnnouncementId) {
-		this.hiddenAnnouncementId = hiddenAnnouncementId;
-	}
-
 	public Announcement getAnnouncement() {
 		if (announcement == null)
 			announcement = service.getObject(Announcement.class, announcementId, 1);
@@ -96,7 +75,7 @@ public class RacesEditBean extends AbstractEditBean {
 
 	public List<Race> getRaces() {
 		if (races == null)
-			races = service.getRaces(getAnnouncementId());
+			races = service.getRaces(announcementId);
 		return races;
 	}
 
@@ -118,8 +97,9 @@ public class RacesEditBean extends AbstractEditBean {
 		for (Race race : selectedRaces) {
 			ids.add(race.getId());
 		}
-		service.deleteRaces(getAnnouncementId(), ids);
+		service.deleteRaces(announcementId, ids);
 		races = null;
+		selectedRaces = null;
 	}
 
 	public Gender[] getGenders() {

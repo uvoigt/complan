@@ -4,7 +4,8 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:pe="http://primefaces.org/ui/extensions">
 
 	<ui:composition template="/templates/title.xhtml">
 
@@ -12,9 +13,7 @@
 		<ui:param name="title" value="#{bundle.races}"/>
 		<ui:define name="content">
 
-			<h:form>
-				<h:inputHidden id="announcementId" value="#{racesEditBean.announcementId}"
-					binding="#{racesEditBean.hiddenAnnouncementId}"/>
+			<h:form prependId="false">
 
 				<h:panelGroup layout="block" styleClass="ui-g">
 					<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em">
@@ -84,9 +83,9 @@
 							process="@form" update="@form"/>
 					<p:commandButton value="#{bundle.raceDelete}" widgetVar="btnRaceDelete"
 							action="#{racesEditBean.delete()}"
-							process="@this racesTable announcementId" update="racesTable"
+							process="racesTable @this" update="@this racesTable"
 							onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('raceComfirmMsg', 'xxx')}'.replace(/xxx/, PF('racesTable').getSelectedRowsCount()))"
-							oncomplete="racesEdit.enableButtons()">
+							disabled="#{param.racesTable_selection == null or facesContext.currentPhaseId.name == 'RENDER_RESPONSE'}">
 						<p:confirm icon=""/>
 					</p:commandButton>
 					<p:commandButton value="#{messages.backToOverview}"
@@ -111,13 +110,10 @@
 						</h:panelGroup>
 					</f:facet>
 
-					<p:ajax event="sort" process="@form:announcementId"/>
-					<p:ajax event="toggleSelect" oncomplete="racesEdit.enableButtons()"/>
-					<p:ajax event="rowSelect" oncomplete="racesEdit.enableButtons()"/>
-					<p:ajax event="rowUnselect" oncomplete="racesEdit.enableButtons()"/>
-					<p:ajax event="rowSelectCheckbox" oncomplete="racesEdit.enableButtons()"/>
-					<p:ajax event="rowUnselectCheckbox" oncomplete="racesEdit.enableButtons()"/>
-					<p:ajax event="cellEdit" listener="#{racesEditBean.onCellEdit}" process="@form:announcementId racesTable"/>
+					<pe:javascript event="toggleSelect" execute="racesEdit.enableButtons()"/>
+					<pe:javascript event="rowSelectCheckbox" execute="racesEdit.enableButtons()"/>
+					<pe:javascript event="rowUnselectCheckbox" execute="racesEdit.enableButtons()"/>
+					<p:ajax event="cellEdit" listener="#{racesEditBean.onCellEdit}" process="racesTable"/>
 
 					<p:column selectionMode="multiple" style="width:16px;text-align:center"/>
 					<p:column headerText="#{bundle.day}" sortBy="#{racesEditBean.getRaceDay(race.day)}">
@@ -148,8 +144,6 @@
 						<h:outputText value="#{race.distance}"/>
 					</p:column>
 				</p:dataTable>
-
-				<h:outputScript>racesEdit.enableButtons()</h:outputScript>
 			</h:form>
 		</ui:define>
 	</ui:composition>
