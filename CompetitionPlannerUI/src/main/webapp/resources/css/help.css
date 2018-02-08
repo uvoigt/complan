@@ -7,4 +7,8 @@ dt {
 }
 .help-button {
 	cursor: auto !important;
+	margin: 0.5em 0.5em 0.5em 0 !important;
+}
+.help-section {
+	display: none;
 }

@@ -12,11 +12,11 @@
 		<ui:param name="typ" value="org.planner.eo.Registration"/>
 		<ui:param name="bearbeitenLink" value="/announcement/registrationEdit.xhtml"/>
 		<ui:param name="editBean" value="#{registrationBean}"/>
-		<ui:param name="renderNewButton" value="false"/>
-		<ui:param name="renderCopyButton" value="false"/>
 
+		<ui:define name="newButton"/>
+		<ui:define name="copyButton"/>
 		<ui:define name="addRowButtons">
-			<p:commandButton icon="ui-icon-mail-closed" title="#{bundle.setStatus}"
+			<p:commandButton icon="fa fa-envelope-o" title="#{bundle.setStatus}"
 					action="#{registrationBean.setStatus(item, 'submitted')}"
 					process="@this"
 					update="searchTable"

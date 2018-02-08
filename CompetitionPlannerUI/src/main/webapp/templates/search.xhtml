@@ -10,22 +10,19 @@
 <ui:composition template="/templates/title.xhtml">
 <ui:define name="content">
 
-	<ui:param name="renderCrudButtonsValue" value="#{renderCrudButtons != null ? renderCrudButtons : true}"/>
-	<ui:param name="renderNewButtonValue" value="#{renderNewButton != null ? renderNewButton : true}"/>
-	<ui:param name="renderCopyButtonValue" value="#{renderCopyButton != null ? renderCopyButton : true}"/>
-
 	<h:outputScript>$(".ui-columntoggler").remove()</h:outputScript>
 
 	<h:form id="main">
 
 		<h:panelGrid columns="2" width="100%">
 			<h:panelGroup layout="block" style="margin: 5px; float: left">
-				<p:commandButton value="#{bundle.newButton}"
-					action="#{searchBean.anlegen(bearbeitenLink, typ, editBean)}"
-					process="@form"
-					update=":mainContent"
-					style="margin-right: 5px"
-					rendered="#{renderCrudButtonsValue and renderNewButtonValue}"/>
+				<ui:insert name="newButton">
+					<p:commandButton value="#{bundle.newButton}"
+						action="#{searchBean.anlegen(bearbeitenLink, typ, editBean)}"
+						process="@form"
+						update="mainContent"
+						style="margin-right: 5px"/>
+				</ui:insert>
 
 				<ui:insert name="buttonExt"/>
 
@@ -97,35 +94,39 @@
 			<p:column id="aktionenColumn" toggleable="false" style="width: calc(2.5em * #{searchBean.getButtonCount(component)} + 10px)" styleClass="hiddenHintCol">
 				<f:facet name="header">
 					<h:outputText value="#{messages.tableHeaderActions}"/>
-					<p:commandButton id="toggler" type="button" title="Spalten" style="float:right" icon="ui-icon-calculator" />
+					<p:commandButton id="toggler" type="button" title="Spalten" style="float:right" icon="fa fa-wrench" />
 					<p:columnToggler datasource="searchTable" trigger="toggler" widgetVar="toggler">
 						<p:ajax event="toggle" listener="#{searchBean.columnChooserListener}" update="searchTable" onstart="PF('toggler').hide()"/>
 					</p:columnToggler>
 				</f:facet>
 
-				<p:commandButton icon="ui-icon-pencil" title="#{bundle.modify}"
-						action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
-						process="@form"
-						update=":mainContent"
-						styleClass="editButton"
-						rendered="#{renderCrudButtonsValue}"/>
+				<ui:insert name="editButton">
+					<p:commandButton icon="fa fa-edit" title="#{bundle.modify}"
+							action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
+							process="@form"
+							update="mainContent"
+							styleClass="editButton"/>
+				</ui:insert>
 
 				<ui:insert name="addRowButtons"/>
 
-				<p:commandButton icon="ui-icon-copy" title="#{bundle.copy}"
-						action="#{searchBean.kopieren(bearbeitenLink, typ, item, editBean)}"
-						process="@this"
-						update=":mainContent"
-						rendered="#{renderCrudButtonsValue and renderCopyButtonValue}"/>
-				<p:commandButton icon="ui-icon-trash" title="#{bundle.delete}"
-						action="#{searchBean.loeschen(typ, item.id)}"
-						process="@this"
-						update="searchTable messagesPopup"
-						rendered="#{renderCrudButtonsValue}"
-						onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"
-						style="float: right">
-					<p:confirm icon=""/>
-				</p:commandButton>
+				<ui:insert name="copyButton">
+					<p:commandButton icon="fa fa-copy" title="#{bundle.copy}"
+							action="#{searchBean.kopieren(bearbeitenLink, typ, item, editBean)}"
+							process="@this"
+							update="mainContent"/>
+				</ui:insert>
+				<ui:insert name="deleteButton">
+					<p:commandButton icon="fa fa-trash-o" title="#{bundle.delete}"
+							action="#{searchBean.loeschen(typ, item.id)}"
+							process="@this"
+							update="searchTable messagesPopup"
+							onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"
+							style="float: right">
+						<p:confirm icon=""/>
+					</p:commandButton>
+				</ui:insert>
+
 				<h:panelGroup layout="block" id="rowInfo" styleClass="hiddenHint"/>
 				<h:outputScript rendered="#{rowIndex == 0}">updateResultCount('#{bundle.format("count", "xxx")}', #{searchBean.getDataModel(typ).rowCount})</h:outputScript>
 				<h:outputScript rendered="#{rowIndex == searchBean.lastRow}">updateColumnWidth(#{searchBean.getMaxButtonCount(component.parent.parent)})</h:outputScript>

@@ -58,7 +58,7 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.email}" autocomplete="off" maxlength="255" size="30"/>
 					<p:commandButton value="#{bundle.passwordEmail}"
-						styleClass="ui-confirmdialog-yes" icon="ui-icon-mail-closed" style="margin-left: 5px"
+						styleClass="ui-confirmdialog-yes" icon="fa fa-envelope-o" style="margin-left: 5px"
 						action="#{registryBean.sendPasswortReset(user.id)}"
 						process="@this"
 						update=":messages"
@@ -86,9 +86,7 @@
 						<c:otherwise>
 							<p:inputText value="#{user.club.id ne null ? user.club.name : userBean.myUser.club.name}" size="30" readonly="true"/>
 							<h:inputHidden id="clubid" value="#{userBean.clubId}"/>
-							<h:outputScript>
-								$("[id*=clubid]").val("#{userBean.myUser.club.id}");
-							</h:outputScript>
+							<h:outputScript>$("[id$=clubid]").val("#{userBean.myUser.club.id}")</h:outputScript>
 						</c:otherwise>
 					</c:choose>
 				</div>
