@@ -16,12 +16,14 @@ import java.util.Map.Entry;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.EntityManager;
 import javax.transaction.RollbackException;
 
 import org.planner.dao.Authorizer;
 import org.planner.dao.Authorizer.AnnouncementAuthorizer;
 import org.planner.dao.Authorizer.RegistrationAuthorizer;
 import org.planner.dao.Authorizer.UserAuthorizer;
+import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
 import org.planner.dao.QueryModifier;
 import org.planner.ejb.CallerProvider;
@@ -205,29 +207,42 @@ public class CommonImpl {
 	}
 
 	public <T extends AbstractEntity> T getByIdForCopy(Class<T> typ, Long id) {
-		T object = getById(typ, id, 1);
+		final T object = getById(typ, id, 1);
 		if (object != null) {
-			// object.setId(null);
-			try {
-				for (PropertyDescriptor pd : Introspector.getBeanInfo(object.getClass()).getPropertyDescriptors()) {
-					Object propertyValue = pd.getReadMethod().invoke(object);
-					if (propertyValue instanceof AbstractEntity) {
-						// ((AbstractEntity) propertyValue).setId(null);
-					} else if (propertyValue instanceof Collection) {
-						for (Object o : ((Collection<?>) propertyValue)) {
-							// if (o instanceof AbstractEntity)
-							// ((AbstractEntity) o).setId(null);
+			dao.executeOperation(new IOperation<Void>() {
+				@Override
+				public Void execute(EntityManager em) {
+					try {
+						for (PropertyDescriptor pd : Introspector.getBeanInfo(object.getClass())
+								.getPropertyDescriptors()) {
+							Object propertyValue = pd.getReadMethod().invoke(object);
+							if (propertyValue instanceof AbstractEntity) {
+								((AbstractEntity) propertyValue).setId(null);
+								em.detach(propertyValue);
+							} else if (propertyValue instanceof Collection) {
+								for (Object o : ((Collection<?>) propertyValue)) {
+									if (o instanceof AbstractEntity) {
+										((AbstractEntity) o).setId(null);
+										em.detach(o);
+									}
+								}
+							} else if (propertyValue instanceof Map) {
+								for (Entry<?, ?> e : ((Map<?, ?>) propertyValue).entrySet()) {
+									if (e.getValue() instanceof AbstractEntity) {
+										((AbstractEntity) e.getKey()).setId(null);
+										em.detach(e.getKey());
+									}
+								}
+							}
 						}
-					} else if (propertyValue instanceof Map) {
-						for (Entry<?, ?> e : ((Map<?, ?>) propertyValue).entrySet()) {
-							// if (e.getValue() instanceof AbstractEntity)
-							// ((AbstractEntity) e.getKey()).setId(null);
-						}
+					} catch (Exception e) {
+						throw new TechnischeException("Fehler beim Lesen der Properties", e);
 					}
+					object.setId(null);
+					em.detach(object);
+					return null;
 				}
-			} catch (Exception e) {
-				throw new TechnischeException("Fehler beim Lesen der Properties", e);
-			}
+			});
 		}
 		return object;
 	}
