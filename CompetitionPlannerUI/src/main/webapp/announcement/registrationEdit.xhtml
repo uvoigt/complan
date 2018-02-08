@@ -59,19 +59,19 @@
 					</p:dataTable>
 
 					<h:panelGroup>
-						<p:commandButton type="button" icon="ui-icon-circle-arrow-e" title="#{bundle.copyFilter}"
+						<p:commandButton type="button" icon="fa fa-arrow-circle-right" title="#{bundle.copyFilter}"
 							onclick="registrationEdit.copyFilters()"
 							style="margin-bottom: 1em"/>
-						<p:commandButton type="button" icon="ui-icon-person" title="#{bundle.addRequest}"
+						<p:commandButton type="button" icon="fa fa-user-plus" title="#{bundle.addRequest}"
 							onclick="PF('remarkDlg').show()"
 							widgetVar="btnAddRequest"
 							style="margin-bottom: 1em"/>
-						<p:commandButton icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
+						<p:commandButton icon="fa fa-arrow-circle-down" title="#{bundle.addToRegistration}"
 							widgetVar="btnAddAthlete"
 							action="#{registrationBean.addToRegistration()}"
 							process="@form"
 							update="registrationTable"/>
-						<p:commandButton id="btnCancel" icon="ui-icon-arrowthick-1-w" title="#{messages.backToOverview}"
+						<p:commandButton id="btnCancel" icon="fa fa-arrow-left" title="#{messages.backToOverview}"
 							action="#{startseiteBean.setMainContent('/announcement/registrations.xhtml')}"
 							process="@this"
 							update="mainContent"
@@ -102,10 +102,10 @@
 									<h:outputLabel id="resultSelectedLabel"
 										value="#{bundle.format('selected', registrationBean.selectedAthletes != null ? registrationBean.selectedAthletes.size() : 0)}"/>
 								</h:panelGroup>
-								<p:commandButton id="toggler" type="button"
+								<p:selectBooleanButton id="toggler" type="button"
 									style="float:right; margin: -5px -10px 0 0;"
-									icon="ui-icon-calculator" title="#{bundle.chooseClub}"
-									onclick="registrationEdit.toggleColumn(PF('athletesTable'), 1); $('[id$=clubVisible]').val($('[id$=clubVisible]').val() == 'false' ? 'true' : 'false')"/>
+									onIcon="fa fa-minus-square-o" offIcon="fa fa-plus-square-o" title="#{bundle.chooseClub}"
+									onchange="registrationEdit.toggleColumn(PF('athletesTable'), 1); $('[id$=clubVisible]').val($('[id$=clubVisible]').val() == 'false' ? 'true' : 'false')"/>
 							</f:facet>
 
 							<p:ajax event="page" process="@form:clubVisible" update="@form:clubVisible"/>
@@ -174,7 +174,7 @@
 						</ui:repeat>
 					</p:column>
 					<p:column width="30">
-						<p:commandButton icon="ui-icon-trash" title="#{bundle.deleteParticipant}"
+						<p:commandButton icon="fa fa-trash-o" title="#{bundle.deleteParticipant}"
 								action="#{registrationBean.deleteFromRegistration(entry)}"
 								process="registrationTable"
 								update="registrationTable"/>
