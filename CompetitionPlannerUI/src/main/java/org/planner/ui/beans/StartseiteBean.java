@@ -145,6 +145,7 @@ public class StartseiteBean implements Serializable {
 		menu.addElement(createMenuItem(id++, bundle.get("roles"), "/masterdata/roles.xhtml", auth.inRole("Admin")));
 
 		DefaultMenuItem item = new DefaultMenuItem(bundle.get("help"));
+		item.setGlobal(true);
 		item.setId(Integer.toString(id));
 		item.setCommand("#{startseiteBean.setHelpVisible(true)}");
 		item.setProcess("@this");
@@ -158,6 +159,7 @@ public class StartseiteBean implements Serializable {
 
 	private MenuElement createMenuItem(int id, String text, String path, boolean rendered) {
 		DefaultMenuItem item = new DefaultMenuItem(text);
+		item.setGlobal(true);
 		item.setId(Integer.toString(id));
 		item.setCommand("#{startseiteBean.setMainContentAndReset('" + path + "')}");
 		item.setProcess("@this");
@@ -188,11 +190,14 @@ public class StartseiteBean implements Serializable {
 	}
 
 	public String getHelp() throws IOException {
-		String mainContent = getMainContent();
+		return getHelp(getMainContent());
+	}
+
+	public String getHelp(String path) throws IOException {
 		String help = messages.bundle("help").getStringOrNull(mainContent);
 		if (help == null) {
 			Locale locale = FacesContext.getCurrentInstance().getViewRoot().getLocale();
-			InputStream in = getClass().getResourceAsStream("/help/" + locale.getLanguage() + "/" + mainContent);
+			InputStream in = getClass().getResourceAsStream("/help/" + locale.getLanguage() + "/" + path);
 			if (in != null) {
 				try {
 					help = IOUtils.toString(in, "UTF-8");
@@ -202,13 +207,28 @@ public class StartseiteBean implements Serializable {
 				// entferne die komplette erste Zeile mit dem Meta-Element
 				if (help.startsWith("<meta"))
 					help = help.substring(help.indexOf("\r\n") + 2);
-				help = substitute(help, "Implementation-Version", "Build-Timestamp");
+				help = substituteFromManifest(help, "Implementation-Version", "Build-Timestamp");
+				help = substituteContent(help);
 			}
 		}
 		return help;
 	}
 
-	private String substitute(String text, String... attributes) {
+	private String substituteContent(String text) throws IOException {
+		String pattern = "${embed:";
+		int index = text.indexOf(pattern);
+		if (index == -1)
+			return text;
+		int end = text.indexOf("}", index);
+		if (end == -1)
+			return text;
+		String path = text.substring(index + pattern.length(), end);
+		String help = getHelp(path);
+		text = text.substring(0, index) + help + text.substring(end + 1);
+		return substituteContent(text);
+	}
+
+	private String substituteFromManifest(String text, String... attributes) {
 		Manifest manifest = null;
 		for (String attribute : attributes) {
 			String pattern = "${" + attribute + "}";
