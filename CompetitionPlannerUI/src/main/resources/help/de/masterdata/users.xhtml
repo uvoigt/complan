@@ -1,42 +1,42 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 
 <h1>Benutzersuche</h1>
-
-Diese Seite zeigt alle Benutzer des eigenen Vereins an.
+<p>
+Diese Seite zeigt alle Benutzer des eigenen Vereins an. Die folgenden Funktionen werden unterstützt:
+</p>
 <dl>
-	<dt>Filtern</dt>
-<dd>Dafür gibt man Buchstaben oder Zahlen in das Feld unter dem Spaltennamen ein
-und drückt Enter. Der Vergleich ist unabhängig von der Groß-/Kleinschreibung.
-</dd>
-	<dt>Sortieren</dt>
-<dd>Klickt man mit der Maus auf eine Spalte der Kopfzeile, wird nach dieser
-Spalte sortiert. Eine Sortierung nach mehreren Spalten ist über das Halten
-von <font face="Courier"><b>«Strg»</b></font> beim Klick möglich.</dd>
-	<dt>
-	<button class="help-button ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" onclick="return false;" type="button">
-		<span class="ui-button-icon-left ui-icon ui-c ui-icon-pencil"></span>
-		<span class="ui-button-text ui-c">Benutzer bearbeiten</span>
-	</button>
-	Benutzer bearbeiten</dt>
-<dd>Benutzen Sie diesen Button, um den Benutzer in der Zeile auf der nächsten Seite in
-Detailansicht bearbeiten zu können. Übrigens funktioniert auch ein Doppelklick auf der Zeile.</dd>
-	<dt>
-	<button class="help-button ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" onclick="return false;" type="button">
-		<span class="ui-button-icon-left ui-icon ui-c ui-icon-trash"></span>
-		<span class="ui-button-text ui-c">Benutzer löschen</span>
-	</button>
-	Benutzer löschen</dt>
-<dd>Löschen Sie den Benutzer in der Zeile mit dem Klick auf diesen Button. Bevor die
-Löschung durchgeführt wird, werden Sie noch um eine Bestätigung gebeten.</dd>
-	<dt>Neuen Benutzer anlegen</dt>
+<dt><button class="help-button ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" onclick="return false" type="button">
+	<span class="ui-button-text ui-c">Neuen Benutzer anlegen</span>
+</button></dt>
 <dd>Hiermit gelangen Sie auf die Eingabeseite, auf der Sie einen neuen Benutzer anlegen können</dd>
-	<dt>Benutzer herunterladen</dt>
+<dt><button class="help-button ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" onclick="return false" type="button">
+	<span class="ui-button-text ui-c">Benutzer herunterladen</span>
+</button></dt>
 <dd>Verwenden Sie diesen Button, um alle Benutzer des Vereins in eine CSV-Datei zu exportieren.
 Die Datei kann sofort heruntergeladen und gespeichert werden.</dd>
-	<dt>Benutzer auswählen / Hochladen</dt>
+<dt><button class="help-button ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" onclick="return false" type="button">
+	<span class="ui-button-text ui-c">Benutzer auswählen / Hochladen</span>
+</button></dt>
 <dd>Hiermit kann eine CSV-Datei im gleichen Format wie die Exportdatei ausgewählt und
 hochgeladen werden. Die Benutzer werden dann sofort angelegt. Befinden sich in der Datei
 Benutzer mit einem Anmeldenamen, welcher bereits durch einen anderen Benutzer verwendet wird,
 ggf. auch in einem anderen Verein, dann wird dieser Benutzer nicht angelegt und eine
 Fehlermeldung wird am Ende des Imports angezeigt.</dd>
+${embed:/sections/search.xhtml}
+<dt>
+<button class="help-button ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" onclick="return false" type="button">
+	<span class="ui-button-icon-left ui-icon ui-c fa fa-edit"></span>
+	<span class="ui-button-text ui-c">Benutzer bearbeiten</span>
+</button>
+Benutzer bearbeiten</dt>
+<dd>Benutzen Sie diesen Button, um den Benutzer in der Zeile auf der nächsten Seite in
+Detailansicht bearbeiten zu können. Übrigens funktioniert auch ein Doppelklick auf der Zeile.</dd>
+<dt>
+<button class="help-button ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" onclick="return false" type="button">
+	<span class="ui-button-icon-left ui-icon ui-c fa fa-trash-o"></span>
+	<span class="ui-button-text ui-c">Benutzer löschen</span>
+</button>
+Benutzer löschen</dt>
+<dd>Löschen Sie den Benutzer in der Zeile mit dem Klick auf diesen Button. Bevor die
+Löschung durchgeführt wird, werden Sie noch um eine Bestätigung gebeten.</dd>
 </dl>
