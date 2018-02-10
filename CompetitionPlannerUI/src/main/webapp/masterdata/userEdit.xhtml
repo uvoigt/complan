@@ -58,7 +58,7 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.email}" autocomplete="off" maxlength="255" size="30"/>
 					<p:commandButton value="#{bundle.passwordEmail}"
-						styleClass="ui-confirmdialog-yes" icon="fa fa-envelope-o" style="margin-left: 5px"
+						styleClass="ui-confirmdialog-yes" icon="ui-icon-mail-closed" style="margin-left: 5px"
 						action="#{registryBean.sendPasswortReset(user.id)}"
 						process="@this"
 						update=":messages"

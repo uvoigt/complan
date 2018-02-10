@@ -34,26 +34,6 @@
     <param-name>com.sun.faces.enableViewStateIdRendering</param-name>
     <param-value>false</param-value>
   </context-param>
-  <context-param>
-    <param-name>primefaces.FONT_AWESOME</param-name>
-    <param-value>true</param-value>
-  </context-param>
-  <mime-mapping>
-  	<extension>eot</extension>
-  	<mime-type>font/eot</mime-type>
-  </mime-mapping>
-  <mime-mapping>
-  	<extension>ttf</extension>
-  	<mime-type>font/ttf</mime-type>
-  </mime-mapping>
-  <mime-mapping>
-  	<extension>woff</extension>
-  	<mime-type>font/woff</mime-type>
-  </mime-mapping>
-  <mime-mapping>
-  	<extension>woff2</extension>
-  	<mime-type>font/woff2</mime-type>
-  </mime-mapping>
   <env-entry>
     <!-- keine ViewExpiredException! -->
     <env-entry-name>jsf/ClientSideSecretKey</env-entry-name>

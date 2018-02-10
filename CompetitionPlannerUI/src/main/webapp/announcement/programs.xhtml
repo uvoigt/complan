@@ -18,7 +18,7 @@
 		<ui:define name="newButton"/>
 		<ui:define name="copyButton"/>
 		<ui:define name="addRowButtons">
-			<p:commandButton icon="fa fa-print" title="#{bundle.createPdf}"
+			<p:commandButton icon="ui-icon-print" title="#{bundle.createPdf}"
 					action="#{programBean.uploadBean.create(null, item)}"
 					process="@this"
 					oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('main',{'token':args.token}); PF('pdfButton').jq.click(); }"/>

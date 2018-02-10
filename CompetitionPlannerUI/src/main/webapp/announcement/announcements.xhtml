@@ -13,7 +13,7 @@
 		<ui:param name="editBean" value="#{announcementBean}"/>
 		<ui:param name="renderDownloadSupport" value="true"/>
 		<ui:param name="uploadBean" value="#{announcementBean.uploadBean}"/>
-		<ui:param name="doubleClickDisabled" value="#{not (authBean.inRole('Sportwart'))}"/>
+		<ui:param name="doubleClickDisabled" value="#{not (authBean.inRole('Sportwart')) or item['club.name'] != authBean.loggedInUser.club.name}"/>
 
 		<ui:define name="newButton">
 			<p:commandButton value="#{bundle.newButton}"
@@ -24,7 +24,7 @@
 				rendered="#{authBean.inRole('Sportwart')}"/>
 		</ui:define>
 		<ui:define name="editButton">
-			<p:commandButton icon="fa #{item.status != 'announced' ? 'fa-edit' : 'fa-square-o'}"
+			<p:commandButton icon="#{item.status != 'announced' ? 'ui-icon-pencil' : 'ui-icon-document'}"
 					title="#{item.status != 'announced' ? bundle.modify : bundle.display}"
 					action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
 					process="@form"
@@ -34,7 +34,7 @@
 					disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/>
 		</ui:define>
 		<ui:define name="copyButton">
-			<p:commandButton icon="fa fa-copy" title="#{bundle.copy}"
+			<p:commandButton icon="ui-icon-copy" title="#{bundle.copy}"
 					action="#{searchBean.kopieren(bearbeitenLink, typ, item, editBean)}"
 					process="@this"
 					update="mainContent"
@@ -42,7 +42,7 @@
 					disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/>
 		</ui:define>
 		<ui:define name="deleteButton">
-			<p:commandButton icon="fa fa-trash-o" title="#{bundle.delete}"
+			<p:commandButton icon="ui-icon-trash" title="#{bundle.delete}"
 					action="#{searchBean.loeschen(typ, item.id)}"
 					process="@this"
 					update="searchTable messagesPopup"
@@ -54,24 +54,24 @@
 			</p:commandButton>
 		</ui:define>
 		<ui:define name="addRowButtons">
-			<p:commandButton id="racesButton" icon="fa fa-flag-checkered" title="#{bundle.races}"
+			<p:commandButton id="racesButton" icon="ui-icon-flag" title="#{bundle.races}"
 					action="#{searchBean.bearbeiten('/announcement/racesEdit.xhtml', item.id, racesEditBean)}"
 					process="@form"
 					update=":mainContent"
 					rendered="#{authBean.inRole('Sportwart')}"
 					disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/>
-			<p:commandButton icon="fa fa-print" title="#{bundle.createPdf}"
+			<p:commandButton icon="ui-icon-print" title="#{bundle.createPdf}"
 					action="#{announcementBean.uploadBean.create(null, item)}"
 					process="@this"
 					partialSubmit="true"
 					oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('main',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
-			<p:commandButton icon="fa fa-check-circle" title="#{bundle.register}"
+			<p:commandButton icon="ui-icon-comment" title="#{bundle.register}"
 					action="#{registrationBean.createRegistration(item)}"
 					process="@this"
 					update="mainContent"
 					rendered="#{authBean.inRole('Sportwart', 'Trainer', 'Mastersportler')}"
 					disabled="#{item.status != 'announced'}"/>
-			<p:commandButton icon="fa fa-calculator" title="#{bundle.createProgram}"
+			<p:commandButton icon="ui-icon-calculator" title="#{bundle.createProgram}"
 					action="#{programBean.createProgram(item)}"
 					process="@this"
 					update="mainContent"
