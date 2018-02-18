@@ -12,3 +12,9 @@ dt {
 .help-section {
 	display: none;
 }
+.outer {
+	margin: -5px;
+}
+.inner {
+	margin: 5px;
+}
