@@ -4,7 +4,8 @@
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:pe="http://primefaces.org/ui/extensions">
 <head />
 <body>
 <ui:composition template="/templates/title.xhtml">
@@ -14,7 +15,7 @@
 
 	<h:form id="main">
 
-		<h:panelGrid columns="2" width="100%">
+		<h:panelGrid columns="2" width="100%" rendered="#{not noButtons}">
 			<h:panelGroup layout="block" style="margin: 5px; float: left">
 				<ui:insert name="newButton">
 					<p:commandButton value="#{bundle.newButton}"
@@ -74,9 +75,10 @@
 			<p:ajax event="page" listener="#{searchBean.onPagination}"/>
 			<p:ajax event="filter" listener="#{searchBean.onFilter}" oncomplete="checkEmpty('#{bundle.format('count', 'xxx')}')"/>
 			<p:ajax event="sort" listener="#{searchBean.onSort}"/>
-			<p:ajax event="rowDblselect" listener="#{searchBean.bearbeiten(bearbeitenLink, typ, editBean)}"
-					process="@form" update="mainContent" disabled="#{doubleClickDisabled != null ? doubleClickDisabled : false}"/>
+			<pe:javascript event="rowDblselect" execute="rowDoubleClicked(PF('searchTable'), params[0].value)"/>
 			<f:event type="preRenderComponent" listener="#{searchBean.onPrerenderTable}"/>
+			<p:remoteCommand name="executeRowDblselect" action="#{searchBean.bearbeiten(bearbeitenLink, typ, editBean)}"
+				process="@form" update="mainContent"/>
 
 			<p:columns var="column" value="#{searchBean.getColumns(typ)}"
 					filterBy="#{item[column.property]}"
@@ -91,7 +93,7 @@
 			<!--  diese column is ggf. nicht sichtbar.. dann ist der Property-Value null -->
 			<ui:param name="firstProperty" value="#{searchBean.getColumns(typ)[0].property}"/>
 
-			<p:column id="aktionenColumn" toggleable="false" style="width: calc(2.5em * #{searchBean.getButtonCount(component)} + 10px)" styleClass="hiddenHintCol">
+			<p:column id="aktionenColumn" toggleable="false" style="width: calc(2.5em * #{searchBean.getButtonCount(component)} + 10px)">
 				<f:facet name="header">
 					<h:outputText value="#{messages.tableHeaderActions}"/>
 					<p:commandButton id="toggler" type="button" title="Spalten" style="float:right" icon="ui-icon-wrench" />
@@ -127,9 +129,7 @@
 					</p:commandButton>
 				</ui:insert>
 
-				<h:panelGroup layout="block" id="rowInfo" styleClass="hiddenHint"/>
-				<h:outputScript rendered="#{rowIndex == 0}">updateResultCount('#{bundle.format("count", "xxx")}', #{searchBean.getDataModel(typ).rowCount})</h:outputScript>
-				<h:outputScript rendered="#{rowIndex == searchBean.lastRow}">updateColumnWidth(#{searchBean.getMaxButtonCount(component.parent.parent)})</h:outputScript>
+				<h:outputScript rendered="#{rowIndex == searchBean.lastRow}">updateResultCount('#{bundle.format("count", "xxx")}', #{searchBean.getDataModel(typ).rowCount});updateColumnWidth(#{searchBean.getMaxButtonCount(component.parent.parent)})</h:outputScript>
 			</p:column>
 		</p:dataTable>
 

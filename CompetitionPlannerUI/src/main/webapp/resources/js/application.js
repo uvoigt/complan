@@ -91,6 +91,9 @@ function updateResultCount(countLabel, count) {
 function updateColumnWidth(buttonCount) {
 	$("[id$=aktionenColumn]").css("width", "calc(2.5em * " + buttonCount + " + 10px)");
 }
+function rowDoubleClicked(table, rowId) {
+	table.jq.find("[data-rk=" + rowId + "]>:last-child>.editButton").trigger("click");
+}
 function attachSubmitHandler() {
 	if (!main.handlerAttached) {
 		$(main).submit(function(e) {

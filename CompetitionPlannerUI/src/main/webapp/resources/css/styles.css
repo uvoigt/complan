@@ -158,18 +158,6 @@
 	margin-right: 10px !important;
 }
 
-td.hiddenHintCol {
-	position: relative;
-}
-
-.hiddenHint {
-	position: absolute;
-	right: 0;
-	top: 0;
-	height: 5px;
-	width: 5px;
-}
-
 .copyDialog > div {
 	overflow: hidden !important;
 }
@@ -190,7 +178,7 @@ td.hiddenHintCol {
 	bottom: 0;
 	margin: auto;
 	width: 10em;
-	height: 1.2em;
+	height: 1.4em;
 	text-align: center;
 	background-color: white;
 	color: black;
@@ -265,6 +253,19 @@ input[readonly=readonly] {
 .regEditTableMid {
 	padding: 1px !important;
 	vertical-align: middle;
+}
+
+.expanded {
+	width: 100%;
+}
+
+.expanded .ui-datalist-content {
+	height: 100%;
+}
+
+.program-dayTimes {
+	float: left;
+	margin-right: 1em;
 }
 
 .ui-datalist-header {
