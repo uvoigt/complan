@@ -21,21 +21,21 @@
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.userId}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
-					<p:inputText value="#{user.userId}" size="30" readonly="#{true}"/>
+					<p:inputText value="#{user.userId}" size="30" readonly="#{true}" style="max-width: 98%"/>
 				</div>
 			</div>
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.firstName}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.firstName}" autocomplete="off" maxlength="255" size="30" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.firstName)}"/>
+						requiredMessage="#{bundle.format('fieldValidation', bundle.firstName)}" style="max-width: 98%"/>
 				</div>
 			</div>
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.lastName}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.lastName}" autocomplete="off" maxlength="255" size="30" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.lastName)}"/>
+						requiredMessage="#{bundle.format('fieldValidation', bundle.lastName)}" style="max-width: 98%"/>
 				</div>
 			</div>
 			<div class="ui-g">
@@ -43,20 +43,21 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:password value="#{user.password}" autocomplete="off" maxlength="255" size="30" inline="true"
 						match="pwd2" feedback="true" promptLabel="#{bundle.passwordPrompt}" validatorMessage="#{bundle.passwordNoMatch}"
-						weakLabel="#{bundle.passwordWeak}" goodLabel="#{bundle.passwordGood}" strongLabel="#{bundle.passwordStrong}"/>
+						weakLabel="#{bundle.passwordWeak}" goodLabel="#{bundle.passwordGood}" strongLabel="#{bundle.passwordStrong}"
+						style="max-width: 98%"/>
 				</div>
 			</div>
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.password2}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
-					<p:password id="pwd2" autocomplete="off" maxlength="255" size="30"/>
+					<p:password id="pwd2" autocomplete="off" maxlength="255" size="30" style="max-width: 98%"/>
 				</div>
 			</div>
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.email}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{user.email}" autocomplete="off" maxlength="255" size="30" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.email)}"/>
+						requiredMessage="#{bundle.format('fieldValidation', bundle.email)}" style="max-width: 98%"/>
 				</div>
 			</div>
 			<div class="ui-g">
@@ -64,7 +65,7 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<c:choose>
 					<c:when test="${user.club.id != null}">
-						<p:inputText value="#{user.club.name}" size="30" readonly="true"/>
+						<p:inputText value="#{user.club.name}" size="30" readonly="true" style="max-width: 98%"/>
 					</c:when>
 					<c:otherwise>
 						<p:inplace label="#{bundle.editClub}">
