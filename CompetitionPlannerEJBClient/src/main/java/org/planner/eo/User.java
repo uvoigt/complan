@@ -61,7 +61,7 @@ public class User extends AbstractEntity {
 	@ManyToMany
 	@JoinTable(inverseJoinColumns = @JoinColumn(name = "role_id"))
 	@OrderBy("role")
-	@Visible(export = true, order = 6)
+	@Visible(export = true, order = 6, multiRowGroup = "userId")
 	private Set<Role> roles = new HashSet<>();
 
 	// aufgrund der Neuanlage bei Registrierung muss das bei der Erstanmeldung

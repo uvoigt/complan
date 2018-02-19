@@ -55,6 +55,7 @@ import org.planner.model.LocalizedEnum;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.model.Suchkriterien.Filter;
+import org.planner.model.Suchkriterien.Property;
 import org.planner.model.Suchkriterien.SortField;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
@@ -275,38 +276,41 @@ public class PlannerDao {
 		CriteriaQuery<T> dataQuery = builder.createQuery(returningType);
 		Root<?> dataRoot = dataQuery.from(entityType);
 		Set<String> joined = null;
+		Map<Expression<?>, Expression<?>> columnReplacement = null;
 		if (kriterien.getProperties() != null) {
 			joined = new HashSet<>();
 			From<?, ?> from = dataRoot;
 
 			List<Selection<?>> selection = new ArrayList<Selection<?>>();
-			for (String property : kriterien.getProperties()) {
-				if (hasDottedNotation(property)) {
-					Entry<From<?, ?>, String> entry = followDots(property, from, joined);
+			for (Property property : kriterien.getProperties()) {
+				String propertyName = property.getName();
+				if (hasDottedNotation(propertyName)) {
+					Entry<From<?, ?>, String> entry = followDots(propertyName, from, joined);
 					from = entry.getKey();
-					property = entry.getValue();
+					propertyName = entry.getValue();
 				}
-				Path<Object> propPath = from.get(property);
-				selection.add(propPath);
+				Path<Object> propPath = from.get(propertyName);
+				String multiRowGroup = property.getMultiRowGroup();
+				if (StringUtils.isNotEmpty(multiRowGroup)) {
+					Expression<String> concat = builder.function("group_concat", String.class, propPath, propPath);
+					selection.add(concat);
+					if (columnReplacement == null)
+						columnReplacement = new HashMap<>();
+					columnReplacement.put(propPath, concat);
+					Expression<?> groupBy = dataRoot.get(multiRowGroup);
+					dataQuery.groupBy(groupBy);
+					// columnReplacement = .builder..
+				} else {
+					selection.add(propPath);
+				}
 				from = dataRoot;
 			}
 			dataQuery.multiselect(selection.toArray(new Selection<?>[selection.size()]));
-
-			// joine den Benutzer, um nicht später weitere Queries ausführen zu
-			// müssen
-			if (kriterien.getProperties().contains(AbstractEntity_.updateTime)) {
-				// dataQuery.from(User.);
-				// Join<Object, Object> join1 =
-				// dataRoot.join(AbstractEntity_.createUser.getName(),
-				// JoinType.LEFT);
-				// join1.on(builder.equal(join1.get(""), y));
-
-			}
 		}
 		//
 		buildWhereClause(filters, modifiedFilterValues, kriterien.isExact(), kriterien.isIgnoreCase(), builder,
 				dataQuery, dataRoot, joined, queryModifier);
-		buildOrderByClause(kriterien.getSortierung(), builder, dataQuery, dataRoot);
+		buildOrderByClause(kriterien.getSortierung(), builder, dataQuery, dataRoot, joined, columnReplacement);
 
 		TypedQuery<T> query = em.createQuery(dataQuery);
 		setParameters(query, filters, modifiedFilterValues, kriterien.isIgnoreCase(), queryModifier);
@@ -460,12 +464,14 @@ public class PlannerDao {
 		throw new IllegalArgumentException("Unknown comparison operator: " + filter.getComparisonOperator());
 	}
 
+	@SuppressWarnings("unchecked")
 	private void buildOrderByClause(List<SortField> sortierung, CriteriaBuilder builder, CriteriaQuery<?> query,
-			From<?, ?> root) {
+			From<?, ?> root, Set<String> joined, Map<Expression<?>, Expression<?>> columnReplacement) {
 
 		List<Order> orders = null;
 		if (sortierung != null) {
-			Set<String> joined = new HashSet<>();
+			if (joined == null)
+				joined = new HashSet<>();
 			for (SortField sort : sortierung) {
 
 				From<?, ?> from = root;
@@ -476,12 +482,17 @@ public class PlannerDao {
 					property = entry.getValue();
 				}
 
-				Expression<String> feld = from.get(property);
+				Expression<?> feld = from.get(property);
 				if (orders == null) {
 					orders = new ArrayList<Order>();
 				}
+				if (columnReplacement != null) {
+					Expression<?> replacement = columnReplacement.get(feld);
+					if (replacement != null)
+						feld = replacement;
+				}
 				if (sort.isIgnoreCase() && String.class.equals(feld.getJavaType()))
-					feld = builder.lower(feld);
+					feld = builder.lower((Expression<String>) feld);
 				orders.add(sort.isAsc() ? builder.asc(feld) : builder.desc(feld));
 			}
 		}

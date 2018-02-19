@@ -11,6 +11,7 @@ import org.apache.commons.lang.StringUtils;
 import org.planner.model.IResultProvider;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
+import org.planner.model.Suchkriterien.Property;
 import org.planner.ui.beans.SearchBean.ColumnModel;
 import org.planner.ui.util.JsfUtil;
 import org.primefaces.component.column.Column;
@@ -136,20 +137,20 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 			}
 		}
 		createFilters(krit, filters);
-		List<String> properties = null;
+		List<Property> properties = null;
 		for (ColumnModel column : columns) {
 			if (!column.isVisible())
 				continue;
 			if (properties == null)
 				properties = new ArrayList<>();
-			properties.add(column.getProperty());
+			properties.add(new Property(column.getProperty(), column.getMultiRowGroup()));
 		}
 		if (mandatory != null) {
 			for (ColumnModel column : mandatory) {
 				if (properties == null)
 					properties = new ArrayList<>();
 				if (!properties.contains(column.getProperty()))
-					properties.add(column.getProperty());
+					properties.add(new Property(column.getProperty(), column.getMultiRowGroup()));
 			}
 		}
 

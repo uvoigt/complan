@@ -47,6 +47,10 @@ public class ColumnHandler {
 			return visibility.mandatory();
 		}
 
+		public String getMultiRowGroup() {
+			return visibility.multiRowGroup();
+		}
+
 		public boolean isVisible() {
 			return visible;
 		}

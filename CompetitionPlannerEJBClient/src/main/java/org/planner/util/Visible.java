@@ -38,4 +38,10 @@ public @interface Visible {
 	 * @return die Reihenfolge der Anzeige
 	 */
 	int order() default -1;
+
+	/**
+	 * @return Spalte, nach der gruppiert werden soll, wenn die zugehörige Tabellenspalte über mehrere Zeilen durch
+	 *         einen Group-Join in einen Wert überführt werden soll.
+	 */
+	String multiRowGroup() default "";
 }

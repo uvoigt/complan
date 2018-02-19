@@ -61,14 +61,20 @@ import org.primefaces.model.Visibility;
 public class SearchBean implements DownloadHandler, UploadHandler, Serializable {
 	public static class ColumnModel implements Serializable {
 		private static final long serialVersionUID = 1L;
-		private String header;
-		private String property;
-		private boolean visible;
+		private final String header;
+		private final String property;
+		private final boolean visible;
+		private final String multiRowGroup;
 
 		public ColumnModel(String header, String property, boolean visible) {
+			this(header, property, visible, null);
+		}
+
+		public ColumnModel(String header, String property, boolean visible, String multiRowGroup) {
 			this.header = header;
 			this.property = property;
 			this.visible = visible;
+			this.multiRowGroup = multiRowGroup;
 		}
 
 		public String getHeader() {
@@ -81,6 +87,10 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 		public boolean isVisible() {
 			return visible;
+		}
+
+		public String getMultiRowGroup() {
+			return multiRowGroup;
 		}
 
 		@Override
@@ -141,7 +151,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		List<ColumnModel> exportColumns = new ArrayList<>();
 		Class<Serializable> entityType = loadTyp(typ, Serializable.class);
 		for (Column column : columnHandler.getExportColumns(entityType)) {
-			exportColumns.add(new ColumnModel(null, column.getName(), true));
+			exportColumns.add(new ColumnModel(null, column.getName(), true, column.getMultiRowGroup()));
 		}
 		return exportColumns;
 	}
@@ -194,10 +204,10 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 						+ NLSBundle.class.getSimpleName() + " besitzen", null);
 			for (Column column : columnHandler.getColumns(entityType)) {
 				if (column.isMandatory())
-					mandatoryColumns.add(new ColumnModel(null, column.getName(), false));
+					mandatoryColumns.add(new ColumnModel(null, column.getName(), false, column.getMultiRowGroup()));
 				if (column.isVisibleForCurrentUser())
 					list.add(new ColumnModel(messages.get(nlsBundle.value() + "." + column.getName()), column.getName(),
-							column.isVisible()));
+							column.isVisible(), column.getMultiRowGroup()));
 			}
 			columns.put(typ, list);
 			if (!mandatoryColumns.isEmpty())

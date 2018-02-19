@@ -48,6 +48,7 @@ import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.model.Suchkriterien.Filter;
 import org.planner.model.Suchkriterien.Filter.Comparison;
+import org.planner.model.Suchkriterien.Property;
 import org.planner.model.Suchkriterien.SortField;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.Messages;
@@ -301,9 +302,10 @@ public class AnnouncementServiceImpl {
 	}
 
 	public Suchergebnis<? extends Serializable> getAthletes(final Suchkriterien criteria) {
-		criteria.setProperties(Arrays.asList(User_.club.getName() + "." + Club_.name.getName(),
-				User_.club.getName() + "." + Club_.shortName.getName(), User_.firstName.getName(),
-				User_.lastName.getName(), User_.birthDate.getName(), User_.gender.getName()));
+		criteria.setProperties(Arrays.asList(new Property(User_.club.getName() + "." + Club_.name.getName()),
+				new Property(User_.club.getName() + "." + Club_.shortName.getName()),
+				new Property(User_.firstName.getName()), new Property(User_.lastName.getName()),
+				new Property(User_.birthDate.getName()), new Property(User_.gender.getName())));
 		return common.internalSearch(User.class, criteria, new AthletesFilterer(criteria));
 	}
 

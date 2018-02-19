@@ -37,6 +37,7 @@
 			<property name="hibernate.cache.use_second_level_cache" value="true"/>
 			<property name="hibernate.cache.use_structured_entries" value="true"/>
 			<property name="hibernate.cache.use_query.cache" value="true" />
+			<property name="hibernate.dialect" value="${dialect}" />
 		</properties>
 	</persistence-unit>
 

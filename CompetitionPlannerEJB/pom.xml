@@ -12,6 +12,30 @@
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
+	<profiles>
+		<profile>
+			<id>H2</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<dialect>org.planner.dao.H2DialectExt</dialect>
+			</properties>
+		</profile>
+		<profile>
+			<id>MySql</id>
+			<activation>
+				<property>
+					<name>os.name</name>
+					<value>Linux</value>
+				</property>
+			</activation>
+			<properties>
+				<dialect>org.planner.dao.MySQL5DialectExt</dialect>
+			</properties>
+		</profile>
+	</profiles>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.competition.planner</groupId>
@@ -24,9 +48,27 @@
 			<version>1.7.20</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
+			<version>5.0.10.Final</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<!-- Wenn man persistence.xml in einen anderen Folder legt, z.B. resources-filtered,
+				     beschwert sich das JPA-Plugin, dass die Datei nicht da wäre.
+				     Ansonsten muss hier darauf geachtet werden, dass nicht andere Dateien ungewollt
+				     Substitutionen erhalten.
+				 -->
+			</resource>
+		</resources>
+
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

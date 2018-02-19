@@ -28,6 +28,7 @@ import org.planner.dao.PlannerDao;
 import org.planner.dao.QueryModifier;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.AbstractEntity;
+import org.planner.eo.AbstractEntity_;
 import org.planner.eo.AbstractEnum;
 import org.planner.eo.AbstractEnum_;
 import org.planner.eo.Announcement;
@@ -44,6 +45,7 @@ import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
+import org.planner.model.Suchkriterien.Property;
 import org.planner.util.LogUtil;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
@@ -74,11 +76,11 @@ public class CommonImpl {
 
 		Authorizer authorizer = null;
 		if (entityType == User.class)
-			authorizer = new UserAuthorizer(getCallingUser());
+			authorizer = new UserAuthorizer(caller, getCallingUser());
 		else if (entityType == Announcement.class)
-			authorizer = new AnnouncementAuthorizer(getCallingUser());
+			authorizer = new AnnouncementAuthorizer(caller, getCallingUser());
 		else if (entityType == Registration.class)
-			authorizer = new RegistrationAuthorizer(getCallingUser());
+			authorizer = new RegistrationAuthorizer(caller, getCallingUser());
 		return internalSearch(entityType, criteria, authorizer);
 	}
 
@@ -86,20 +88,20 @@ public class CommonImpl {
 	<T extends Serializable> Suchergebnis<T> internalSearch(Class<T> entityType, Suchkriterien criteria,
 			QueryModifier queryModifier) {
 
-		List<String> properties = criteria.getProperties();
+		List<Property> properties = criteria.getProperties();
 		if (properties != null) {
 			// die id sollte immer enthalten sein
 			// außerdem lesen wir noch die last-Edit-Eigenschaften
 			// die werden im DAO gesondert behandelt
-			final List<String> additionalProperties = Arrays.asList(AbstractEnum_.id
-					.getName()/*
-								 * , AbstractEntity_.createUser.getName(), AbstractEntity_.createTime.getName(),
-								 * AbstractEntity_.updateUser.getName(), AbstractEntity_.updateTime.getName()
-								 */);
+			final List<Property> additionalProperties = Arrays.asList(new Property(AbstractEnum_.id.getName())
+			/*
+			 * , AbstractEntity_.createUser.getName(), AbstractEntity_.createTime.getName(),
+			 * AbstractEntity_.updateUser.getName(), AbstractEntity_.updateTime.getName()
+			 */);
 			try {
 				properties.addAll(additionalProperties);
 			} catch (UnsupportedOperationException e) {
-				List<String> list = new ArrayList<String>(properties.size() + additionalProperties.size());
+				List<Property> list = new ArrayList<>(properties.size() + additionalProperties.size());
 				list.addAll(additionalProperties);
 				list.addAll(properties);
 				properties = list;
@@ -109,8 +111,6 @@ public class CommonImpl {
 			Suchergebnis<Object[]> data = dao.search(entityType, Object[].class, criteria, queryModifier);
 			List<Object[]> list = data.getListe();
 			List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>(list.size());
-			Class<?> metaType = loadMetaType(entityType);
-			Map<String, Object> previousRow = null;
 			for (Object entry : data) {
 				HashMap<String, Object> resultRow = new HashMap<String, Object>();
 				if (entry instanceof Object[]) {
@@ -118,43 +118,20 @@ public class CommonImpl {
 					// eine Zeile muss genauso lang sein wie die
 					// Properties-Liste
 					for (int i = 0; i < row.length; i++) {
-						String prop = properties.get(i);
-						resultRow.put(prop, row[i]);
+						Property prop = properties.get(i);
+						resultRow.put(prop.getName(), row[i]);
 					}
-					if (previousRow != null && previousRow.get(AbstractEnum_.id.getName())
-							.equals(resultRow.get(AbstractEnum_.id.getName()))) {
-						mergeRows(previousRow, resultRow, metaType);
-					} else {
-						result.add(resultRow);
-						previousRow = resultRow;
-					}
+					result.add(resultRow);
 				} else {
 					// sind keine Properties übergeben worden, wird lediglich
 					// die ID geliefert
-					resultRow.put("id", entry);
+					resultRow.put(AbstractEntity_.id.getName(), entry);
 					result.add(resultRow);
 				}
 			}
 			return (Suchergebnis<T>) new Suchergebnis<HashMap<String, Object>>(result, data.getGesamtgroesse());
 		} else {
 			return dao.search(entityType, criteria, queryModifier);
-		}
-	}
-
-	private void mergeRows(Map<String, Object> row, HashMap<String, Object> nextRow, Class<?> metaType) {
-		for (String key : nextRow.keySet()) {
-			Object value = row.get(key);
-			Object nextValue = nextRow.get(key);
-			if (value != null && nextValue != null && !value.equals(nextValue))
-				row.put(key, value + ", " + nextValue);
-		}
-	}
-
-	private Class<?> loadMetaType(Class<?> entityType) {
-		try {
-			return Class.forName(entityType.getName() + "_");
-		} catch (ClassNotFoundException e) {
-			throw new TechnischeException("Fehler beim Laden des Meta-Typen für " + entityType, e);
 		}
 	}
 
