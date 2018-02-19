@@ -17,91 +17,90 @@
 
 			<h:form>
 
-				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0" legend="#{bundle.options}" widgetVar="optionsSet">
+				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0"
+						legend="#{bundle.options}" widgetVar="optionsSet"
+						rendered="#{authBean.inRole('Sportwart', 'Trainer')}">
 					<pe:javascript event="toggle" execute="programEdit.initExpr()"/>
-					<h:panelGroup styleClass="ui-g" layout="block">
+					<h:panelGroup layout="block" styleClass="ui-g">
 						<h:panelGroup layout="block" style="width: 100%">
 							<p:inputTextarea id="expr" value="#{programOptionsBean.program.options.expr}" style="width: 100%" rows="10" widgetVar="expr"
 								completeMethod="#{programOptionsBean.suggestExpr}" minQueryLength="100" onkeyup="programEdit.evalExpr()"/>
 							<p:inputText widgetVar="exprStatus" readonly="true" style="width: 100%; color: red"/>
 						</h:panelGroup>
-						<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.heatMode}"/></div>
-						<h:panelGroup styleClass="ui-g-12 ui-md-6 ui-lg-4">
-							<div class="ui-g">
-								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoFinal}"/></div>
-								<div><p:spinner value="#{programBean.program.options.intoFinal}" min="0" size="1"/></div>
-							</div>
-							<div class="ui-g">
-								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.intoSemiFinal}"/></div>
-								<div><p:spinner value="#{programBean.program.options.intoSemiFinal}" min="0" size="1"/></div>
-							</div>
-						</h:panelGroup>
-						<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em"><h:outputText value="#{bundle.childProtection}"/></div>
-						<h:panelGroup id="childProtection" styleClass="ui-g-12 ui-md-6 ui-lg-4">
-							<div style="width: 15em; margin-right: 1em">
-								<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}">
-									<p:ajax update="childProtection" partialSubmit="true"/>
-								</p:selectBooleanCheckbox>
-							</div>
-							<div class="ui-g">
-								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.racesPerDay}"/></div>
-								<div><p:spinner value="#{programBean.program.options.racesPerDay}" min="0" size="1" 
-										readonly="#{not programBean.program.options.childProtection}"/></div>
-							</div>
-							<div class="ui-g">
-								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.protectionPeriod}"/></div>
-								<div><p:spinner value="#{programBean.program.options.protectionPeriod}" min="0" size="1"
-										readonly="#{not programBean.program.options.childProtection}"/></div>
-							</div>
-						</h:panelGroup>
 
-						<h:panelGroup styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em">
+						<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em">
 							<h:outputText value="#{bundle.beginTimes}"/>
 						</h:panelGroup>
-						<h:panelGroup styleClass="ui-g-12 ui-md-6 ui-lg-4">
+						<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-4">
 							<div class="ui-g">
-								<p:dataList var="dayTime" rowIndexVar="rowIndex" value="#{programBean.program.options.dayTimes}">
-									<h:outputText value="#{bundle.day} #{rowIndex + 1}"/>
+								<p:dataList var="dayTime" rowIndexVar="rowIndex" value="#{programBean.program.options.dayTimes}" styleClass="expanded">
+									<h:outputText value="#{bundle.day} #{rowIndex + 1}" styleClass="program-dayTimes"/>
 									<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].start}" pattern="HH:mm" timeOnly="true"
-										size="8" style="margin-left: 1em"/>
+										size="8" styleClass="program-dayTimes"/>
 									<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].end}" pattern="HH:mm" timeOnly="true"
-										size="8" style="margin-left: 1em"/>
-									<h:outputText value="#{bundle.breaks}"/>
-									<p:dataList var="break" rowIndexVar="breakIndex" value="#{programBean.program.options.dayTimes[rowIndex].breaks}">
-										<h:outputText value="#{bundle.breakBegin}"/>
-										<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].time}" pattern="HH:mm" timeOnly="true" size="8"/>
-										<h:outputText value="#{bundle.breakDuration}"/>
-										<p:spinner value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].duration}" min="0" size="1"/>
+										size="8" styleClass="program-dayTimes"/>
+									<p:dataList var="break" rowIndexVar="breakIndex" value="#{programBean.program.options.dayTimes[rowIndex].breaks}"
+											styleClass="program-dayTimes" style="border: none" type="none">
+										<h:outputText value="#{bundle.breakBegin}" styleClass="program-dayTimes"/>
+										<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].time}" pattern="HH:mm"
+												timeOnly="true" size="8" styleClass="program-dayTimes"/>
+										<p:spinner value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].duration}" min="0"
+												size="1" styleClass="program-dayTimes"/>
+										<h:outputText value="#{bundle.breakDuration}" styleClass="program-dayTimes"/>
 									</p:dataList>
 								</p:dataList>
 							</div>
 						</h:panelGroup>
 
-						<div class="ui-g">
-							<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.timeLag}"/></div>
-							<div><p:spinner value="#{programBean.program.options.timeLag}" min="0" size="1"/></div>
-						</div>
+						<h:panelGroup layout="block" styleClass="ui-g">
+							<h:panelGroup layout="block" style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.timeLag}"/></h:panelGroup>
+							<h:panelGroup layout="block" style=""><p:spinner value="#{programBean.program.options.timeLag}" min="0" size="1"/></h:panelGroup>
+						</h:panelGroup>
+
+						<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em">
+							<h:outputText value="#{bundle.childProtection}"/>
+						</h:panelGroup>
+						<h:panelGroup id="childProtection" styleClass="ui-g-12 ui-md-6 ui-lg-4">
+							<h:panelGroup layout="block" style="width: 15em; margin-right: 1em">
+								<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}">
+									<p:ajax update="childProtection" partialSubmit="true"/>
+								</p:selectBooleanCheckbox>
+							</h:panelGroup>
+							<div class="ui-g">
+								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.racesPerDay}"/></div>
+								<h:panelGroup layout="block" style=""><p:spinner value="#{programBean.program.options.racesPerDay}" min="0" size="1" 
+										readonly="#{not programBean.program.options.childProtection}"/></h:panelGroup>
+							</div>
+							<div class="ui-g">
+								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.protectionPeriod}"/></div>
+								<h:panelGroup layout="block" style=""><p:spinner value="#{programBean.program.options.protectionPeriod}" min="0" size="1"
+										readonly="#{not programBean.program.options.childProtection}"/></h:panelGroup>
+							</div>
+						</h:panelGroup>
+
 					</h:panelGroup>
 				</p:fieldset>
 
-				<p:panelGrid columns="5" styleClass="ui-panelgrid-blank">
-					<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
-							process="@form" update="programTable"/>
-					<p:commandButton value="#{bundle.checkProgram}" action="#{programBean.checkProgram()}"
-							process="@form" update="programTable"/>
-					<h:panelGroup>
-						<h:outputText value="#{bundle.showTeams}"/>
-						<p:selectBooleanCheckbox value="#{programBean.showTeams}" style="margin-left: 5px">
-							<p:ajax partialSubmit="true" update="programTable"/>
-						</p:selectBooleanCheckbox>
+				<h:panelGroup styleClass="ui-g">
+					<h:panelGroup styleClass="ui-g-12">
+						<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
+								process="@form" update="programTable"/>
+						<p:commandButton value="#{bundle.checkProgram}" action="#{programBean.checkProgram()}"
+								process="@form" update="programTable"/>
+						<h:panelGroup>
+							<h:outputText value="#{bundle.showTeams}"/>
+							<p:selectBooleanCheckbox value="#{programBean.showTeams}" style="margin-left: 5px">
+								<p:ajax partialSubmit="true" update="programTable"/>
+							</p:selectBooleanCheckbox>
+						</h:panelGroup>
+						<p:commandButton widgetVar="swapRaces" value="#{bundle.swapRaces}" action="#{programBean.swapRaces()}"
+								process="@this programTable" update="programTable" partialSubmit="true"
+								onsuccess="PF('swapRaces').disable();"/>
+						<p:commandButton id="btnCancel" value="#{messages.backToOverview}"
+								action="#{startseiteBean.setMainContent('/announcement/programs.xhtml')}"
+								process="@this" partialSubmit="true" update="mainContent"/>
 					</h:panelGroup>
-					<p:commandButton widgetVar="swapRaces" value="#{bundle.swapRaces}" action="#{programBean.swapRaces()}"
-							process="@this programTable" update="programTable" partialSubmit="true"
-							onsuccess="PF('swapRaces').disable();"/>
-					<p:commandButton id="btnCancel" value="#{messages.backToOverview}"
-							action="#{startseiteBean.setMainContent('/announcement/programs.xhtml')}"
-							process="@this" partialSubmit="true" update="mainContent"/>
-				</p:panelGrid>
+				</h:panelGroup>
 
 				<ui:include src="programOutputTable.xhtml"/>
 
