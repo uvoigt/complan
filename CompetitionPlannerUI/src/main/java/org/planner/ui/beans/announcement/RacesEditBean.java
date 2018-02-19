@@ -54,6 +54,7 @@ public class RacesEditBean extends AbstractEditBean {
 		announcementId = getIdFromRequestParameters();
 		if (announcementId == null)
 			announcementId = (Long) JsfUtil.getViewVariable("id");
+		JsfUtil.setViewVariable("id", announcementId);
 		selectedRaces = new ArrayList<>();
 		distances = (List<Integer>) JsfUtil.getViewVariable("distances");
 		if (distances == null) {
