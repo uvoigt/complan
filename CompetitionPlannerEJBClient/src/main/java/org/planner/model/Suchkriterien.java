@@ -106,6 +106,36 @@ public class Suchkriterien implements Serializable {
 		}
 	}
 
+	public static class Property implements Serializable {
+
+		private static final long serialVersionUID = 1L;
+
+		private final String name;
+		private final String multiRowGroup;
+
+		public Property(String name) {
+			this(name, null);
+		}
+
+		public Property(String name, String multiRowGroup) {
+			this.name = name;
+			this.multiRowGroup = multiRowGroup;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String getMultiRowGroup() {
+			return multiRowGroup;
+		}
+
+		@Override
+		public String toString() {
+			return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+		}
+	}
+
 	private static final long serialVersionUID = 1L;
 
 	private int zeilenOffset;
@@ -114,7 +144,7 @@ public class Suchkriterien implements Serializable {
 	private boolean ignoreCase = true;
 	private boolean exact;
 	private List<SortField> sortierung;
-	private List<String> properties;
+	private List<Property> properties;
 
 	public int getZeilenOffset() {
 		return zeilenOffset;
@@ -172,11 +202,11 @@ public class Suchkriterien implements Serializable {
 		sortierung.add(new SortField(sortierFeld, asc));
 	}
 
-	public List<String> getProperties() {
+	public List<Property> getProperties() {
 		return properties;
 	}
 
-	public void setProperties(List<String> properties) {
+	public void setProperties(List<Property> properties) {
 		this.properties = properties;
 	}
 
