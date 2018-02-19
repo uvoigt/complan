@@ -136,7 +136,7 @@ public class StartseiteBean implements Serializable {
 		menu.addElement(createMenuItem(id++, bundle.get("announcement"), "/announcement/announcements.xhtml",
 				auth.inRole("User")));
 		menu.addElement(createMenuItem(id++, bundle.get("registration"), "/announcement/registrations.xhtml",
-				auth.inRole("User")));
+				auth.inRole("Sportwart", "Mastersportler")));
 		menu.addElement(
 				createMenuItem(id++, bundle.get("program"), "/announcement/programs.xhtml", auth.inRole("User")));
 		menu.addElement(createMenuItem(id++, bundle.get("users"), "/masterdata/users.xhtml",
