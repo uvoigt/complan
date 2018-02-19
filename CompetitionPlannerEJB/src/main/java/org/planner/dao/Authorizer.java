@@ -4,6 +4,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.planner.ejb.CallerProvider;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Announcement_;
 import org.planner.eo.Registration.RegistrationStatus;
@@ -15,8 +16,8 @@ import org.planner.eo.User_;
 public abstract class Authorizer extends QueryModifier {
 	public static class UserAuthorizer extends Authorizer {
 
-		public UserAuthorizer(User caller) {
-			super(caller);
+		public UserAuthorizer(CallerProvider provider, User caller) {
+			super(provider, caller);
 		}
 
 		@Override
@@ -26,20 +27,23 @@ public abstract class Authorizer extends QueryModifier {
 	}
 
 	// entweder du bist Vereinsmitglied des Erstellers der Ausschreibung
+	// und in der Rolle Sportwart oder Trainer
+	//
 	// oder du bist kein Vereinsmitglied (Verein egal) und
 	// die Ausschreibung ist im Status "announced"
 	public static class AnnouncementAuthorizer extends Authorizer {
 
-		public AnnouncementAuthorizer(User caller) {
-			super(caller);
+		public AnnouncementAuthorizer(CallerProvider provider, User caller) {
+			super(provider, caller);
 		}
 
 		@Override
 		public Predicate createPredicate(Root root, CriteriaBuilder builder) {
-			Predicate club = builder.equal(root.get(Announcement_.club), nextParam(builder, caller.getClub()));
-			Predicate status = builder.equal(root.get(Announcement_.status),
-					nextParam(builder, AnnouncementStatus.announced));
-			return builder.or(club, status);
+			if (provider.isInRole("Sportwart") || provider.isInRole("Trainer")) {
+				return builder.equal(root.get(Announcement_.club), nextParam(builder, caller.getClub()));
+			} else {
+				return builder.equal(root.get(Announcement_.status), nextParam(builder, AnnouncementStatus.announced));
+			}
 		}
 	}
 
@@ -48,8 +52,8 @@ public abstract class Authorizer extends QueryModifier {
 	// die Meldung ist im Status "submitted"
 	public static class RegistrationAuthorizer extends Authorizer {
 
-		public RegistrationAuthorizer(User caller) {
-			super(caller);
+		public RegistrationAuthorizer(CallerProvider provider, User caller) {
+			super(provider, caller);
 		}
 
 		@Override
@@ -64,9 +68,11 @@ public abstract class Authorizer extends QueryModifier {
 		}
 	}
 
+	protected CallerProvider provider;
 	protected User caller;
 
-	protected Authorizer(User caller) {
+	protected Authorizer(CallerProvider provider, User caller) {
+		this.provider = provider;
 		this.caller = caller;
 	}
 }
