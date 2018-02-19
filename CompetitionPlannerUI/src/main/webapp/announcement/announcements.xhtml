@@ -13,8 +13,8 @@
 		<ui:param name="editBean" value="#{announcementBean}"/>
 		<ui:param name="renderDownloadSupport" value="true"/>
 		<ui:param name="uploadBean" value="#{announcementBean.uploadBean}"/>
-		<ui:param name="doubleClickDisabled" value="#{not (authBean.inRole('Sportwart')) or item['club.name'] != authBean.loggedInUser.club.name}"/>
 
+		<ui:param name="noButtons" value="#{not (authBean.inRole('Sportwart'))}"/>
 		<ui:define name="newButton">
 			<p:commandButton value="#{bundle.newButton}"
 				action="#{searchBean.anlegen(bearbeitenLink, typ, editBean)}"
@@ -54,12 +54,11 @@
 			</p:commandButton>
 		</ui:define>
 		<ui:define name="addRowButtons">
-			<p:commandButton id="racesButton" icon="ui-icon-flag" title="#{bundle.races}"
+			<p:commandButton id="racesButton" icon="ui-icon-flag"
+					title="#{item.status != 'announced' ? bundle.races : bundle.racesDisplay}"
 					action="#{searchBean.bearbeiten('/announcement/racesEdit.xhtml', item.id, racesEditBean)}"
 					process="@form"
-					update=":mainContent"
-					rendered="#{authBean.inRole('Sportwart')}"
-					disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/>
+					update="mainContent"/>
 			<p:commandButton icon="ui-icon-print" title="#{bundle.createPdf}"
 					action="#{announcementBean.uploadBean.create(null, item)}"
 					process="@this"
