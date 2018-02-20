@@ -92,7 +92,9 @@ function updateColumnWidth(buttonCount) {
 	$("[id$=aktionenColumn]").css("width", "calc(2.5em * " + buttonCount + " + 10px)");
 }
 function rowDoubleClicked(table, rowId) {
-	table.jq.find("[data-rk=" + rowId + "]>:last-child>.editButton").trigger("click");
+	var button = table.jq.find("[data-rk=" + rowId + "]>:last-child>.editButton");
+	if (!button.attr("disabled"))
+		button.trigger("click");
 }
 function attachSubmitHandler() {
 	if (!main.handlerAttached) {
