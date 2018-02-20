@@ -40,7 +40,10 @@ public abstract class Authorizer extends QueryModifier {
 		@Override
 		public Predicate createPredicate(Root root, CriteriaBuilder builder) {
 			if (provider.isInRole("Sportwart") || provider.isInRole("Trainer")) {
-				return builder.equal(root.get(Announcement_.club), nextParam(builder, caller.getClub()));
+				Predicate club = builder.equal(root.get(Announcement_.club), nextParam(builder, caller.getClub()));
+				Predicate status = builder.equal(root.get(Announcement_.status),
+						nextParam(builder, AnnouncementStatus.announced));
+				return builder.or(club, status);
 			} else {
 				return builder.equal(root.get(Announcement_.status), nextParam(builder, AnnouncementStatus.announced));
 			}
