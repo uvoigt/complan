@@ -61,11 +61,16 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<filtering>true</filtering>
-				<!-- Wenn man persistence.xml in einen anderen Folder legt, z.B. resources-filtered,
-				     beschwert sich das JPA-Plugin, dass die Datei nicht da wäre.
-				     Ansonsten muss hier darauf geachtet werden, dass nicht andere Dateien ungewollt
-				     Substitutionen erhalten.
-				 -->
+				<includes>
+					<include>**/persistence.xml</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>false</filtering>
+				<excludes>
+					<exclude>**/persistence.xml</exclude>
+				</excludes>
 			</resource>
 		</resources>
 
