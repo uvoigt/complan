@@ -23,6 +23,7 @@ public class TracePhaseListener implements PhaseListener {
 	@Override
 	public void afterPhase(PhaseEvent event) {
 		MDC.remove("phase");
+		MDC.remove("user");
 	}
 
 	@Override
