@@ -3,6 +3,7 @@ package org.planner.ui.beans.announcement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
+import javax.faces.context.PartialViewContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -53,6 +55,10 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	@Inject
 	private BenutzerEinstellungen einstellungen;
 
+	private Long announcementId;
+
+	private Long registrationId;
+
 	private Registration registration;
 
 	private List<Race> races;
@@ -78,13 +84,15 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	public void init() {
 		super.init();
 
-		Long id = getIdFromRequestParameters();
-		if (id == null)
-			id = (Long) JsfUtil.getViewVariable("id");
-		if (id != null) {
-			if (!isCancelPressed())
-				loadRegistration(id);
-			JsfUtil.setViewVariable("id", id);
+		registrationId = getIdFromRequestParameters();
+		announcementId = (Long) getFromRequestParameters(2);
+		if (registrationId == null) {
+			registrationId = (Long) JsfUtil.getViewVariable("id");
+			announcementId = (Long) JsfUtil.getViewVariable("aid");
+		}
+		if (registrationId != null) {
+			JsfUtil.setViewVariable("id", registrationId);
+			JsfUtil.setViewVariable("aid", announcementId);
 		}
 
 		remark = einstellungen.getTypedValue("requestMsg", String.class, JsfUtil.getScopedBundle().get("requestMsg"));
@@ -94,13 +102,18 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	public void setItem(Object item) {
 		// wird nochmals geladen aufgrund der Detailtiefe
 		loadRegistration(((Registration) item).getId());
-		JsfUtil.setViewVariable("id", registration.getId());
+		registrationId = registration.getId();
+		announcementId = registration.getAnnouncement().getId();
+		JsfUtil.setViewVariable("id", registrationId);
+		JsfUtil.setViewVariable("aid", announcementId);
 	}
 
 	private void loadRegistration(Long id) {
 		// TODO auch hier... über einen search-view-parameter die detailtiefe festlegen
 		// 4 aufgrund der Anzeige des Vereins bei manchen Sportlern, ansonsten reicht 2
 		registration = service.getObject(Registration.class, id, 4);
+		// zentraler Ort, um diese zusätzliche Id "nachzuschieben"
+		setRequestParameter(2, registration.getAnnouncement().getId());
 	}
 
 	private void loadRegistrationAndUpdateModel() {
@@ -116,7 +129,15 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		feature.filter(FacesContext.getCurrentInstance(), registrationTable, filterMetadata, null);
 	}
 
+	private boolean isTableTargeted(String tableId) {
+		PartialViewContext ctx = FacesContext.getCurrentInstance().getPartialViewContext();
+		Collection<String> ids = ctx.getExecuteIds();
+		return !isCancelPressed() && (ids.contains(tableId) || ids.contains("main")) || !ctx.isPartialRequest();
+	}
+
 	public Registration getRegistration() {
+		if (registration == null && (isTableTargeted("main:racesTable") || isTableTargeted("main:registrationTable")))
+			loadRegistration(registrationId);
 		return registration;
 	}
 
@@ -236,15 +257,14 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	}
 
 	public List<Race> getRaces() {
-		if (races == null && !isCancelPressed()) {
-			Announcement announcement = registration.getAnnouncement();
-			races = service.getRaces(announcement.getId());
+		if (races == null && isTableTargeted("main:racesTable")) {
+			races = service.getRaces(announcementId);
 		}
 		return races;
 	}
 
 	public RemoteDataModel<? extends Serializable> getAthletes() {
-		if (athletes == null) {
+		if (athletes == null && isTableTargeted("main:athletesTable")) {
 
 			List<ColumnModel> columns = new ArrayList<>();
 			Column[] userColumns = columnHandler.getColumns(User.class);

@@ -92,11 +92,16 @@ public class StartseiteBean implements Serializable {
 		setMainContent(mainContent, null);
 	}
 
-	public void setMainContent(String mainContent, Long id) {
+	public void setMainContent(String mainContent, Long id, Object... moreParams) {
 		JsfUtil.setViewVariable("mainContent", mainContent);
 		JsfUtil.setViewVariable("id", id);
 		urlParameters.setMainContent(mainContent);
 		urlParameters.setId(id);
+		if (moreParams != null) {
+			for (int i = 0; i < moreParams.length; i++) {
+				urlParameters.set(2 + i, moreParams[i]);
+			}
+		}
 
 		if (Boolean.TRUE.equals(JsfUtil.getViewVariable("helpVisible")))
 			FacesContext.getCurrentInstance().getPartialViewContext().getRenderIds().add("help");
