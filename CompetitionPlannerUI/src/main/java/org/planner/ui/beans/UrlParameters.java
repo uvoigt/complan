@@ -21,14 +21,25 @@ import org.apache.commons.lang.mutable.MutableInt;
  * <ol>
  * <li>den mainContent-Pfad</li>
  * <li>die ID des aktuell bearbeiteten Objekts</li>
+ * <li>ggf. weitere Objekte</li>
  * </ol>
  */
 @Named
 @RequestScoped
 public class UrlParameters {
+	private enum Type {
+		aString, aLong;
 
-	private Object[] content = new Object[3];
-	private Class<?>[] types = { String.class, Long.class };
+		private static Type byNum(int num) {
+			for (Type t : values()) {
+				if (num == t.ordinal())
+					return t;
+			}
+			throw new IllegalArgumentException(Integer.toString(num));
+		}
+	}
+
+	private Object[] content;
 
 	private static final byte[] RAND;
 
@@ -50,13 +61,12 @@ public class UrlParameters {
 			return;
 		try {
 			byte[] buf = decodeBytes(string);
-			int start = 0;
-			start++;
 			xor(buf);
-			MutableInt offset = new MutableInt(start);
+			content = new Object[buf[1]];
+			MutableInt offset = new MutableInt(2);
 			for (int i = 0; i < content.length && offset.intValue() < buf.length; i++) {
-				Object object = getObject(buf, offset, types[i]);
-				content[i] = object;
+				Object object = getObject(buf, offset);
+				set(i, object);
 			}
 		} catch (Exception e) {
 			// unpassendes Token nach Server-Restart
@@ -64,18 +74,17 @@ public class UrlParameters {
 	}
 
 	public String getEncoded() {
-		// // 13, die maximale Länge eines Longs mit radix 36
+		// 13, die maximale Länge eines Longs mit radix 36
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		// // offset in RAND, bleibt unkodiert
-		out.write((int) (Math.random() * 255));
-		for (Object object : content) {
-			byte[] bytes = getBytes(object);
-			out.write(bytes.length);
-			out.write(bytes, 0, bytes.length);
-		}
-		// auffüllen
-		while ((out.size() % 3) > 0)
+		// offset in RAND, bleibt unkodiert
+		if (content != null) {
 			out.write((int) (Math.random() * 255));
+			out.write(content.length);
+			for (Object object : content) {
+				byte[] bytes = getBytes(object);
+				out.write(bytes, 0, bytes.length);
+			}
+		}
 		byte[] buf = out.toByteArray();
 		xor(buf);
 		return encodeBytes(buf);
@@ -89,22 +98,39 @@ public class UrlParameters {
 		return DatatypeConverter.parseHexBinary(string);
 	}
 
+	/*
+	 * Offset 0: Länge ohne Typ Offset 1: Typ Offset 2: Inhalt
+	 */
 	private byte[] getBytes(Object object) {
-		if (object instanceof Long)
-			object = Long.toString((Long) object, Character.MAX_RADIX);
+		if (object == null)
+			return new byte[] { 0 };
+		Type type;
+		String s;
+		if (object instanceof Long) {
+			s = Long.toString((Long) object, Character.MAX_RADIX);
+			type = Type.aLong;
+		} else if (object instanceof String) {
+			s = (String) object;
+			type = Type.aString;
+		} else
+			throw new IllegalArgumentException("Unsupported type: " + object.getClass());
 
-		if (object instanceof String)
-			return ((String) object).getBytes(Charset.forName("UTF-8"));
-		return new byte[0];
+		byte[] bs = s.getBytes(Charset.forName("UTF-8"));
+		byte[] result = new byte[bs.length + 2];
+		result[0] = (byte) bs.length;
+		result[1] = (byte) type.ordinal();
+		System.arraycopy(bs, 0, result, 2, bs.length);
+		return result;
 	}
 
-	private Object getObject(byte[] buf, MutableInt offset, Class<?> type) {
+	private Object getObject(byte[] buf, MutableInt offset) {
 		int length = buf[offset.intValue()];
 		if (length == 0)
 			return null;
-		String string = new String(buf, offset.intValue() + 1, length, Charset.forName("UTF-8"));
-		offset.add(length + 1);
-		if (Long.class.equals(type))
+		Type type = Type.byNum(buf[offset.intValue() + 1]);
+		String string = new String(buf, offset.intValue() + 2, length, Charset.forName("UTF-8"));
+		offset.add(length + 2);
+		if (type == Type.aLong)
 			return Long.parseLong(string, Character.MAX_RADIX);
 		return string;
 	}
@@ -118,18 +144,32 @@ public class UrlParameters {
 	}
 
 	public String getMainContent() {
-		return (String) content[0];
+		return (String) get(0);
 	}
 
 	public void setMainContent(String mainContent) {
-		content[0] = mainContent;
+		set(0, mainContent);
 	}
 
 	public Long getId() {
-		return (Long) content[1];
+		return (Long) get(1);
 	}
 
 	public void setId(Long id) {
-		content[1] = id;
+		set(1, id);
+	}
+
+	public Object get(int offset) {
+		return content != null && content.length > offset ? content[offset] : null;
+	}
+
+	public void set(int offset, Object value) {
+		if (content == null)
+			content = new Object[offset + 1];
+		if (content.length <= offset) {
+			int size = content.length;
+			System.arraycopy(content, 0, content = new Object[offset + 1], 0, size);
+		}
+		content[offset] = value;
 	}
 }

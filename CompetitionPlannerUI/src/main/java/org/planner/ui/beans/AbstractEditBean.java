@@ -45,6 +45,14 @@ public abstract class AbstractEditBean implements ITarget, Serializable {
 		return urlParameters.getId();
 	}
 
+	protected Object getFromRequestParameters(int offset) {
+		return urlParameters.get(offset);
+	}
+
+	protected void setRequestParameter(int offset, Object value) {
+		urlParameters.set(offset, value);
+	}
+
 	protected <T> T getRequestParameter(String name, Class<T> type) {
 		String value = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get(name);
 		try {
