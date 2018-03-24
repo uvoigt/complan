@@ -414,7 +414,7 @@ public class PlannerDao {
 			predicate = createComparison(builder, filter, columnExp,
 					builder.parameter(columnExp.getJavaType(), property));
 			modifiedFilterValues.put(filter.getName(), toNumber(columnExp.getJavaType(), filter.getValue().toString()));
-		} else if (Boolean.class.equals(columnExp.getJavaType())) {
+		} else if (Boolean.class.equals(columnExp.getJavaType()) || boolean.class.equals(columnExp.getJavaType())) {
 			predicate = createComparison(builder, filter, columnExp, builder.parameter(Boolean.class, property));
 			// null kann gleichbedeutend mit "false" interpretiert werden
 			boolean isTrue = toBoolean(filter.getValue().toString());
