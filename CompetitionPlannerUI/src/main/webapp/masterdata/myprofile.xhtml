@@ -80,7 +80,7 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.roles}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:selectManyMenu value="#{user.roles}" disabled="true" showCheckbox="true" style="width: 94%" styleClass="planner-listbox">
-						<f:selectItems value="#{user.roles}" var="role" itemValue="#{role}" itemLabel="#{role.description}"/>
+						<f:selectItems value="#{user.roles}" var="role" itemValue="#{role.role}" itemLabel="#{role.description}"/>
 					</p:selectManyMenu>
 				</div>
 			</div>
