@@ -41,20 +41,6 @@ left outer join User u2 on u2.userid=user0_.updateUser
 
 
 
-
-
-
-
-
-
-
-insert into Role (id, role, description, version, createtime, createuser) values(1, 'Admin', 'Administrator', 0, current_timestamp, null);
-insert into Role (id, role, description, version, createtime, createuser) values(2, 'Sportwart', 'Sportwart (Kann Ausschreibungen erstellen, Melden und Trainer und Sportler im Verein anlegen und bearbeiten)', 0, current_timestamp, null);
-insert into Role (id, role, description, version, createtime, createuser) values(3, 'Trainer', 'Trainer (Kann Sportler melden aber keine zusätzlichen Trainer anlegen)', 0, current_timestamp, null);
-insert into Role (id, role, description, version, createtime, createuser) values(4, 'Mastersportler', 'Mastersportler (Kann sich selbst melden)', 0, current_timestamp, null);
-insert into Role (id, role, description, version, createtime, createuser) values(4, 'Sportler', 'Sportler (Kann nur Meldungen und Ausschreibungen ansehen)', 0, current_timestamp, null);
-
-
 -- age types
 insert into enum (id, type, ordinal, name, createtime, createuser, version) values (next value for hibernate_sequence, 3, 0, 'Schüler A', current_timestamp, null, 0)
 insert into enum (id, type, ordinal, name, createtime, createuser, version) values (next value for hibernate_sequence, 3, 0, 'Schüler B', current_timestamp, null, 0)
