@@ -230,6 +230,8 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 	public void onFilter(FilterEvent event) {
 		JsfUtil.setViewVariable("filters", event.getFilters());
+		JsfUtil.setViewVariable("rows", null);
+		JsfUtil.setViewVariable("first", null);
 	}
 
 	public void onSort(SortEvent event) {
