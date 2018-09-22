@@ -5,6 +5,7 @@ import java.util.List;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -13,7 +14,10 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 
+import org.planner.model.LocalizedEnum;
+import org.planner.util.CommonMessages;
 import org.planner.util.NLSBundle;
+import org.planner.util.Visibilities;
 import org.planner.util.Visible;
 
 @Entity
@@ -21,10 +25,20 @@ import org.planner.util.Visible;
 @NLSBundle("programs")
 public class Program extends AbstractEntity {
 
+	public enum ProgramStatus implements LocalizedEnum {
+		created, announced, finished;
+
+		@Override
+		public String getText() {
+			return CommonMessages.getEnumText(this);
+		}
+	}
+
 	private static final long serialVersionUID = 1L;
 
-	@Visible
 	@OneToOne
+	@Visible
+	@Visibilities(@Visible(path = "club.name", order = 2, initial = false, mandatory = true))
 	private Announcement announcement;
 
 	// entweder so oder als @ElementCollection (Map<String, Object>
@@ -38,6 +52,10 @@ public class Program extends AbstractEntity {
 
 	@Lob
 	private String text;
+
+	@Column(/* nullable = false */)
+	@Visible(depth = 0, order = 5)
+	private ProgramStatus status;
 
 	public Announcement getAnnouncement() {
 		return announcement;
@@ -69,5 +87,13 @@ public class Program extends AbstractEntity {
 
 	public void setText(String text) {
 		this.text = text;
+	}
+
+	public ProgramStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(ProgramStatus status) {
+		this.status = status;
 	}
 }

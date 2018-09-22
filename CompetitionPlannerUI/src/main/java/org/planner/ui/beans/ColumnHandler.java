@@ -21,6 +21,7 @@ import javax.persistence.Entity;
 import org.planner.eo.AbstractEntity;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Logged;
+import org.planner.util.Visibilities;
 import org.planner.util.Visible;
 
 @Named
@@ -74,6 +75,57 @@ public class ColumnHandler {
 		}
 	}
 
+	private class Paths {
+		private String[] paths;
+		private Visible[] visibilities;
+		private int current = -1;
+
+		private Paths(Visibilities v) {
+			if (v != null) {
+				visibilities = v.value();
+				paths = new String[visibilities.length];
+				for (int i = 0; i < paths.length; i++) {
+					paths[i] = visibilities[i].path();
+				}
+			}
+		}
+
+		private Paths(Visible[] vs, String[] p) {
+			visibilities = vs;
+			this.paths = p;
+		}
+
+		Visible getVisibility() {
+			return visibilities != null && current >= 0 ? visibilities[current] : null;
+		}
+
+		boolean hasFirst(String part) {
+			if (paths != null) {
+				for (int i = 0; i < paths.length; i++) {
+					String path = paths[i];
+					String[] split = path.split("\\.");
+					if (split[0].equals(part)) {
+						current = i;
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		Paths next() {
+			if (visibilities == null)
+				return this;
+			String[] newPaths = new String[paths.length];
+			for (int i = 0; i < paths.length; i++) {
+				String path = paths[i];
+				int index = path.indexOf('.');
+				newPaths[i] = index != -1 ? path.substring(index + 1) : "";
+			}
+			return new Paths(visibilities, newPaths);
+		}
+	}
+
 	@Inject
 	private BenutzerEinstellungen benutzerEinstellungen;
 
@@ -84,7 +136,7 @@ public class ColumnHandler {
 		if (columns == null) {
 			List<Column> columnList = new ArrayList<>();
 			try {
-				getColumnsForType(type, null, columnList, 0, null);
+				getColumnsForType(type, null, columnList, 0, null, null);
 			} catch (IntrospectionException e) {
 				throw new TechnischeException("Fehler beim Initialisieren der columns für " + type, e);
 			}
@@ -101,7 +153,7 @@ public class ColumnHandler {
 	public Column[] getExportColumns(Class<?> type) {
 		List<Column> columnList = new ArrayList<>();
 		try {
-			getColumnsForType(type, null, columnList, 0, null);
+			getColumnsForType(type, null, columnList, 0, null, null);
 		} catch (IntrospectionException e) {
 			throw new TechnischeException("Fehler beim Initialisieren der columns für " + type, e);
 		}
@@ -124,23 +176,28 @@ public class ColumnHandler {
 	}
 
 	private void getColumnsForType(Class<?> type, String parentProperty, List<Column> result, int level,
-			Visible visibility) throws IntrospectionException {
+			Visible visibility, Paths paths) throws IntrospectionException {
 		for (Field field : type.getDeclaredFields()) {
+			boolean force = paths != null && paths.hasFirst(field.getName());
 			Visible visible = field.getAnnotation(Visible.class);
-			if (visible == null || level > visible.depth())
+			if (!force && (visible == null || level > visible.depth()))
 				continue;
 			String propertyName = parentProperty != null ? parentProperty + "." + field.getName() : field.getName();
 			Class<?> propertyType = field.getType();
 			if (field.getGenericType() instanceof ParameterizedType)
 				propertyType = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-			getColumnsForType(propertyType, propertyName, result, level + 1, visible);
+			getColumnsForType(propertyType, propertyName, result, level + 1, visible,
+					paths != null ? paths.next() : new Paths(field.getAnnotation(Visibilities.class)));
 			if (propertyType.getAnnotation(Entity.class) == null) {
-				result.add(new Column(propertyName, visibility != null ? visibility : visible));
+				Visible v = paths != null ? paths.getVisibility() : null;
+				if (v == null)
+					v = visibility != null ? visibility : visible;
+				result.add(new Column(propertyName, v));
 			}
 		}
 		Class<?> superclass = type.getSuperclass();
 		if (superclass != null)
-			getColumnsForType(superclass, parentProperty, result, level, visibility);
+			getColumnsForType(superclass, parentProperty, result, level, visibility, paths);
 	}
 
 	private void applyRoleRestrictions(Column[] columns) {

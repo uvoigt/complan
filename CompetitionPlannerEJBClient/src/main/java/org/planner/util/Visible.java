@@ -10,6 +10,12 @@ import java.lang.annotation.Target;
 public @interface Visible {
 
 	/**
+	 * @return zusätzlicher Pfad zu Properties, die nicht per depth erreicht werden oder keine Visible Annotation haben.
+	 *         Dieses Attribut wird nur ausgewertet, wenn die {@link Visibilities}-Annotation verwendet wird.
+	 */
+	String path() default "";
+
+	/**
 	 * @return true, wenn die Spalte per Voreinstellung angezeigt werden soll
 	 */
 	boolean initial() default true;
