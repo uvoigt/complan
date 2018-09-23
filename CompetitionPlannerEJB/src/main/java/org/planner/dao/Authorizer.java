@@ -7,6 +7,8 @@ import javax.persistence.criteria.Root;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Announcement_;
+import org.planner.eo.Program.ProgramStatus;
+import org.planner.eo.Program_;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
 import org.planner.eo.User;
@@ -68,6 +70,24 @@ public abstract class Authorizer extends QueryModifier {
 			Predicate registrationStatus = builder.equal(root.get(Registration_.status),
 					nextParam(builder, RegistrationStatus.submitted));
 			return builder.or(registrationClub, builder.and(announcementClub, registrationStatus));
+		}
+	}
+
+	// entweder du bist "Sportwart" oder "Trainer" und Vereinsmitglied des Erstellers des Programmes
+	// oder das Programm ist im Status "announced"
+	public static class ProgramAuthorizer extends Authorizer {
+		public ProgramAuthorizer(CallerProvider provider, User caller) {
+			super(provider, caller);
+		}
+
+		@Override
+		public Predicate createPredicate(Root root, CriteriaBuilder builder) {
+			if (provider.isInRole("Sportwart") || provider.isInRole("Trainer")) {
+				return builder.equal(root.get(Registration_.announcement).get(Announcement_.club),
+						nextParam(builder, caller.getClub()));
+			} else {
+				return builder.equal(root.get(Program_.status), nextParam(builder, ProgramStatus.announced));
+			}
 		}
 	}
 

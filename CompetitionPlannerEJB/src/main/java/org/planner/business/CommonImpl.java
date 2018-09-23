@@ -21,6 +21,7 @@ import javax.transaction.RollbackException;
 
 import org.planner.dao.Authorizer;
 import org.planner.dao.Authorizer.AnnouncementAuthorizer;
+import org.planner.dao.Authorizer.ProgramAuthorizer;
 import org.planner.dao.Authorizer.RegistrationAuthorizer;
 import org.planner.dao.Authorizer.UserAuthorizer;
 import org.planner.dao.IOperation;
@@ -81,6 +82,8 @@ public class CommonImpl {
 			authorizer = new AnnouncementAuthorizer(caller, getCallingUser());
 		else if (entityType == Registration.class)
 			authorizer = new RegistrationAuthorizer(caller, getCallingUser());
+		else if (entityType == Program.class)
+			authorizer = new ProgramAuthorizer(caller, getCallingUser());
 		return internalSearch(entityType, criteria, authorizer);
 	}
 
@@ -382,7 +385,7 @@ public class CommonImpl {
 		// nur die Rollen "Sportwart", "Trainer" und "Mastersportler" dürfen Meldungen
 		// speichern oder löschen
 		if (!caller.isInRole("Sportwart") && !caller.isInRole("Trainer") && !caller.isInRole("Mastersportler"))
-			throw new FachlicheException(messages.getResourceBundle(), "registration.cannot.save");
+			throwAccessException(registration, operation);
 
 		// Eine bereits übermittelte Meldung darf nicht mehr geändert werden
 		if (!caller.isInRole("Tester") && registration.getStatus() == RegistrationStatus.submitted)
