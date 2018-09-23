@@ -45,7 +45,7 @@ public class Announcement extends AbstractEntity {
 	// Ort und Zeitangabe der Wettkämpfe
 	@Column(nullable = false)
 	@Temporal(TemporalType.DATE)
-	@Visible(initial = false, order = 3)
+	@Visible(order = 3)
 	private Date startDate;
 
 	@Column(nullable = false)
@@ -119,7 +119,7 @@ public class Announcement extends AbstractEntity {
 	private String text;
 
 	@Column(nullable = false)
-	@Visible(order = 6, mandatory = true, depth = 0)
+	@Visible(order = 6, mandatory = true, depth = 0, initial = false)
 	private AnnouncementStatus status;
 
 	public String getName() {

@@ -31,12 +31,14 @@ public class ColumnHandler {
 	public class Column implements Cloneable, Comparable<Column> {
 		private String name;
 		private Visible visibility;
+		private Visible parent;
 		private boolean visible;
 		private boolean visibleForCurrentUser;
 
-		public Column(String name, Visible visibility) {
+		public Column(String name, Visible visibility, Visible parent) {
 			this.name = name;
 			this.visibility = visibility;
+			this.parent = parent;
 			this.visible = visibility.initial();
 		}
 
@@ -71,7 +73,15 @@ public class ColumnHandler {
 
 		@Override
 		public int compareTo(Column o) {
-			return Integer.compare(visibility.order(), o.visibility.order());
+			return Integer.compare(getOrder(), o.getOrder());
+		}
+
+		private int getOrder() {
+			return visibility.order() + (parent != null ? parent.order() : 0);
+		}
+
+		private boolean isExport() {
+			return visibility.export() || parent != null && parent.export();
 		}
 	}
 
@@ -159,7 +169,7 @@ public class ColumnHandler {
 		}
 		for (Iterator<Column> it = columnList.iterator(); it.hasNext();) {
 			Column column = it.next();
-			if (!column.visibility.export())
+			if (!column.isExport())
 				it.remove();
 		}
 		Column[] columns = columnList.toArray(new Column[columnList.size()]);
@@ -191,8 +201,8 @@ public class ColumnHandler {
 			if (propertyType.getAnnotation(Entity.class) == null) {
 				Visible v = paths != null ? paths.getVisibility() : null;
 				if (v == null)
-					v = visibility != null ? visibility : visible;
-				result.add(new Column(propertyName, v));
+					v = visible;
+				result.add(new Column(propertyName, v, visibility));
 			}
 		}
 		Class<?> superclass = type.getSuperclass();

@@ -37,8 +37,8 @@ public class Program extends AbstractEntity {
 	private static final long serialVersionUID = 1L;
 
 	@OneToOne
-	@Visible
-	@Visibilities(@Visible(path = "club.name", order = 2, initial = false, mandatory = true))
+	@Visible(order = 2)
+	@Visibilities(@Visible(path = "club.name", order = 2, mandatory = true))
 	private Announcement announcement;
 
 	// entweder so oder als @ElementCollection (Map<String, Object>
@@ -54,7 +54,7 @@ public class Program extends AbstractEntity {
 	private String text;
 
 	@Column(/* nullable = false */)
-	@Visible(depth = 0, order = 5)
+	@Visible(depth = 0, order = 6, initial = false)
 	private ProgramStatus status;
 
 	public Announcement getAnnouncement() {

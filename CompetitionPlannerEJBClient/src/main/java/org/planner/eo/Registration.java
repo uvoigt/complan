@@ -33,7 +33,7 @@ public class Registration extends AbstractEntity {
 	private static final long serialVersionUID = 1L;
 
 	@ManyToOne(optional = false)
-	@Visible(initial = false, mandatory = true, order = 2)
+	@Visible(initial = false, mandatory = true, order = 4)
 	private Club club;
 
 	@ManyToOne(optional = false)
@@ -45,7 +45,7 @@ public class Registration extends AbstractEntity {
 	private List<RegEntry> entries;
 
 	@Column(nullable = false)
-	@Visible(order = 3, mandatory = true)
+	@Visible(order = 6, mandatory = true, initial = false)
 	private RegistrationStatus status;
 
 	public Club getClub() {
