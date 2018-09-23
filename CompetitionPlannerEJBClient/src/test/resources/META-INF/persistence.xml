@@ -12,7 +12,6 @@
 		<class>org.planner.eo.Club</class>
 		<class>org.planner.eo.Country</class>
 		<class>org.planner.eo.Location</class>
-		<class>org.planner.eo.Message</class>
 		<class>org.planner.eo.Participant</class>
 		<class>org.planner.eo.Program</class>
 		<class>org.planner.eo.ProgramRace</class>
@@ -23,6 +22,7 @@
 		<class>org.planner.eo.Role</class>
 		<class>org.planner.eo.Team</class>
 		<class>org.planner.eo.TeamMember</class>
+		<class>org.planner.eo.Token</class>
 		<class>org.planner.eo.User</class>
 
 		<properties>
@@ -30,7 +30,7 @@
 			<property name="hibernate.archive.autodetection" value="class" />
 			<property name="hibernate.show_sql" value="true" />			
 			<!--property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.WebSphereTransactionManagerLookup" /-->
-			<property name="hibernate.transaction.factory_class" value="org.hibernate.transaction.CMTTransactionFactory" />
+			<!--property name="hibernate.transaction.factory_class" value="org.hibernate.transaction.CMTTransactionFactory" /-->
 			<property name="hibernate.hbm2ddl.auto" value="create" />
 			<property name="hibernate.cache.use_second_level_cache" value="true"/>
 			<property name="hibernate.cache.use_structured_entries" value="true"/>
