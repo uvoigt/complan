@@ -383,7 +383,7 @@
                         <login-module code="org.planner.ui.util.KeepLoggedInLoginModule" flag="sufficient">
                             <module-option name="dsJndiName" value="java:jboss/datasources/${env.OPENSHIFT_MYSQL_DATASOURCE}"/>
                             <module-option name="principalsQuery" value="select password from User where userId=? and (locked=0 or locked is null)"/>
-                            <module-option name="rolesQuery" value="select r.role, 'Roles' from vrole r where r.userId=?1 union select 'User', 'Roles' from Dual"/>
+                            <module-option name="rolesQuery" value="select r.role, 'Roles' from vrole r where r.userId=? union select 'User', 'Roles' from Dual"/>
                             <module-option name="hashAlgorithm" value="SHA-512"/>
                             <module-option name="hashCharset" value="UTF-8"/>
                         </login-module>
