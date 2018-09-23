@@ -61,7 +61,9 @@ public interface ServiceFacade extends IResultProvider {
 
 	String getUserName(String userId);
 
-	List<Role> getRoles();
+	List<Role> getAllRoles();
+
+	List<Role> getExternalRoles();
 
 	List<Club> getClubs();
 

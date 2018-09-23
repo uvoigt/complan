@@ -1,9 +1,13 @@
 package org.planner.eo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 
 import org.planner.util.NLSBundle;
 import org.planner.util.Visible;
@@ -22,6 +26,12 @@ public class Role extends AbstractEntity {
 	@Visible(depth = 0)
 	private String description;
 
+	@ManyToMany
+	private List<Role> roles = new ArrayList<>();
+
+	@Visible(depth = 0, initial = false)
+	private boolean internal;
+
 	public String getRole() {
 		return role;
 	}
@@ -36,5 +46,17 @@ public class Role extends AbstractEntity {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public List<Role> getRoles() {
+		return roles;
+	}
+
+	public boolean isInternal() {
+		return internal;
+	}
+
+	public void setInternal(boolean internal) {
+		this.internal = internal;
 	}
 }

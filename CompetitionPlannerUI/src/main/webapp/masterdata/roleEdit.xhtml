@@ -7,7 +7,7 @@
 	xmlns:p="http://primefaces.org/ui">
 
 	<ui:composition template="/templates/edit.xhtml">
-		<ui:param name="roles" value="Admin"/>
+		<ui:param name="roleSuffix" value="roles"/>
 		<ui:param name="bundle" value="#{messages.bundle('roles')}"/>
 		<ui:param name="bean" value="#{roleBean}"/>
 		<ui:param name="searchLink" value="/masterdata/roles.xhtml"/>
@@ -28,6 +28,32 @@
 					<p:inputText value="#{role.description}" autocomplete="off" maxlength="255" required="true"
 						requiredMessage="#{bundle.format('fieldValidation', bundle.description)}"
 						style="width: 98%"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 10em"><h:outputText value="#{bundle.internal}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:selectBooleanCheckbox value="#{role.internal}" />
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 10em"><h:outputText value="#{bundle.roles}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:pickList value="#{roleBean.model}" var="r" itemLabel="#{r.role}" itemValue="#{r.id}" converter="#{roleConverter}"
+						responsive="true" showSourceFilter="true" showTargetFilter="true" filterMatchMode="contains"/>
+				</div>
+			</div>
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 10em"><h:outputText value="#{bundle.users}"/></div>
+				<div class="ui-g-12 ui-md-6 ui-lg-8">
+					<p:inplace>
+						<f:facet name="output">#{bundle.showUsers}</f:facet>
+						<f:facet name="input">
+							<p:dataList value="#{roleBean.users}" lazy="true" var="user" emptyMessage="#{bundle.emptyMsg}">
+								#{user.firstName} #{user.lastName}
+							</p:dataList>
+						</f:facet>
+					</p:inplace>
 				</div>
 			</div>
 			

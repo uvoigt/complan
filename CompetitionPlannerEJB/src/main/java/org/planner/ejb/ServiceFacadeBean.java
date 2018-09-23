@@ -157,8 +157,14 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public List<Role> getRoles() {
-		return masterData.getRoles();
+	@RolesAllowed("Admin")
+	public List<Role> getAllRoles() {
+		return masterData.getRoles(false);
+	}
+
+	@Override
+	public List<Role> getExternalRoles() {
+		return masterData.getRoles(true);
 	}
 
 	@Override

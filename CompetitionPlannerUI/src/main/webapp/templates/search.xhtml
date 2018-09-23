@@ -22,7 +22,8 @@
 						action="#{searchBean.anlegen(bearbeitenLink, typ, editBean)}"
 						process="@form"
 						update="mainContent"
-						style="margin-right: 5px"/>
+						style="margin-right: 5px"
+						rendered="#{authBean.inRole('create_'.concat(roleSuffix))}"/>
 				</ui:insert>
 
 				<ui:insert name="buttonExt"/>
@@ -124,7 +125,9 @@
 							process="@this"
 							update="searchTable messagesPopup"
 							onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"
-							style="float: right">
+							style="float: right"
+							rendered="#{authBean.inRole('delete_'.concat(roleSuffix))}"
+							disabled="#{not editBean.canDelete(item)}">
 						<p:confirm icon=""/>
 					</p:commandButton>
 				</ui:insert>

@@ -110,18 +110,6 @@ var announcementEdit = {
 	init: function() {
 		attachSubmitHandler();
 		return this;
-	},
-	enableButtons: function(status) {
-		var btnAnnounce = PF("btnAnnounce");
-		var btnRevoke = PF("btnRevoke");
-		if (!btnAnnounce || !btnRevoke)
-			return;
-		btnAnnounce.disable();
-		btnRevoke.disable();
-		if (status == 0)
-			btnAnnounce.enable();
-		else if (status == 1)
-			btnRevoke.enable();
 	}
 };
 var racesEdit = {
@@ -169,6 +157,7 @@ var registrationEdit = {
 	copyFilters: function(fromSelection) {
 		var racesTable = PF("racesTable");
 		var athletesTable = PF("athletesTable");
+		var copyToRegistrationTable = true; // TODO
 		if (fromSelection) {
 			var selectedId = racesTable.jq.find("[id$=racesTable_selection]").val();
 			var row = racesTable.jq.find("tr[data-rk=" + selectedId + "]");
@@ -176,6 +165,7 @@ var registrationEdit = {
 			var gender = row.children().eq(3).text();
 			if (gender == "mixed")
 				gender = "";
+			var raceNumber = row.children().eq(0).text();
 		} else {
 			var ageType = racesTable.jq.find("[name$=ageType\\:filter]").val();
 			var gender = racesTable.jq.find("[name$=gender\\:filter]").val();
@@ -183,6 +173,12 @@ var registrationEdit = {
 		athletesTable.jq.find("[name$=ageType\\:filter]").val(ageType);
 		athletesTable.jq.find("[name$=gender\\:filter]").val(gender);
 		athletesTable.filter();
+		if (copyToRegistrationTable && fromSelection) {
+			var registrationTable = PF("registrationTable");
+			var raceFilterPattern = $("#raceFilterPattern").text();
+			registrationTable.jq.find("[name$=raceNumber\\:filter]").val(raceFilterPattern.replace(/\$/, raceNumber));
+			registrationTable.filter();
+		}
 	},
 	toggleColumn: function(table, index) {
 		var columnHeader = table.thead.children("tr").find("th:nth-child(" + index + ")");
@@ -193,6 +189,15 @@ var registrationEdit = {
 		if (count == undefined)
 			count = PF("registrationTable").tbody.children().length;
 		$("[id$=registrationsCountLabel]").text("{msg:registrations.athletesCount, xxx}".replace(/xxx/, count));
+	},
+	showRemarkDlg: function() {
+		var dlg = PF("remarkDlg");
+		dlg.loadContents();
+		dlg.show();
+	},
+	hideRemarkDlg: function() {
+		PF("remarkDlg").hide();
+		$("[id$=remark_panel]").remove();
 	}
 };
 var programEdit = {

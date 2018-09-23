@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -67,6 +68,10 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		// das könnte auch als Argument in der search-xhtml mitgegeben werden
 		loadProgram(program.getId());
 		JsfUtil.setViewVariable("id", program.getId());
+	}
+
+	public boolean canDelete(Map<String, String> item) {
+		return item.get("announcement.club.name").equals(auth.getLoggedInUser().getClub().getName());
 	}
 
 	private void loadProgram(Long id) {

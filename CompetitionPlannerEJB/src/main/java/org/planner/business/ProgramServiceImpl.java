@@ -32,6 +32,7 @@ import org.planner.eo.Announcement;
 import org.planner.eo.Club;
 import org.planner.eo.Participant;
 import org.planner.eo.Program;
+import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramOptions.Break;
 import org.planner.eo.ProgramOptions.DayTimes;
@@ -248,6 +249,7 @@ public class ProgramServiceImpl {
 		common.checkWriteAccess(program, Operation.create);
 
 		program.getOptions().setExpr(getDefaultHeatModeExpression());
+		program.setStatus(ProgramStatus.created);
 		common.save(program);
 
 		return program.getId();
@@ -274,6 +276,8 @@ public class ProgramServiceImpl {
 		crit.addFilter(Registration_.announcement.getName(), program.getAnnouncement().getId());
 		crit.addFilter(Registration_.status.getName(), RegistrationStatus.submitted);
 		List<Registration> registrations = dao.search(Registration.class, crit, null).getListe();
+		if (registrations.isEmpty())
+			throw new FachlicheException(messages.getResourceBundle(), "program.noRegistrations");
 		Map<Long, List<Team>> races = new HashMap<>();
 
 		if (LOG.isDebugEnabled())
@@ -390,8 +394,8 @@ public class ProgramServiceImpl {
 		Collections.shuffle(teams);
 		// Collections.sort(teams, new InitialOrder());
 
-		// wenn so wenige Einzelmeldungen da sind, gibt es keine Vorläufe
-		if (calc.numRaces == 1) {
+		// wenn so wenige Einzelmeldungen da sind oder eine Langstrecke gefahren wird, gibt es keine Vorläufe
+		if (calc.numRaces == 1 || race.getDistance() >= 2000) {
 
 			if (LOG.isDebugEnabled())
 				LOG.debug("Rennen " + race.getNumber() + " hat einen Endlauf");

@@ -1,5 +1,7 @@
 package org.planner.ui.beans.masterdata;
 
+import java.util.Map;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
@@ -38,6 +40,10 @@ public class ClubBean extends AbstractEditBean {
 	@Override
 	public void setItem(Object item) {
 		club = (Club) item;
+	}
+
+	public boolean canDelete(@SuppressWarnings("unused") Map<String, String> item) {
+		return true;
 	}
 
 	public Club getClub() {

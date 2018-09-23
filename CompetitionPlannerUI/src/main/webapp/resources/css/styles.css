@@ -142,6 +142,10 @@
 	height: auto !important;
 }
 
+.ui-selectonemenu-panel .ui-selectonemenu-filter-container {
+	display: inherit !important;
+}
+
 .ui-password-panel {
 	width: 94% !important;
 }
@@ -334,4 +338,8 @@ input[readonly=readonly] {
 .teamMembers > div {
 	background: none;
 	border: none;
+}
+
+.syntaxProblem {
+	background: url(data:image/gif;base64,R0lGODlhCgAEAMIEAP9BGP6pl//Wy/7//P///////////////yH5BAEKAAQALAAAAAAKAAQAAAMROCOhK0oA0MIUMmTAZhsWBCYAOw==) repeat-x scroll 0 100% transparent
 }

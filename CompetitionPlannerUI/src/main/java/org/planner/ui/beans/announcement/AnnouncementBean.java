@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -92,6 +93,10 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		} else {
 			JsfUtil.setViewVariable("id", announcement.getId());
 		}
+	}
+
+	public boolean canDelete(Map<String, String> item) {
+		return item.get("club.name").equals(auth.getLoggedInUser().getClub().getName());
 	}
 
 	private String getTemplate() {

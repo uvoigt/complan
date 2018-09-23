@@ -7,6 +7,7 @@
 	xmlns:p="http://primefaces.org/ui">
 
 	<ui:composition template="/templates/search.xhtml">
+		<ui:param name="roleSuffix" value="registrations"/>
 		<ui:param name="uploadBean" value="#{searchBean.uploadBean}"/>
 		<ui:param name="bundle" value="#{messages.bundle('registrations')}"/>
 		<ui:param name="typ" value="org.planner.eo.Registration"/>
@@ -16,6 +17,16 @@
 		<ui:param name="noButtons" value="true"/>
 		<ui:define name="newButton"/>
 		<ui:define name="copyButton"/>
+					<!--disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/-->
+		<ui:define name="editButton">
+			<p:commandButton icon="#{item.status != 'submitted' ? 'ui-icon-pencil' : 'ui-icon-document'}"
+					title="#{item.status != 'submitted' ? bundle.modify : bundle.display}"
+					action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
+					process="@form"
+					update="mainContent"
+					styleClass="editButton"
+					rendered="#{authBean.inRole('read_registrations')}"/>
+		</ui:define>
 		<ui:define name="addRowButtons">
 			<p:commandButton icon="ui-icon-mail-closed" title="#{bundle.setStatus}"
 					action="#{registrationBean.setStatus(item, 'submitted')}"

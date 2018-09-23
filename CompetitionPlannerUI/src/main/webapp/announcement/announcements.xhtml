@@ -7,6 +7,7 @@
 	xmlns:p="http://primefaces.org/ui">
 
 	<ui:composition template="/templates/search.xhtml">
+		<ui:param name="roleSuffix" value="announcements"/>
 		<ui:param name="bundle" value="#{messages.bundle('announcements')}"/>
 		<ui:param name="typ" value="org.planner.eo.Announcement"/>
 		<ui:param name="bearbeitenLink" value="/announcement/announcementEdit.xhtml"/>
@@ -14,15 +15,7 @@
 		<ui:param name="renderDownloadSupport" value="true"/>
 		<ui:param name="uploadBean" value="#{announcementBean.uploadBean}"/>
 
-		<ui:param name="noButtons" value="#{not (authBean.inRole('Sportwart'))}"/>
-		<ui:define name="newButton">
-			<p:commandButton value="#{bundle.newButton}"
-				action="#{searchBean.anlegen(bearbeitenLink, typ, editBean)}"
-				process="@form"
-				update="mainContent"
-				style="margin-right: 5px"
-				rendered="#{authBean.inRole('Sportwart')}"/>
-		</ui:define>
+		<ui:param name="noButtons" value="#{not (authBean.inRole('create_announcements'))}"/>
 		<ui:define name="editButton">
 			<p:commandButton icon="#{item.status != 'announced' ? 'ui-icon-pencil' : 'ui-icon-document'}"
 					title="#{item.status != 'announced' ? bundle.modify : bundle.display}"
@@ -30,7 +23,7 @@
 					process="@form"
 					update="mainContent"
 					styleClass="editButton"
-					rendered="#{authBean.inRole('Sportwart')}"
+					rendered="#{authBean.inRole('update_announcements')}"
 					disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/>
 		</ui:define>
 		<ui:define name="copyButton">
@@ -38,23 +31,11 @@
 					action="#{searchBean.kopieren(bearbeitenLink, typ, item, editBean)}"
 					process="@this"
 					update="mainContent"
-					rendered="#{authBean.inRole('Sportwart')}"
+					rendered="#{authBean.inRole('create_announcements')}"
 					disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/>
 		</ui:define>
-		<ui:define name="deleteButton">
-			<p:commandButton icon="ui-icon-trash" title="#{bundle.delete}"
-					action="#{searchBean.loeschen(typ, item.id)}"
-					process="@this"
-					update="searchTable messagesPopup"
-					onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"
-					style="float: right"
-					rendered="#{authBean.inRole('Sportwart')}"
-					disabled="#{item['club.name'] != authBean.loggedInUser.club.name}">
-				<p:confirm icon=""/>
-			</p:commandButton>
-		</ui:define>
 		<ui:define name="addRowButtons">
-			<p:commandButton id="racesButton" icon="ui-icon-flag"
+			<p:commandButton icon="ui-icon-flag"
 					title="#{item.status != 'announced' ? bundle.races : bundle.racesDisplay}"
 					action="#{searchBean.bearbeiten('/announcement/racesEdit.xhtml', item.id, racesEditBean)}"
 					process="@form"
@@ -68,13 +49,13 @@
 					action="#{registrationBean.createRegistration(item)}"
 					process="@this"
 					update="mainContent"
-					rendered="#{authBean.inRole('Sportwart', 'Trainer', 'Mastersportler')}"
+					rendered="#{authBean.inRole('create_registrations')}"
 					disabled="#{item.status != 'announced'}"/>
 			<p:commandButton icon="ui-icon-calculator" title="#{bundle.createProgram}"
 					action="#{programBean.createProgram(item)}"
 					process="@this"
 					update="mainContent"
-					rendered="#{authBean.inRole('Sportwart')}"
+					rendered="#{authBean.inRole('create_programs')}"
 					disabled="#{not (item.status == 'announced' and item['club.name'] == authBean.loggedInUser.club.name)}"/>
 		</ui:define>
 

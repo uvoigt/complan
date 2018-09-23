@@ -7,6 +7,7 @@
 	xmlns:p="http://primefaces.org/ui">
 
 	<ui:composition template="/templates/edit.xhtml">
+		<ui:param name="roleSuffix" value="clubs"/>
 		<ui:param name="bundle" value="#{messages.bundle('clubs')}"/>
 		<ui:param name="bean" value="#{clubBean}"/>
 		<ui:param name="searchLink" value="/masterdata/clubs.xhtml"/>

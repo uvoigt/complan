@@ -139,15 +139,17 @@ public class StartseiteBean implements Serializable {
 				createMenuItem(id++, bundle.get("myprofile"), "/masterdata/myprofile.xhtml", auth.inRole("User")));
 		menu.addElement(createMenuItem(id++, bundle.get("myclub"), "/masterdata/myclub.xhtml", auth.inRole("User")));
 		menu.addElement(createMenuItem(id++, bundle.get("announcement"), "/announcement/announcements.xhtml",
-				auth.inRole("User")));
+				auth.inRole("read_announcements")));
 		menu.addElement(createMenuItem(id++, bundle.get("registration"), "/announcement/registrations.xhtml",
-				auth.inRole("Sportwart", "Mastersportler")));
+				auth.inRole("read_registrations")));
+		menu.addElement(createMenuItem(id++, bundle.get("program"), "/announcement/programs.xhtml",
+				auth.inRole("read_programs")));
 		menu.addElement(
-				createMenuItem(id++, bundle.get("program"), "/announcement/programs.xhtml", auth.inRole("User")));
-		menu.addElement(createMenuItem(id++, bundle.get("users"), "/masterdata/users.xhtml",
-				auth.inRole("Admin", "Sportwart")));
-		menu.addElement(createMenuItem(id++, bundle.get("clubs"), "/masterdata/clubs.xhtml", auth.inRole("Admin")));
-		menu.addElement(createMenuItem(id++, bundle.get("roles"), "/masterdata/roles.xhtml", auth.inRole("Admin")));
+				createMenuItem(id++, bundle.get("users"), "/masterdata/users.xhtml", auth.inRole("read_users")));
+		menu.addElement(
+				createMenuItem(id++, bundle.get("clubs"), "/masterdata/clubs.xhtml", auth.inRole("read_clubs")));
+		menu.addElement(
+				createMenuItem(id++, bundle.get("roles"), "/masterdata/roles.xhtml", auth.inRole("read_roles")));
 
 		DefaultMenuItem item = new DefaultMenuItem(bundle.get("help"));
 		item.setGlobal(true);

@@ -3,6 +3,7 @@ package org.planner.ui.beans.masterdata;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
@@ -58,6 +59,10 @@ public class UserBean extends AbstractEditBean {
 	public void setItem(Object item) {
 		user = (User) item;
 		prepareSelectedRoles();
+	}
+
+	public boolean canDelete(@SuppressWarnings("unused") Map<String, String> item) {
+		return true;
 	}
 
 	public UIInput getRoleMenu() {
@@ -145,7 +150,7 @@ public class UserBean extends AbstractEditBean {
 	}
 
 	public List<Role> getRoles() {
-		return service.getRoles();
+		return service.getExternalRoles();
 	}
 
 	public Date getToday() {

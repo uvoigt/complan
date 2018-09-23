@@ -41,6 +41,7 @@ import org.planner.ui.util.JsfUtil;
 import org.primefaces.component.datatable.DataTable;
 import org.primefaces.component.datatable.feature.DataTableFeatureKey;
 import org.primefaces.component.datatable.feature.FilterFeature;
+import org.primefaces.component.selectonemenu.SelectOneMenu;
 import org.primefaces.model.FilterMeta;
 
 @Named
@@ -77,7 +78,7 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 
 	private DataTable registrationTable;
 
-	private String remark;
+	private List<String> remarks;
 
 	@Override
 	@PostConstruct
@@ -95,7 +96,11 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			JsfUtil.setViewVariable("aid", announcementId);
 		}
 
-		remark = einstellungen.getTypedValue("requestMsg", String.class, JsfUtil.getScopedBundle().get("requestMsg"));
+		String[] remarks = einstellungen.getTypedValue("requestMsg", String[].class,
+				// da die Seite sowohl von Announcements als auch von Registrations aufgerufen wird,
+				// muss der Key voll qualifiziert sein
+				new String[] { JsfUtil.getScopedBundle().get("registrations.requestMsg") });
+		this.remarks = new ArrayList<>(Arrays.asList(remarks));
 	}
 
 	@Override
@@ -106,6 +111,10 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		announcementId = registration.getAnnouncement().getId();
 		JsfUtil.setViewVariable("id", registrationId);
 		JsfUtil.setViewVariable("aid", announcementId);
+	}
+
+	public boolean canDelete(Map<String, String> item) {
+		return item.get("club.name").equals(auth.getLoggedInUser().getClub().getName());
 	}
 
 	private void loadRegistration(Long id) {
@@ -132,7 +141,11 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	private boolean isTableTargeted(String tableId) {
 		PartialViewContext ctx = FacesContext.getCurrentInstance().getPartialViewContext();
 		Collection<String> ids = ctx.getExecuteIds();
-		return !isCancelPressed() && (ids.contains(tableId) || ids.contains("main")) || !ctx.isPartialRequest();
+		// mainContent -> Aufruf von den Ausschreibungen
+		// main -> Aktion oder Aufruf von den Registrierungen
+		// !partialRequest -> full page reload
+		return !isCancelPressed() && (ids.contains(tableId) || ids.contains("main")) || !ctx.isPartialRequest()
+				|| ctx.getRenderIds().contains("mainContent");
 	}
 
 	public Registration getRegistration() {
@@ -167,12 +180,14 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 
 	public void createRegistration(Object announcement) {
 		FacesContext ctx = FacesContext.getCurrentInstance();
-		Long announcementId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), announcement,
+		announcementId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), announcement,
 				AbstractEntity_.id.getName());
 		Registration r = new Registration();
 		r.setAnnouncement(service.getObject(Announcement.class, announcementId, 1));
-		Long registrationId = service.createRegistration(r);
+		registrationId = service.createRegistration(r);
 		loadRegistration(registrationId);
+		JsfUtil.setViewVariable("id", registrationId);
+		JsfUtil.setViewVariable("aid", announcementId);
 		startseiteBean.setMainContent("/announcement/registrationEdit.xhtml", this.registration.getId());
 	}
 
@@ -242,7 +257,7 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			List<RegEntry> entries = new ArrayList<>(1);
 			entries.add(selectedEntry);
 			Participant request = new Participant();
-			request.setRemark(remark);
+			request.setRemark(remarks.get(0));
 			selectedEntry.setParticipants(Arrays.asList(request));
 			service.saveRegEntries(registration.getId(), entries);
 			showEffect = true;
@@ -299,6 +314,41 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		return sb.toString();
 	}
 
+	public String getRaceFilterPattern(Messages bundle) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(bundle.get("raceNo"));
+		sb.append(" $ -");
+		return sb.toString();
+	}
+
+	public String getRegisteredParticipantsString(RegEntry entry) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < entry.getParticipants().size(); i++) {
+			Participant participant = entry.getParticipants().get(i);
+			if (i > 0)
+				sb.append(" ");
+			getRegisteredParticipantString(entry, participant, sb);
+		}
+		return sb.toString();
+	}
+
+	public String getRegisteredParticipantString(RegEntry entry, Participant participant, StringBuilder sb) {
+		StringBuilder result = sb != null ? sb : new StringBuilder();
+		if (participant.getRemark() != null) {
+			result.append(participant.getRemark());
+		} else {
+			result.append(participant.getUser().getFirstName());
+			result.append(" ");
+			result.append(participant.getUser().getLastName());
+			if (!participant.getUser().getClub().getId().equals(entry.getRegistration().getClub().getId())) {
+				result.append(" (");
+				result.append(participant.getUser().getClub().getShortNameOrName());
+				result.append(")");
+			}
+		}
+		return result != sb ? result.toString() : null;
+	}
+
 	public void setStatus(Object registration, RegistrationStatus status) {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long registrationId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), registration,
@@ -328,17 +378,28 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		this.registrationTable = registrationTable;
 	}
 
+	public List<String> getRemarks() {
+		return remarks;
+	}
+
 	public String getRemark() {
-		return remark;
+		return remarks.get(0);
 	}
 
 	public void setRemark(String remark) {
-		if (remark != null && !remark.equals(this.remark)) {
+		if (remark != null) {
 			if (remark.length() > 50)
 				remark = remark.substring(0, 50);
-			einstellungen.setValue("requestMsg", remark);
+			remarks.remove(remark);
+			if (remarks.size() >= 10)
+				remarks.remove(9);
+			remarks.add(0, remark);
+			einstellungen.setValue("requestMsg", remarks.toArray(new String[remarks.size()]));
+			Object[] ids = FacesContext.getCurrentInstance().getPartialViewContext().getExecuteIds().toArray();
+			SelectOneMenu menu = (SelectOneMenu) FacesContext.getCurrentInstance().getViewRoot()
+					.findComponent((String) ids[ids.length - 1]);
+			menu.setValue(remarks);
 		}
-		this.remark = remark;
 	}
 
 	public Object renderClubName(Map<String, Object> user) {

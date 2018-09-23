@@ -24,6 +24,7 @@ import org.planner.eo.User;
 import org.planner.eo.User_;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
+import org.planner.model.Suchkriterien.Filter;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
@@ -139,8 +140,12 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		return entities.getListe();
 	}
 
-	public List<Role> getRoles() {
+	public List<Role> getRoles(boolean restrictToExternal) {
 		Suchkriterien krit = new Suchkriterien();
+		if (restrictToExternal)
+			krit.addFilter(new Filter(Role_.internal.getName(), false));
+		else
+			krit.addSortierung(Role_.internal.getName(), true);
 		krit.addSortierung(Role_.role.getName(), true);
 		// filtere Admin und Tester heraus, so dass niemand
 		// außer einem Admin einen Admin bzw. Tester anlegen kann.
@@ -177,7 +182,7 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 			@SuppressWarnings("unchecked")
 			List<Role> roles = (List<Role>) context.get("roles");
 			if (roles == null)
-				context.put("roles", roles = getRoles());
+				context.put("roles", roles = getRoles(true));
 			for (Role userRole : user.getRoles()) {
 				boolean roleFound = false;
 				for (Role role : roles) {

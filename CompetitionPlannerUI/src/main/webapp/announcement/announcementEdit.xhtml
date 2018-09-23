@@ -9,6 +9,7 @@
 	xmlns:pe="http://primefaces.org/ui/extensions">
 
 	<ui:composition template="/templates/edit.xhtml">
+		<ui:param name="roleSuffix" value="announcements"/>
 		<ui:param name="bundle" value="#{messages.bundle('announcements')}"/>
 		<ui:param name="bean" value="#{announcementBean}"/>
 		<ui:param name="searchLink" value="/announcement/announcements.xhtml"/>
@@ -75,28 +76,28 @@
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.announcement}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
-					<div class="ui-g">
+					<h:panelGroup id="annButtons" styleClass="ui-g" layout="block">
 						<p:commandButton value="#{bundle.setStatus}" action="#{announcementBean.setStatus('announced')}"
-							process="@this" update="buttons" partialSubmit="true" widgetVar="btnAnnounce"
-							onsuccess="announcementEdit.enableButtons(1)"/>
+							process="@this" update="buttons annButtons annEditor" partialSubmit="true"
+							disabled="#{announcement.status != 'created'}"/>
 						<p:commandButton value="#{bundle.revokeStatus}" action="#{announcementBean.setStatus('created')}"
-							process="@this" update="buttons" partialSubmit="true" widgetVar="btnRevoke"
-							onsuccess="announcementEdit.enableButtons(0)"
-							style="margin-left: 10px" rendered="#{authBean.inRole('Tester')}"/>
+							process="@this" update="buttons annButtons annEditor" partialSubmit="true"
+							style="margin-left: 10px" rendered="#{authBean.inRole('Tester')}"
+							disabled="#{announcement.status != 'announced'}"/>
 						<p:commandButton value="#{bundle.testPdf}" action="#{announcementBean.uploadBean.create('edit', announcement)}"
 							process="@form" style="margin-left: 10px"
 							oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('main',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
 						<p:commandButton widgetVar="pdfButton" style="display: none"
 							action="#{announcementBean.uploadBean.download(null, 'application/pdf', null, null)}"
 							ajax="false" process="@this"/>
-					</div>
+					</h:panelGroup>
 				</div>
 			</div>
-			<h:outputScript>announcementEdit.init().enableButtons(#{announcement.id == null ? -1 : announcement.status == "created" ? 0 : 1});</h:outputScript>
+			<h:outputScript>announcementEdit.init()</h:outputScript>
 
-			<pe:ckEditor value="#{announcement.text}" widgetVar="annEditor"
+			<pe:ckEditor value="#{announcement.text}" id="annEditor" widgetVar="annEditor"
 				customConfig="javax.faces.resource/editorConfig.js.xhtml?ln=js"
-				width="90%"/>
+				width="90%" readonly="#{not canSave}"/>
 
 		</ui:define>
 	</ui:composition>

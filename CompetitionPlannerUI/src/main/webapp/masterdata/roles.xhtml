@@ -7,7 +7,7 @@
 	xmlns:p="http://primefaces.org/ui">
 
 	<ui:composition template="/templates/search.xhtml">
-		<ui:param name="roles" value="Admin"/>
+		<ui:param name="roleSuffix" value="roles"/>
 		<ui:param name="uploadBean" value="#{searchBean.uploadBean}"/>
 		<ui:param name="bundle" value="#{messages.bundle('roles')}"/>
 		<ui:param name="typ" value="org.planner.eo.Role"/>

@@ -8,6 +8,7 @@
 	xmlns:pe="http://primefaces.org/ui/extensions">
 
 	<ui:composition template="/templates/title.xhtml">
+		<ui:param name="roleSuffix" value="registrations"/>
 		<ui:param name="bundle" value="#{messages.bundle('registrations')}"/>
 		<ui:param name="bean" value="#{registrationBean}"/>
 		<ui:param name="searchLink" value="/announcement/registrations.xhtml"/>
@@ -18,7 +19,14 @@
 
 			<h:form id="main">
 
-				<h:panelGrid columns="3" columnClasses="regEditTable, regEditTableMid, regEditTable" cellpadding="0" cellspacing="0">
+				<h:panelGroup layout="block" rendered="#{registration.status == 'submitted'}">
+					<p:commandButton id="_btnCancel" value="#{messages.backToOverview}"
+							action="#{startseiteBean.setMainContent('/announcement/registrations.xhtml')}"
+							process="@this" partialSubmit="true" update="mainContent"/>
+				</h:panelGroup>
+
+				<h:panelGrid columns="3" columnClasses="regEditTable, regEditTableMid, regEditTable" cellpadding="0" cellspacing="0"
+						rendered="#{registration.status != 'submitted'}">
 					<p:dataTable id="racesTable" widgetVar="racesTable"
 							var="race" rowKey="#{race.id}"
 							value="#{registrationBean.races}"
@@ -41,7 +49,7 @@
 						<pe:javascript event="rowDblselect" execute="registrationEdit.copyFilters(true)"/>
 						<p:ajax event="filter" oncomplete="PF('racesTable').unselectAllRows(); registrationEdit.enableButtons()"/>
 
-						<p:column headerText="#{bundle.number}" sortBy="#{race.number}" filterBy="#{race.number}" filterMatchMode="exact">
+						<p:column id="raceNumber" headerText="#{bundle.number}" sortBy="#{race.number}" filterBy="#{race.number}" filterMatchMode="exact">
 							<h:outputText value="#{race.number}"/>
 						</p:column>
 						<p:column headerText="#{bundle.boatClass}" sortBy="#{race.boatClass.text}" filterBy="#{race.boatClass.text}" filterMatchMode="contains">
@@ -63,7 +71,7 @@
 							onclick="registrationEdit.copyFilters()"
 							style="margin-bottom: 1em"/>
 						<p:commandButton type="button" icon="ui-icon-person" title="#{bundle.addRequest}"
-							onclick="PF('remarkDlg').show()"
+							onclick="registrationEdit.showRemarkDlg()"
 							widgetVar="btnAddRequest"
 							style="margin-bottom: 1em"/>
 						<p:commandButton icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
@@ -158,22 +166,20 @@
 						</h:panelGroup>
 					</f:facet>
 
-					<pe:javascript event="rowSelect" execute="registrationEdit.enableButtons()"/>
-					<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons()"/>
-					<p:ajax event="filter" oncomplete="PF('registrationTable').unselectAllRows(); registrationEdit.enableButtons()"/>
+					<pe:javascript event="rowSelect" execute="registrationEdit.enableButtons()" disabled="#{registration.status == 'submitted'}"/>
+					<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons()" disabled="#{registration.status == 'submitted'}"/>
+					<p:ajax event="filter" oncomplete="PF('registrationTable').unselectAllRows(); if (#{registration.status != 'submitted'}) registrationEdit.enableButtons()"/>
 
-					<p:column headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry, bundle)}" filterMatchMode="contains" filterStyle="width: 80%">
+					<p:column id="raceNumber" headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry, bundle)}" filterMatchMode="contains" filterStyle="width: 80%">
 						<h:outputText value="#{registrationBean.getRaceString(entry, bundle)}"/>
 					</p:column>
-					<p:column>
+					<p:column headerText="#{bundle.registeredTeams}" filterBy="#{registrationBean.getRegisteredParticipantsString(entry)}" filterMatchMode="contains">
 						<ui:repeat var="participant" value="#{entry.participants}" varStatus="status">
 							<h:outputText value="#{'&lt;br /&gt;'}" escape="false" rendered="#{status.index > 0}"/>
-							<h:outputText value="#{participant.remark != null ? participant.remark : participant.user.firstName} "/>
-							<h:outputText value="#{participant.user.lastName}"/>
-							<h:outputText value=" (#{participant.user.club.shortNameOrName})" rendered="#{participant.user.club.id != entry.registration.club.id and participant.remark == null}"/>
+							<h:outputText value="#{registrationBean.getRegisteredParticipantString(entry, participant, null)}"/>
 						</ui:repeat>
 					</p:column>
-					<p:column width="30">
+					<p:column width="30" rendered="#{registration.status != 'submitted'}">
 						<p:commandButton icon="ui-icon-trash" title="#{bundle.deleteParticipant}"
 								action="#{registrationBean.deleteFromRegistration(entry)}"
 								process="registrationTable"
@@ -182,24 +188,29 @@
 					</p:column>
 				</p:dataTable>
 			</h:form>
+			<h:panelGroup id="raceFilterPattern" layout="block" style="display: none">
+				<h:outputText value="#{registrationBean.getRaceFilterPattern(bundle)}"/>
+			</h:panelGroup>
 
 			<p:dialog appendTo="body" widgetVar="remarkDlg" header="#{bundle.requestMsg}" closeOnEscape="true" styleClass="remarkDlg" modal="true">
 				<h:form>
 					<h:panelGroup layout="block" styleClass="ui-dialog-content">
-						<p:inputText id="remark" value="#{registrationBean.remark}" style="width: 100%" maxlength="50"/>
+						<p:selectOneMenu id="remark" value="#{registrationBean.remark}" editable="true" maxlength="50">
+							<f:selectItems value="#{registrationBean.remarks}"/>
+						</p:selectOneMenu>
 					</h:panelGroup>
 					<h:panelGroup layout="block" styleClass="ui-dialog-buttonpane">
 						<p:commandButton value="#{messages.ok}" styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
 							partialSubmit="true"
 							process="@this main:registrationTable remark" update="main:registrationTable"
-							action="#{registrationBean.addRequest()}" oncomplete="PF('remarkDlg').hide()"/>
+							action="#{registrationBean.addRequest()}" oncomplete="registrationEdit.hideRemarkDlg()"/>
 						<p:commandButton value="#{messages.cancel}" type="button" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
-							onclick="PF('remarkDlg').hide()" />
+							onclick="registrationEdit.hideRemarkDlg()" />
 					</h:panelGroup>
 				</h:form>
 			</p:dialog>
 
-			<h:outputScript>registrationEdit.enableButtons()</h:outputScript>
+			<h:outputScript rendered="#{registration.status != 'submitted'}">registrationEdit.enableButtons()</h:outputScript>
 
 		</ui:define>
 	</ui:composition>
