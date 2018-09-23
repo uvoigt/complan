@@ -47,7 +47,7 @@ public class ColumnHandler {
 		}
 
 		public boolean isMandatory() {
-			return visibility.mandatory();
+			return visibility.mandatory() || parent != null && parent.mandatory();
 		}
 
 		public String getMultiRowGroup() {
