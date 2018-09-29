@@ -8,6 +8,7 @@
 	xmlns:c="http://java.sun.com/jsp/jstl/core">
 
 	<ui:composition template="/templates/edit.xhtml">
+		<ui:param name="roles" value="User"/>
 		<ui:param name="bundle" value="#{messages.bundle('users')}"/>
 		<ui:param name="title" value="#{messages.bundle('menu').myprofile}"/>
 		<ui:param name="bean" value="#{myProfileBean}"/>

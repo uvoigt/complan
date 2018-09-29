@@ -8,7 +8,6 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.lang.StringUtils;
 import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
 
@@ -39,9 +38,6 @@ public class AuthBean implements Serializable {
 	}
 
 	public boolean inRoles(String roles) {
-		// dann wird die implizite Rolle "User" angenommen
-		if (StringUtils.isEmpty(roles))
-			return true;
 		String[] split = roles.split(",");
 		for (String s : split) {
 			if (inRole(s))
