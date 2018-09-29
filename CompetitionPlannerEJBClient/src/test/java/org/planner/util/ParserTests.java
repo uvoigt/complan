@@ -1,5 +1,8 @@
 package org.planner.util;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 import org.junit.Test;
 import org.planner.util.ExpressionParser.ExpressionException;
 
@@ -140,6 +143,12 @@ public class ParserTests {
 		assertEquals(s, 0, 0, 7, 6);
 	}
 
+	@Test
+	public void regression28Registrations() throws Exception {
+		String s = readRessource("defaultExpression");
+		assertEquals(s, 28, 9, 3, 6);
+	}
+
 	private void assertEquals(String s, int numTeams, int numLanes, int intoFinal, int intoSemiFinal) throws Exception {
 		ExpressionParser parser = new ExpressionParser(ParserMessages.INSTANCE);
 		parser.evaluateExpression(s, numTeams, numLanes);
@@ -154,5 +163,16 @@ public class ParserTests {
 			Assert.fail("keine exception");
 		} catch (ExpressionException e) {
 		}
+	}
+
+	private String readRessource(String name) throws Exception {
+		InputStream in = ClassLoader.getSystemResourceAsStream(name);
+		StringBuilder sb = new StringBuilder();
+		InputStreamReader r = new InputStreamReader(in, "UTF8");
+		char[] buf = new char[1000];
+		for (int c; (c = r.read(buf)) != -1;)
+			sb.append(buf, 0, c);
+		r.close();
+		return sb.toString();
 	}
 }
