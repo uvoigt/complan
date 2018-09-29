@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.Entity;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.planner.eo.AbstractEntity;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Logged;
@@ -51,7 +52,8 @@ public class ColumnHandler {
 		}
 
 		public String getMultiRowGroup() {
-			return visibility.multiRowGroup();
+			return visibility.multiRowGroup().length() > 0 ? visibility.multiRowGroup()
+					: parent != null ? parent.multiRowGroup() : "";
 		}
 
 		public boolean isVisible() {
@@ -82,6 +84,10 @@ public class ColumnHandler {
 
 		private boolean isExport() {
 			return visibility.export() || parent != null && parent.export();
+		}
+
+		private String[] getRoles() {
+			return (String[]) ArrayUtils.addAll(visibility.roles(), parent != null ? parent.roles() : null);
 		}
 	}
 
@@ -212,8 +218,9 @@ public class ColumnHandler {
 
 	private void applyRoleRestrictions(Column[] columns) {
 		for (Column column : columns) {
-			boolean inRole = column.visibility.roles().length == 0;
-			for (String role : column.visibility.roles()) {
+			String[] roles = column.getRoles();
+			boolean inRole = roles.length == 0;
+			for (String role : roles) {
 				inRole |= FacesContext.getCurrentInstance().getExternalContext().isUserInRole(role);
 			}
 			column.visibleForCurrentUser = inRole;
