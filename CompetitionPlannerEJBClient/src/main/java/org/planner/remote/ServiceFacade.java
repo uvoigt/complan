@@ -12,6 +12,7 @@ import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
+import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.Properties;
 import org.planner.eo.Race;
@@ -99,6 +100,8 @@ public interface ServiceFacade extends IResultProvider {
 	Long createProgram(Program program);
 
 	void generateProgram(Program program);
+
+	void setProgramStatus(Long programId, ProgramStatus status);
 
 	Program getProgram(Long id);
 

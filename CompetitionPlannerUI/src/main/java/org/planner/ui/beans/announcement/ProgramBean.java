@@ -9,6 +9,7 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -16,6 +17,7 @@ import javax.inject.Named;
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.Announcement;
 import org.planner.eo.Program;
+import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
@@ -145,6 +147,15 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		calendar.set(Calendar.SECOND, 0);
 		calendar.set(Calendar.MILLISECOND, 0);
 		return new Date(calendar.getTimeInMillis());
+	}
+
+	public void setStatus(Object program, ProgramStatus status) {
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Long programId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), program,
+				AbstractEntity_.id.getName());
+		service.setProgramStatus(programId, status);
+		FacesContext.getCurrentInstance().addMessage(null,
+				new FacesMessage(null, JsfUtil.getScopedBundle().get("programs.statusSet_" + status)));
 	}
 
 	public void generateProgram() {

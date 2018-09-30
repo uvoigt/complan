@@ -24,11 +24,21 @@
 					action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
 					process="@form"
 					update="mainContent"
-					styleClass="editButton"
-					rendered="#{authBean.inRole('read_programs')}"/>
+					styleClass="editButton"/>
 		</ui:define>
 		<ui:define name="copyButton"/>
 		<ui:define name="addRowButtons">
+			<p:commandButton icon="ui-icon-mail-closed" title="#{bundle.setStatus}"
+					action="#{programBean.setStatus(item, 'announced')}"
+					process="@this"
+					update="searchTable"
+					rendered="#{not (authBean.inRole('Tester') and item.status == 'announced' and item['announcement.club.name'] == authBean.loggedInUser.club.name)}"
+					disabled="#{item.status != 'created'}"/>
+			<p:commandButton icon="ui-icon-circle-arrow-w" title="#{bundle.revokeStatus}"
+					action="#{programBean.setStatus(item, 'created')}"
+					process="@this"
+					update="searchTable"
+					rendered="#{authBean.inRole('Tester') and item.status == 'announced' and item['announcement.club.name'] == authBean.loggedInUser.club.name}"/>
 			<p:commandButton icon="ui-icon-print" title="#{bundle.createPdf}"
 					action="#{programBean.uploadBean.create(null, item)}"
 					process="@this"

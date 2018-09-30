@@ -28,6 +28,7 @@ import org.planner.business.program.Checks;
 import org.planner.business.program.Problem;
 import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
+import org.planner.ejb.CallerProvider;
 import org.planner.eo.Announcement;
 import org.planner.eo.Club;
 import org.planner.eo.Participant;
@@ -211,6 +212,9 @@ public class ProgramServiceImpl {
 
 	@Inject
 	private CommonImpl common;
+
+	@Inject
+	private CallerProvider caller;
 
 	@Inject
 	private PlannerDao dao;
@@ -684,5 +688,14 @@ public class ProgramServiceImpl {
 			members.add(member);
 		}
 		teams.add(team);
+	}
+
+	public void setProgramStatus(Long programId, ProgramStatus status) {
+		Program program = common.getById(Program.class, programId, 0);
+		common.checkWriteAccess(program, Operation.save);
+		if (!caller.isInRole("Tester") && status == ProgramStatus.created)
+			throw new FachlicheException(messages.getResourceBundle(), "accessSetStatus");
+		program.setStatus(status);
+		common.save(program);
 	}
 }

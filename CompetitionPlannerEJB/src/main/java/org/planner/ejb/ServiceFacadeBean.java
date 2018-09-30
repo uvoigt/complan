@@ -20,6 +20,7 @@ import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
+import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.Properties;
 import org.planner.eo.Race;
@@ -254,6 +255,11 @@ public class ServiceFacadeBean implements ServiceFacade {
 	@Override
 	public void generateProgram(Program program) {
 		this.program.generateProgram(program);
+	}
+
+	@Override
+	public void setProgramStatus(Long programId, ProgramStatus status) {
+		program.setProgramStatus(programId, status);
 	}
 
 	@Override
