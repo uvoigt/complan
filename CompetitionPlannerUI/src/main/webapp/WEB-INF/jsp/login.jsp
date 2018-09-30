@@ -12,7 +12,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<script type="text/javascript" src="resources/js/login.js"></script>
 </head>
-<body onload="document.loginform.j_username.focus();">
+<body onload="init()">
 	<div class="vertical">
 		<div class="horizontal main">
 			<noscript>

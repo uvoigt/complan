@@ -1,3 +1,9 @@
+function init() {
+	document.loginform.j_username.focus();
+	var index = location.href.indexOf("/passwordreset");
+	if (index != -1)
+		location.replace(location.href.substring(0, index));
+}
 function message(msg) {
 	document.getElementById("message").innerText = msg;
 }
