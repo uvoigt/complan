@@ -151,6 +151,8 @@ public class RegistryImpl {
 	}
 
 	private boolean isTokenValid(String userId, Token token, byte[] hashFromToken) {
+		if (token == null)
+			return false;
 		byte[] hash = shaHash(userId, token);
 		return Arrays.equals(hash, hashFromToken);
 	}
