@@ -17,7 +17,6 @@
 		<ui:param name="noButtons" value="true"/>
 		<ui:define name="newButton"/>
 		<ui:define name="copyButton"/>
-					<!--disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/-->
 		<ui:define name="editButton">
 			<p:commandButton icon="#{item.status != 'submitted' ? 'ui-icon-pencil' : 'ui-icon-document'}"
 					title="#{item.status != 'submitted' ? bundle.modify : bundle.display}"
