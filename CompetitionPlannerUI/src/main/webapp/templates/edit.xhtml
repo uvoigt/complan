@@ -16,8 +16,7 @@
 				<ui:insert name="editArea"/>
 
 				<h:panelGroup id="buttons" layout="block" style="padding-top: 1em;">
-					<p:commandButton value="#{messages.save}" id="btnSave" styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
-						style="margin-right: 0.5em;"
+					<p:commandButton value="#{messages.save}" id="btnSave" styleClass="ui-confirmdialog-yes gap" icon="ui-icon-check"
 						action="#{bean.save(searchLink)}"
 						process="@form"
 						update="messages mainContent #{addToUpdate}"

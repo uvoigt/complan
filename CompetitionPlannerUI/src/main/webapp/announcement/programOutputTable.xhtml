@@ -20,7 +20,7 @@
 				<f:facet name="header">
 					<h:panelGroup styleClass="#{race.raceType}">
 						<h:panelGroup layout="block" styleClass="raceTitle">
-							<p:selectBooleanCheckbox style="margin-right: 5px" onchange="programEdit.toggleRaceSelection($(this))"/>
+							<p:selectBooleanCheckbox style="margin-right: 5px" onchange="programEdit.toggleRaceSelection($(this))" rendered="#{programBean.program.status == 'created'}"/>
 							<h:outputText value="#{bundle.race} "/>
 							<h:outputText value="#{race.race.number}"/>
 							<h:outputText value="#{race.number != null ? '-'.concat(race.number) : null}"/><br/><h:outputText value="#{race.race.boatClass.text} "/>
@@ -58,7 +58,7 @@
 			<h:outputLabel value="#{renderBean.renderFollowUpHint(race)}"
 				style="font-style: italic" rendered="#{race.raceType == 'heat' or race.raceType == 'semiFinal'}"/>
 
-			<h:outputScript rendered="#{rowIndex == 0}">PF("swapRaces").disable();</h:outputScript>
+			<h:outputScript rendered="#{rowIndex == 0} and programBean.program.status == 'created'}">programEdit.enableSwap();</h:outputScript>
 
 		</p:column>
 

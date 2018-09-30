@@ -257,7 +257,12 @@ var programEdit = {
 				pt.unselectRowWithCheckbox(checkbox, true);
 			} catch (ex) {}
 		}
-		numChecked == 2 ? PF("swapRaces").enable() : PF("swapRaces").disable();
+		this.enableSwap(numChecked == 2);
+	},
+	enableSwap: function(enable) {
+		var swap = PF("swapRaces");
+		if (swap)
+			enable ? swap.enable() : swap.disable();
 	}
 };
 function initLoginDialog() {

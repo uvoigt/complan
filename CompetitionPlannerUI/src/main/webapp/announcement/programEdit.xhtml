@@ -25,29 +25,34 @@
 					<h:panelGroup layout="block" styleClass="ui-g">
 						<h:panelGroup layout="block" style="width: 100%">
 							<p:inputTextarea id="expr" value="#{programOptionsBean.program.options.expr}" style="width: 100%" rows="10" widgetVar="expr"
-								completeMethod="#{programOptionsBean.suggestExpr}" minQueryLength="100" onkeyup="programEdit.evalExpr()"/>
+								completeMethod="#{programOptionsBean.suggestExpr}" minQueryLength="100" onkeyup="programEdit.evalExpr()"
+								disabled="#{programBean.program.status != 'created'}"/>
 							<p:inputText widgetVar="exprStatus" readonly="true" style="width: 100%; color: red"/>
 						</h:panelGroup>
 
-						<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em">
+						<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-1">
 							<h:outputText value="#{bundle.beginTimes}"/>
 						</h:panelGroup>
-						<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-4">
+						<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-5">
 							<div class="ui-g">
-								<p:dataList var="dayTime" rowIndexVar="rowIndex" value="#{programBean.program.options.dayTimes}" styleClass="expanded">
+								<p:dataList var="dayTime" rowIndexVar="rowIndex" value="#{programBean.program.options.dayTimes}" styleClass="expanded" itemType="circle">
 									<h:outputText value="#{bundle.day} #{rowIndex + 1}" styleClass="program-dayTimes"/>
 									<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].start}" pattern="HH:mm" timeOnly="true"
-										size="8" styleClass="program-dayTimes"/>
+											size="8" styleClass="program-dayTimes"
+											disabled="#{programBean.program.status != 'created'}"/>
 									<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].end}" pattern="HH:mm" timeOnly="true"
-										size="8" styleClass="program-dayTimes"/>
+											size="8" styleClass="program-dayTimes"
+											disabled="#{programBean.program.status != 'created'}"/>
 									<p:dataList var="break" rowIndexVar="breakIndex" value="#{programBean.program.options.dayTimes[rowIndex].breaks}"
-											styleClass="program-dayTimes" style="border: none" type="none">
+											styleClass="expanded program-dayTimes datalist-blank" type="none">
 										<h:outputText value="#{bundle.breakBegin}" styleClass="program-dayTimes"/>
 										<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].time}" pattern="HH:mm"
-												timeOnly="true" size="8" styleClass="program-dayTimes"/>
+												timeOnly="true" size="8" styleClass="program-dayTimes"
+												disabled="#{programBean.program.status != 'created'}"/>
 										<p:spinner value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].duration}" min="0"
-												size="1" styleClass="program-dayTimes"/>
-										<h:outputText value="#{bundle.breakDuration}" styleClass="program-dayTimes"/>
+												size="1" style="margin-right: 1px"
+												disabled="#{programBean.program.status != 'created'}"/>
+										<h:outputText value="#{bundle.breakDuration}"/>
 									</p:dataList>
 								</p:dataList>
 							</div>
@@ -55,15 +60,19 @@
 
 						<h:panelGroup layout="block" styleClass="ui-g">
 							<h:panelGroup layout="block" style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.timeLag}"/></h:panelGroup>
-							<h:panelGroup layout="block" style=""><p:spinner value="#{programBean.program.options.timeLag}" min="0" size="1"/></h:panelGroup>
+							<h:panelGroup layout="block" style="">
+								<p:spinner value="#{programBean.program.options.timeLag}" min="0" size="1"
+										disabled="#{programBean.program.status != 'created'}"/>
+							</h:panelGroup>
 						</h:panelGroup>
 
-						<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3" style="width: 11em">
-							<h:outputText value="#{bundle.childProtection}"/>
-						</h:panelGroup>
 						<h:panelGroup id="childProtection" styleClass="ui-g-12 ui-md-6 ui-lg-4">
+							<h:panelGroup layout="block" styleClass="ui-g-12 ui-md-6 ui-lg-3">
+								<h:outputText value="#{bundle.childProtection}"/>
+							</h:panelGroup>
 							<h:panelGroup layout="block" style="width: 15em; margin-right: 1em">
-								<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}">
+								<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}"
+										disabled="#{programBean.program.status != 'created'}">
 									<p:ajax update="childProtection" partialSubmit="true"/>
 								</p:selectBooleanCheckbox>
 							</h:panelGroup>
@@ -85,21 +94,25 @@
 				<h:panelGroup styleClass="ui-g">
 					<h:panelGroup styleClass="ui-g-12">
 						<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
-								process="@form" update="programTable"/>
+								process="@form" update="programTable" rendered="#{programBean.program.status == 'created'}"
+								styleClass="gap"/>
 						<p:commandButton value="#{bundle.checkProgram}" action="#{programBean.checkProgram()}"
-								process="@form" update="programTable"/>
-						<h:panelGroup>
+								process="@form" update="programTable" rendered="#{programBean.program.status == 'created'}"
+								styleClass="gap"/>
+						<h:panelGroup styleClass="gap">
 							<h:outputText value="#{bundle.showTeams}"/>
-							<p:selectBooleanCheckbox value="#{programBean.showTeams}" style="margin-left: 5px">
+							<p:selectBooleanCheckbox value="#{programBean.showTeams}" style="margin-left: 0.5em">
 								<p:ajax partialSubmit="true" update="programTable"/>
 							</p:selectBooleanCheckbox>
 						</h:panelGroup>
 						<p:commandButton widgetVar="swapRaces" value="#{bundle.swapRaces}" action="#{programBean.swapRaces()}"
 								process="@this programTable" update="programTable" partialSubmit="true"
-								onsuccess="PF('swapRaces').disable();"/>
+								onsuccess="programEdit.enableSwap()" rendered="#{programBean.program.status == 'created'}"
+								styleClass="gap"/>
 						<p:commandButton id="btnCancel" value="#{messages.backToOverview}"
 								action="#{startseiteBean.setMainContent('/announcement/programs.xhtml')}"
-								process="@this" partialSubmit="true" update="mainContent"/>
+								process="@this" partialSubmit="true" update="mainContent"
+								styleClass="gap"/>
 					</h:panelGroup>
 				</h:panelGroup>
 
@@ -107,7 +120,7 @@
 
 			</h:form>
 
-			<h:outputScript>PF("swapRaces").disable();</h:outputScript>
+			<h:outputScript rendered="#{programBean.program.status == 'created'}">programEdit.enableSwap();</h:outputScript>
 
 		</ui:define>
 	</ui:composition>

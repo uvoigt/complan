@@ -162,6 +162,10 @@
 	width: 400px !important;
 }
 
+.gap {
+	margin-right: 0.5em !important;
+}
+
 .editButton {
 	margin-right: 10px !important;
 }
