@@ -3,6 +3,7 @@ package org.planner.business;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ import org.planner.util.LogUtil;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
+import org.planner.util.ResetForCopy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -190,13 +192,23 @@ public class CommonImpl {
 		final T object = getById(typ, id, 1);
 		if (object != null) {
 			dao.executeOperation(new IOperation<Void>() {
+				private List<Field> getAllFields(Class<?> type, List<Field> result) {
+					if (type == null)
+						return result;
+					Field[] fields = type.getDeclaredFields();
+					result.addAll(Arrays.asList(fields));
+					return getAllFields(type.getSuperclass(), result);
+				}
+
 				@Override
 				public Void execute(EntityManager em) {
 					try {
-						for (PropertyDescriptor pd : Introspector.getBeanInfo(object.getClass())
-								.getPropertyDescriptors()) {
-							Object propertyValue = pd.getReadMethod().invoke(object);
-							if (propertyValue instanceof AbstractEntity) {
+						for (Field field : getAllFields(object.getClass(), new ArrayList<Field>())) {
+							field.setAccessible(true);
+							Object propertyValue = field.get(object);
+							if (field.getAnnotation(ResetForCopy.class) != null) {
+								field.set(object, null);
+							} else if (propertyValue instanceof AbstractEntity) {
 								((AbstractEntity) propertyValue).setId(null);
 								em.detach(propertyValue);
 							} else if (propertyValue instanceof Collection) {

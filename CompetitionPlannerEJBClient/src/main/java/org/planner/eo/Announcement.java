@@ -19,6 +19,7 @@ import javax.persistence.TemporalType;
 import org.planner.model.LocalizedEnum;
 import org.planner.util.CommonMessages;
 import org.planner.util.NLSBundle;
+import org.planner.util.ResetForCopy;
 import org.planner.util.Visible;
 
 @Entity
@@ -120,6 +121,7 @@ public class Announcement extends AbstractEntity {
 
 	@Column(nullable = false)
 	@Visible(order = 6, mandatory = true, depth = 0, initial = false)
+	@ResetForCopy
 	private AnnouncementStatus status;
 
 	public String getName() {
