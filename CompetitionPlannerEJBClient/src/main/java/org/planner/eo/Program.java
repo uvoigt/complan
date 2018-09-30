@@ -54,7 +54,7 @@ public class Program extends AbstractEntity {
 	private String text;
 
 	@Column(/* nullable = false */)
-	@Visible(depth = 0, order = 6, initial = false)
+	@Visible(depth = 0, mandatory = true, order = 6, initial = false)
 	private ProgramStatus status;
 
 	public Announcement getAnnouncement() {
