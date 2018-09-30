@@ -23,20 +23,19 @@
 					action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
 					process="@form"
 					update="mainContent"
-					styleClass="editButton"
-					rendered="#{authBean.inRole('read_registrations')}"/>
+					styleClass="editButton"/>
 		</ui:define>
 		<ui:define name="addRowButtons">
 			<p:commandButton icon="ui-icon-mail-closed" title="#{bundle.setStatus}"
 					action="#{registrationBean.setStatus(item, 'submitted')}"
 					process="@this"
 					update="searchTable"
-					rendered="#{item.status == 'created' and item['club.name'] == authBean.loggedInUser.club.name}"/>
+					rendered="#{item.status == 'created' and item['club.name'] == authBean.loggedInUser.club.name and (authBean.inRole('update_registrations'))}"/>
 			<p:commandButton icon="ui-icon-circle-arrow-w" title="#{bundle.revokeStatus}"
 					action="#{registrationBean.setStatus(item, 'created')}"
 					process="@this"
 					update="searchTable"
-					rendered="#{authBean.inRole('Tester') and item.status == 'submitted' and item['club.name'] == authBean.loggedInUser.club.name}"/>
+					rendered="#{authBean.inRole('Tester') and (authBean.inRole('update_registrations')) and item.status == 'submitted' and item['club.name'] == authBean.loggedInUser.club.name}"/>
 		</ui:define>
 	</ui:composition>
 </html>
