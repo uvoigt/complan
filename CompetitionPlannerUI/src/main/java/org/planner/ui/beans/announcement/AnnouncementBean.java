@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -16,6 +15,7 @@ import javax.inject.Named;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
+import org.planner.eo.AbstractEntity_;
 import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
@@ -88,15 +88,11 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 	public void setItem(Object item) {
 		announcement = (Announcement) item;
 		populateLocation();
-		if (announcement.getId() == null) {
+		if (announcement.getText() == null) {
 			announcement.setText(getTemplate());
 		} else {
 			JsfUtil.setViewVariable("id", announcement.getId());
 		}
-	}
-
-	public boolean canDelete(Map<String, String> item) {
-		return item.get("club.name").equals(auth.getLoggedInUser().getClub().getName());
 	}
 
 	private String getTemplate() {
@@ -218,6 +214,15 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 	public void setStatus(AnnouncementStatus status) {
 		service.setAnnouncementStatus(announcement.getId(), status);
 		announcement.setStatus(status);
+		FacesContext.getCurrentInstance().addMessage(null,
+				new FacesMessage(null, messages.get("announcements.statusSet_" + status)));
+	}
+
+	public void setStatus(Object announcement, AnnouncementStatus status) {
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Long announcementId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), announcement,
+				AbstractEntity_.id.getName());
+		service.setAnnouncementStatus(announcementId, status);
 		FacesContext.getCurrentInstance().addMessage(null,
 				new FacesMessage(null, messages.get("announcements.statusSet_" + status)));
 	}

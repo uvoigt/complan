@@ -38,6 +38,7 @@ import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.NLSBundle;
 import org.primefaces.component.api.UIColumn;
 import org.primefaces.component.datatable.DataTable;
+import org.primefaces.component.menubutton.MenuButton;
 import org.primefaces.event.ToggleEvent;
 import org.primefaces.event.data.FilterEvent;
 import org.primefaces.event.data.PageEvent;
@@ -366,7 +367,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		UIColumn column = table.getColumns().get(table.getColumnsCount() - 1);
 		int buttonCount = 0;
 		for (UIComponent c : column.getChildren()) {
-			if (c instanceof HtmlCommandButton && c.isRendered())
+			if ((c instanceof HtmlCommandButton || c instanceof MenuButton) && c.isRendered())
 				buttonCount++;
 		}
 		MutableInt maxButtons = (MutableInt) table.getAttributes().get("maxButtons");

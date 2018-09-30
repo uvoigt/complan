@@ -93,8 +93,18 @@ function updateColumnWidth(buttonCount) {
 }
 function rowDoubleClicked(table, rowId) {
 	var button = table.jq.find("[data-rk=" + rowId + "]>:last-child>.editButton");
-	if (!button.attr("disabled"))
-		button.trigger("click");
+	if (button.length > 0) {
+		if (!button.attr("disabled"))
+			button.trigger("click");
+	} else {
+		var btnName = table.jq.find("[data-rk=" + rowId + "]>:last-child>.ui-menubutton>button").attr("name");
+		if (btnName) {
+			btnName = btnName.replace(/:/g, "\\:").replace(/_button/, "_menu");
+			button = $(document).find("#" + btnName + ">>.ui-menuitem>:first-child").eq(0);
+			if (!button.attr("disabled"))
+				button.trigger("click");
+		}
+	}
 }
 function attachSubmitHandler() {
 	if (!main.handlerAttached) {

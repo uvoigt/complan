@@ -103,6 +103,9 @@
 					</p:columnToggler>
 				</f:facet>
 
+				<ui:insert name="aktionenMenu">
+				</ui:insert>
+
 				<ui:insert name="editButton">
 					<p:commandButton icon="ui-icon-pencil" title="#{bundle.modify}"
 							action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"

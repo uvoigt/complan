@@ -16,48 +16,62 @@
 		<ui:param name="uploadBean" value="#{announcementBean.uploadBean}"/>
 
 		<ui:param name="noButtons" value="#{not (authBean.inRole('create_announcements'))}"/>
-		<ui:define name="editButton">
-			<p:commandButton icon="#{item.status != 'announced' ? 'ui-icon-pencil' : 'ui-icon-document'}"
-					title="#{item.status != 'announced' ? bundle.modify : bundle.display}"
-					action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
-					process="@form"
-					update="mainContent"
-					styleClass="editButton"
-					rendered="#{authBean.inRole('update_announcements')}"
-					disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/>
+		<ui:define name="aktionenMenu">
+			<p:menuButton icon="ui-icon-gear" title="#{bundle.tableHeaderActions}" menuStyleClass="actionMenu">
+				<p:menuitem icon="#{item.status != 'announced' ? 'ui-icon-pencil' : 'ui-icon-document'}"
+						value="#{item.status != 'announced' ? bundle.modify : bundle.display}"
+						action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
+						process="@form"
+						update="mainContent"
+						rendered="#{authBean.inRole('update_announcements') and item['club.name'] == authBean.loggedInUser.club.name}"/>
+				<p:menuitem icon="ui-icon-flag"
+						value="#{item.status != 'announced' ? bundle.races : bundle.racesDisplay}"
+						action="#{searchBean.bearbeiten('/announcement/racesEdit.xhtml', item.id, racesEditBean)}"
+						process="@form"
+						update="mainContent"/>
+				<p:menuitem icon="ui-icon-mail-closed" value="#{bundle.setStatus}"
+						action="#{announcementBean.setStatus(item, 'announced')}"
+						process="@this"
+						update="searchTable"
+						rendered="#{item.status == 'created' and item['club.name'] == authBean.loggedInUser.club.name}"/>
+				<p:menuitem icon="ui-icon-circle-arrow-w" value="#{bundle.revokeStatus}"
+						action="#{announcementBean.setStatus(item, 'created')}"
+						process="@this"
+						update="searchTable"
+						rendered="#{authBean.inRole('Tester') and item.status == 'announced' and item['club.name'] == authBean.loggedInUser.club.name}"/>
+				<p:menuitem icon="ui-icon-print" value="#{bundle.createPdf}"
+						action="#{announcementBean.uploadBean.create(null, item)}"
+						process="@this"
+						partialSubmit="true"
+						oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('main',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
+				<p:menuitem icon="ui-icon-comment" value="#{bundle.register}"
+						action="#{registrationBean.createRegistration(item)}"
+						process="@this"
+						update="mainContent"
+						rendered="#{authBean.inRole('create_registrations') and item.status == 'announced'}"/>
+				<p:menuitem icon="ui-icon-calculator" value="#{bundle.createProgram}"
+						action="#{programBean.createProgram(item)}"
+						process="@this"
+						update="mainContent"
+						rendered="#{authBean.inRole('create_programs') and item.status == 'announced' and item['club.name'] == authBean.loggedInUser.club.name}"/>
+				<p:menuitem icon="ui-icon-copy" value="#{bundle.copy}"
+						action="#{searchBean.kopieren(bearbeitenLink, typ, item, editBean)}"
+						process="@this"
+						update="mainContent"
+						rendered="#{authBean.inRole('create_announcements') and item['club.name'] == authBean.loggedInUser.club.name}"/>
+				<p:menuitem icon="ui-icon-trash" value="#{bundle.delete}"
+						action="#{searchBean.loeschen(typ, item.id)}"
+						process="@this"
+						update="searchTable messagesPopup"
+						onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"
+						rendered="#{authBean.inRole('delete_'.concat(roleSuffix)) and item['club.name'] == authBean.loggedInUser.club.name}">
+					<p:confirm icon=""/>
+				</p:menuitem>
+			</p:menuButton>
 		</ui:define>
-		<ui:define name="copyButton">
-			<p:commandButton icon="ui-icon-copy" title="#{bundle.copy}"
-					action="#{searchBean.kopieren(bearbeitenLink, typ, item, editBean)}"
-					process="@this"
-					update="mainContent"
-					rendered="#{authBean.inRole('create_announcements')}"
-					disabled="#{item['club.name'] != authBean.loggedInUser.club.name}"/>
-		</ui:define>
-		<ui:define name="addRowButtons">
-			<p:commandButton icon="ui-icon-flag"
-					title="#{item.status != 'announced' ? bundle.races : bundle.racesDisplay}"
-					action="#{searchBean.bearbeiten('/announcement/racesEdit.xhtml', item.id, racesEditBean)}"
-					process="@form"
-					update="mainContent"/>
-			<p:commandButton icon="ui-icon-print" title="#{bundle.createPdf}"
-					action="#{announcementBean.uploadBean.create(null, item)}"
-					process="@this"
-					partialSubmit="true"
-					oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('main',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
-			<p:commandButton icon="ui-icon-comment" title="#{bundle.register}"
-					action="#{registrationBean.createRegistration(item)}"
-					process="@this"
-					update="mainContent"
-					rendered="#{authBean.inRole('create_registrations')}"
-					disabled="#{item.status != 'announced'}"/>
-			<p:commandButton icon="ui-icon-calculator" title="#{bundle.createProgram}"
-					action="#{programBean.createProgram(item)}"
-					process="@this"
-					update="mainContent"
-					rendered="#{authBean.inRole('create_programs')}"
-					disabled="#{not (item.status == 'announced' and item['club.name'] == authBean.loggedInUser.club.name)}"/>
-		</ui:define>
+		<ui:define name="editButton"/>
+		<ui:define name="copyButton"/>
+		<ui:define name="deleteButton"/>
 
 	</ui:composition>
 	

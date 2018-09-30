@@ -138,6 +138,10 @@
 	}
  */}
 
+.actionMenu {
+	width: 20em !important;	
+}
+
 .ui-columntoggler {
 	height: auto !important;
 }
@@ -259,17 +263,26 @@ input[readonly=readonly] {
 	vertical-align: middle;
 }
 
-.expanded {
+/* .expanded {
 	width: 100%;
-}
+} */
 
 .expanded .ui-datalist-content {
 	height: 100%;
 }
 
+.expanded ul li {
+	float: left;
+}
+
 .program-dayTimes {
 	float: left;
-	margin-right: 1em;
+	margin-right: 0.8em;
+}
+
+.datalist-blank .ui-widget-content {
+	background: none;
+	border: none;
 }
 
 .ui-datalist-header {
