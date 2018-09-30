@@ -258,19 +258,6 @@ public class ProgramServiceImpl {
 	public void generateProgram(Program program) {
 		common.checkWriteAccess(program, Operation.save);
 
-		// lösche zuerst das vorher generierte Programm
-		Program savedProgram = dao.getById(Program.class, program.getId());
-		savedProgram.getRaces().clear();
-		common.save(savedProgram);
-		dao.executeOperation(new IOperation<Void>() {
-			@Override
-			public Void execute(EntityManager em) {
-				em.flush();
-				return null;
-			}
-		});
-		program.setVersion(savedProgram.getVersion());
-
 		// lade alle Meldungen
 		Suchkriterien crit = new Suchkriterien();
 		crit.addFilter(Registration_.announcement.getName(), program.getAnnouncement().getId());
@@ -377,6 +364,11 @@ public class ProgramServiceImpl {
 
 		// jetzt haben wir alle Rennen beisammen
 		checkProgram(program.getRaces(), program);
+
+		// lösche zuerst das vorher generierte Programm
+		Program savedProgram = dao.getById(Program.class, program.getId());
+		savedProgram.getRaces().clear();
+		common.save(savedProgram);
 
 		common.save(program);
 	}
