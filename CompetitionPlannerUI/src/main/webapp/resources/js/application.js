@@ -11,9 +11,19 @@ function toggleHelp(show) {
 	var helpUI = $("#helpUI");
 	if (show === false) {
 		helpUI.animate({ "left": "100%" }, 200);
+		if (document.closer) {
+			$(document).unbind("keydown", document.closer);
+			delete document.closer;
+		}
 	} else {
 		var isSmallScreen = helpUI.width() == $(document).width(); 
 		helpUI.animate({ "left": isSmallScreen ? "0" : "30%" }, 200);
+		var closer = function(evt) {
+			if (evt.which == 27)
+				toggleHelp(false);
+		};
+		$(document).keydown(closer);
+		document.closer = closer;
 	}
 }
 function sendLogin(formId) {
