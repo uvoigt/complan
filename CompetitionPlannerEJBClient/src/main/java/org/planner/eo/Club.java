@@ -18,7 +18,7 @@ public class Club extends AbstractEntity {
 	private static final long serialVersionUID = 1L;
 
 	@Column(nullable = false, unique = true)
-	@Visible
+	@Visible(mandatory = true)
 	private String name;
 
 	@Column(length = 32)

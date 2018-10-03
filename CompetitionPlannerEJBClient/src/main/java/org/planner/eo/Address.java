@@ -33,11 +33,11 @@ public class Address implements Serializable {
 	private City city;
 
 	@Column(nullable = false, length = 10)
-	@Visible(initial = false)
+	@Visible(initial = false, order = 1)
 	private String postCode;
 
 	@Column(nullable = false)
-	@Visible(initial = false)
+	@Visible(initial = false, order = 2)
 	private String street;
 
 	private String addition;
