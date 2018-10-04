@@ -78,8 +78,6 @@
 			<p:ajax event="sort" listener="#{searchBean.onSort}"/>
 			<pe:javascript event="rowDblselect" execute="rowDoubleClicked(PF('searchTable'), params[0].value)"/>
 			<f:event type="preRenderComponent" listener="#{searchBean.onPrerenderTable}"/>
-			<p:remoteCommand name="executeRowDblselect" action="#{searchBean.bearbeiten(bearbeitenLink, typ, editBean)}"
-				process="@form" update="mainContent"/>
 
 			<p:columns var="column" value="#{searchBean.getColumns(typ)}"
 					filterBy="#{item[column.property]}"

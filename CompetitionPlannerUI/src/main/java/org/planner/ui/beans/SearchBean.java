@@ -282,10 +282,6 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		startseiteBean.setMainContent(link, id);
 	}
 
-	public void bearbeiten(String link, String typ, ITarget targetBean) throws Exception {
-		bearbeiten(link, typ, getSelectedItem(), targetBean);
-	}
-
 	public void bearbeiten(String link, Long selectedItemId, ITarget targetBean) throws Exception {
 		startseiteBean.setMainContent(link, selectedItemId);
 		targetBean.setItem(selectedItemId);
