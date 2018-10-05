@@ -273,6 +273,11 @@ var programEdit = {
 		var swap = PF("swapRaces");
 		if (swap)
 			enable ? swap.enable() : swap.disable();
+	},
+	gotoRace: function(id) {
+		var row = PF("programTable").jq.find("[data-rk=" + id + "]");
+		$(".ui-layout-pane-center>.ui-layout-unit-content").animate({scrollTop: row.offset().top}, "slow");
+		return false;
 	}
 };
 function initLoginDialog() {

@@ -55,8 +55,10 @@
 		
 			</p:dataTable>
 
-			<h:outputLabel value="#{renderBean.renderFollowUpHint(race)}"
-				style="font-style: italic" rendered="#{race.raceType == 'heat' or race.raceType == 'semiFinal'}"/>
+			<h:outputLink value="#" onclick="return programEdit.gotoRace(#{race.followUpRace.id})"
+					style="font-style: italic" rendered="#{race.raceType == 'heat' or race.raceType == 'semiFinal'}">
+				<h:outputText value="#{renderBean.renderFollowUpHint(race)}"/>
+			</h:outputLink>
 
 			<h:outputScript rendered="#{rowIndex == 0} and programBean.program.status == 'created'}">programEdit.enableSwap();</h:outputScript>
 
