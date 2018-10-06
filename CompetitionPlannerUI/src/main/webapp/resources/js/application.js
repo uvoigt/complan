@@ -276,7 +276,7 @@ var programEdit = {
 	},
 	gotoRace: function(id) {
 		var rowTop = PF("programTable").jq.find("[data-rk=" + id + "]").offset().top;
-		var mainTop = $(".mainContent").offset().top;
+		var mainTop = $("#mainContent").offset().top;
 		$(".ui-layout-pane-center>.ui-layout-unit-content").animate({scrollTop: rowTop - mainTop}, "fast");
 		return false;
 	}
