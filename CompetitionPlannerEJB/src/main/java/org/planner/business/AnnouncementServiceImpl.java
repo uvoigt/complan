@@ -3,6 +3,7 @@ package org.planner.business;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -13,14 +14,20 @@ import java.util.TreeSet;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.ListJoin;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
 
 import org.joda.time.LocalDate;
 import org.planner.business.CommonImpl.Operation;
+import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
 import org.planner.dao.QueryModifier;
 import org.planner.ejb.CallerProvider;
@@ -31,6 +38,9 @@ import org.planner.eo.Category;
 import org.planner.eo.Club_;
 import org.planner.eo.Location;
 import org.planner.eo.Participant;
+import org.planner.eo.Participant_;
+import org.planner.eo.ProgramRace;
+import org.planner.eo.ProgramRace_;
 import org.planner.eo.Race;
 import org.planner.eo.Race_;
 import org.planner.eo.RegEntry;
@@ -38,7 +48,13 @@ import org.planner.eo.RegEntry_;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
+import org.planner.eo.Result;
+import org.planner.eo.Result_;
 import org.planner.eo.Role_;
+import org.planner.eo.Team;
+import org.planner.eo.TeamMember;
+import org.planner.eo.TeamMember_;
+import org.planner.eo.Team_;
 import org.planner.eo.User;
 import org.planner.eo.User_;
 import org.planner.model.AgeType;
@@ -134,6 +150,8 @@ public class AnnouncementServiceImpl {
 
 		if (existing != null) {
 			existing.setName(announcement.getName());
+			existing.setStartDate(announcement.getStartDate());
+			existing.setEndDate(announcement.getEndDate());
 			existing.setCategory(announcement.getCategory());
 			existing.setText(announcement.getText());
 			// TODO existing.getLocation().;
@@ -527,5 +545,75 @@ public class AnnouncementServiceImpl {
 		}
 		registration.setStatus(status);
 		common.save(registration);
+	}
+
+	public List<RegEntry> getMyUpcomingRegistrations() {
+		if (!caller.isInRole("Sportler") && !caller.isInRole("Mastersportler"))
+			return new ArrayList<>();
+		return dao.executeOperation(new IOperation<List<RegEntry>>() {
+			@Override
+			public List<RegEntry> execute(EntityManager em) {
+				CriteriaBuilder builder = em.getCriteriaBuilder();
+				CriteriaQuery<RegEntry> query = builder.createQuery(RegEntry.class);
+				Root<RegEntry> entry = query.from(RegEntry.class);
+				Join<RegEntry, Registration> registration = entry.join(RegEntry_.registration);
+				Join<Registration, Announcement> announcement = registration.join(Registration_.announcement);
+				ListJoin<RegEntry, Participant> participants = entry.join(RegEntry_.participants);
+				Path<User> user = participants.get(Participant_.user);
+				Predicate inFuture = builder.greaterThanOrEqualTo(announcement.get(Announcement_.startDate),
+						new Date());
+				Predicate youAreRegistered = builder.equal(user.get(User_.userId), caller.getLoginName());
+				query.where(builder.and(inFuture, youAreRegistered));
+				query.orderBy(builder.asc(announcement.get(Announcement_.startDate)));
+				query.select(entry);
+				return em.createQuery(query).getResultList();
+			}
+		});
+	}
+
+	public List<Result> getMyLatestResults() {
+		if (!caller.isInRole("Sportler") && !caller.isInRole("Mastersportler"))
+			return new ArrayList<>();
+		return dao.executeOperation(new IOperation<List<Result>>() {
+			@Override
+			public List<Result> execute(EntityManager em) {
+				CriteriaBuilder builder = em.getCriteriaBuilder();
+				CriteriaQuery<Result> query = builder.createQuery(Result.class);
+				Root<Result> result = query.from(Result.class);
+				Join<Result, ProgramRace> programRace = result.join(Result_.programRace);
+				Join<ProgramRace, Race> race = programRace.join(ProgramRace_.race);
+				Join<Race, Announcement> announcement = race.join(Race_.announcement);
+				ListJoin<ProgramRace, Team> team = programRace.join(ProgramRace_.participants);
+				ListJoin<Team, TeamMember> members = team.join(Team_.members);
+				Join<TeamMember, User> user = members.join(TeamMember_.user);
+				Calendar date = Calendar.getInstance();
+				date.add(Calendar.MONTH, -2);
+				Predicate latest = builder.greaterThan(announcement.get(Announcement_.startDate), date.getTime());
+				Predicate youAreMember = builder.equal(user.get(User_.userId), caller.getLoginName());
+				query.where(builder.and(latest, youAreMember));
+				query.orderBy(builder.asc(announcement.get(Announcement_.startDate)));
+				return em.createQuery(query).getResultList();
+			}
+		});
+	}
+
+	public void saveResult(final Result result) {
+		common.checkWriteAccess(result, Operation.save);
+
+		common.save(result);
+	}
+
+	public List<Long> getResult(final Long programRaceId) {
+		return dao.executeOperation(new IOperation<List<Long>>() {
+			@Override
+			public List<Long> execute(EntityManager em) {
+				CriteriaBuilder builder = em.getCriteriaBuilder();
+				CriteriaQuery<Result> query = builder.createQuery(Result.class);
+				Root<Result> root = query.from(Result.class);
+				query.where(builder.equal(root.get(Result_.programRace), programRaceId));
+				Result result = em.createQuery(query).getSingleResult();
+				return result.getPlacements();
+			}
+		});
 	}
 }

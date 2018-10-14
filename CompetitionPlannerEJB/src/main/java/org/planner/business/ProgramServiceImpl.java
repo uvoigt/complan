@@ -23,9 +23,8 @@ import org.joda.time.Days;
 import org.joda.time.Instant;
 import org.joda.time.MutableDateTime;
 import org.planner.business.CommonImpl.Operation;
-import org.planner.business.program.Change;
 import org.planner.business.program.Checks;
-import org.planner.business.program.Problem;
+import org.planner.business.program.ListView;
 import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
 import org.planner.ejb.CallerProvider;
@@ -45,11 +44,13 @@ import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
+import org.planner.eo.Result;
 import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
 import org.planner.eo.User;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
+import org.planner.model.Change;
 import org.planner.model.Gender;
 import org.planner.model.Suchkriterien;
 import org.planner.util.ExpressionParser;
@@ -501,16 +502,26 @@ public class ProgramServiceImpl {
 	}
 
 	private Program doGetProgram(EntityManager em, Long id) {
+		// so werden die Options mitgeladen
+		Program program = em.find(Program.class, id);
+		if (program == null)
+			throw new FachlicheException(messages.getResourceBundle(), "program.notfound");
+		em.detach(program);
+		boolean withResults = program.getStatus() == ProgramStatus.running;
+
 		// in JPQL gibt es eine MultipleBagException
-		String sql = "select " //
+		StringBuilder sql = new StringBuilder("select " //
 				+ "pr.id RaceId, pr.number, pr.startTime, pr.raceType, pr.heatMode, " //
 				+ "r.number RaceNumber, r.gender, r.distance, r.boatClass, r.ageType, " //
 				+ "t.id TeamId, t.lane, " //
 				+ "tc.id TeamClubId, tc.shortName TCShort, tc.name TCName, " //
 				+ "tm.pos, tm.remark, " //
 				+ "tu.firstName, tu.lastName, tu.birthDate, " //
-				+ "uc.id UserClubId, uc.shortName UCShort, uc.name UCName " //
-				+ "from Program p " //
+				+ "uc.id UserClubId, uc.shortName UCShort, uc.name UCName");
+		if (withResults) {
+			sql.append(", rs.placements");
+		}
+		sql.append(" from Program p " //
 				+ "inner join Announcement a on p.announcement_id=a.id "
 				+ "inner join ProgramRace pr on pr.program_id=p.id " //
 				+ "left outer join Race r on pr.race_id=r.id " //
@@ -518,10 +529,13 @@ public class ProgramServiceImpl {
 				+ "left outer join Club tc on t.club_id=tc.id " //
 				+ "left outer join TeamMember tm on tm.team_id=t.id " //
 				+ "left outer join User tu on tm.user_id=tu.id " //
-				+ "left outer join Club uc on tu.club_id=uc.id " //
-				+ "where p.id = :id " //
-				+ "order by pr.startTime";
-		Query query = em.createNativeQuery(sql);
+				+ "left outer join Club uc on tu.club_id=uc.id ");
+		if (withResults) {
+			sql.append("left outer join Result rs on pr.id=rs.programrace_id ");
+		}
+		sql.append("where p.id = :id " //
+				+ "order by pr.startTime");
+		Query query = em.createNativeQuery(sql.toString());
 		query.setParameter("id", id);
 		@SuppressWarnings("unchecked")
 		List<Object[]> result = query.getResultList();
@@ -529,11 +543,6 @@ public class ProgramServiceImpl {
 		Map<Integer, FollowUpRaces> racesByNumber = new HashMap<>();
 		Map<BigInteger, Team> teams = new HashMap<>();
 		Map<BigInteger, Club> clubs = new HashMap<>();
-		// so werden die Options mitgeladen
-		Program program = em.find(Program.class, id);
-		if (program == null)
-			throw new FachlicheException(messages.getResourceBundle(), "program.notfound");
-		em.detach(program);
 		program.setRaces(new ArrayList<ProgramRace>());
 		for (Object[] row : result) {
 			BigInteger raceId = (BigInteger) row[0];
@@ -576,7 +585,7 @@ public class ProgramServiceImpl {
 			if (teamId != null) {
 				Team team = teams.get(teamId);
 				if (team == null) {
-					team = new Team();
+					team = new Team(teamId.longValue());
 					team.setLane((int) row[11]);
 					team.setClub(getClub(clubs, row, 12));
 					team.setMembers(new ArrayList<TeamMember>());
@@ -595,6 +604,9 @@ public class ProgramServiceImpl {
 					member.setUser(user);
 				}
 				team.getMembers().add(member);
+				if (withResults && race.getResults() == null && row[23] != null) {
+					race.setResults(Result.convertToEntityAttribute((String) row[23]));
+				}
 			}
 		}
 
@@ -642,8 +654,8 @@ public class ProgramServiceImpl {
 		throw new IllegalArgumentException();
 	}
 
-	public void checkProgram(Program program) {
-		checkProgram(program.getRaces(), program);
+	public List<Change> checkProgram(Program program) {
+		return checkProgram(program.getRaces(), program);
 	}
 
 	private List<Change> checkProgram(List<ProgramRace> races, Program program) {
@@ -654,12 +666,10 @@ public class ProgramServiceImpl {
 		if (LOG.isDebugEnabled())
 			LOG.debug("Prüfe das Programm " + program.getAnnouncement().getName());
 
-		List<Problem> problems = checks.execute(program, races, true);
-		for (Problem problem : problems) {
-			System.out.println(problem);
-		}
-
+		List<ProgramRace> wrappedRaces = new ListView<>(races);
 		List<Change> changes = new ArrayList<>();
+		checks.execute(program, wrappedRaces, changes);
+
 		// List<ProgramRace> copies = null;
 		// if (createCopy) {
 		// copies = new ArrayList<>();

@@ -27,8 +27,10 @@ import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
+import org.planner.eo.Result;
 import org.planner.eo.Role;
 import org.planner.eo.User;
+import org.planner.model.Change;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.remote.ServiceFacade;
@@ -248,6 +250,26 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
+	public List<RegEntry> getMyUpcomingRegistrations() {
+		return announcement.getMyUpcomingRegistrations();
+	}
+
+	@Override
+	public List<Result> getMyLatestResults() {
+		return announcement.getMyLatestResults();
+	}
+
+	@Override
+	public void saveResult(Result result) {
+		announcement.saveResult(result);
+	}
+
+	@Override
+	public List<Long> getResult(Long programRaceId) {
+		return announcement.getResult(programRaceId);
+	}
+
+	@Override
 	public Long createProgram(Program program) {
 		return this.program.createProgram(program);
 	}
@@ -268,8 +290,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public void checkProgram(Program program) {
-		this.program.checkProgram(program);
+	public List<Change> checkProgram(Program program) {
+		return this.program.checkProgram(program);
 	}
 
 	@Override

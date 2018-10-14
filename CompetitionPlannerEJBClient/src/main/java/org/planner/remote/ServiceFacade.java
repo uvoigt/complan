@@ -19,8 +19,10 @@ import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
+import org.planner.eo.Result;
 import org.planner.eo.Role;
 import org.planner.eo.User;
+import org.planner.model.Change;
 import org.planner.model.IResultProvider;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
@@ -97,6 +99,14 @@ public interface ServiceFacade extends IResultProvider {
 
 	void setRegistrationStatus(Long registrationId, RegistrationStatus status);
 
+	List<RegEntry> getMyUpcomingRegistrations();
+
+	List<Result> getMyLatestResults();
+
+	void saveResult(Result result);
+
+	List<Long> getResult(Long programRaceId);
+
 	Long createProgram(Program program);
 
 	void generateProgram(Program program);
@@ -106,7 +116,7 @@ public interface ServiceFacade extends IResultProvider {
 	Program getProgram(Long id);
 
 	// TODO temporär
-	void checkProgram(Program program);
+	List<Change> checkProgram(Program program);
 
 	void swapRaces(ProgramRace r1, ProgramRace r2);
 }
