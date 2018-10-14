@@ -51,6 +51,11 @@ public class Init {
 		Role update_programs = insertRoleIfNotExists(em, "update_programs", null, true);
 		Role delete_programs = insertRoleIfNotExists(em, "delete_programs", null, true);
 
+		Role create_results = insertRoleIfNotExists(em, "create_results", null, true);
+		Role read_results = insertRoleIfNotExists(em, "read_results", null, true);
+		Role update_results = insertRoleIfNotExists(em, "update_results", null, true);
+		Role delete_results = insertRoleIfNotExists(em, "delete_results", null, true);
+
 		Role create_users = insertRoleIfNotExists(em, "create_users", null, true);
 		Role read_users = insertRoleIfNotExists(em, "read_users", null, true);
 		Role update_users = insertRoleIfNotExists(em, "update_users", null, true);
@@ -69,21 +74,23 @@ public class Init {
 		insertRoleIfNotExists(em, "Admin", "Administrator", false, create_announcements, read_announcements,
 				update_announcements, delete_announcements, create_registrations, read_registrations,
 				update_registrations, delete_registrations, create_programs, read_programs, update_programs,
-				delete_programs, create_users, read_users, update_users, delete_users, create_clubs, read_clubs,
-				update_clubs, delete_clubs, create_roles, read_roles, update_roles, delete_roles);
+				delete_programs, create_results, read_results, update_results, delete_results, create_users, read_users,
+				update_users, delete_users, create_clubs, read_clubs, update_clubs, delete_clubs, create_roles,
+				read_roles, update_roles, delete_roles);
+		// "update_clubes" für Anzeige des Save-Buttons auf "Mein Verein"
 		insertRoleIfNotExists(em, "Sportwart",
 				"Sportwart (Kann Ausschreibungen erstellen, Melden und Trainer und Sportler im Verein anlegen und bearbeiten)",
 				false, create_announcements, read_announcements, update_announcements, delete_announcements,
 				create_registrations, read_registrations, update_registrations, delete_registrations, create_programs,
-				read_programs, update_programs, delete_programs, create_users, read_users, update_users, delete_users,
-				update_clubs); // für Anzeige des Save-Buttons auf "Mein Verein"
+				read_programs, update_programs, delete_programs, create_results, read_results, update_results,
+				delete_results, create_users, read_users, update_users, delete_users, update_clubs);
 		insertRoleIfNotExists(em, "Trainer", "Trainer (Kann Sportler melden aber keine zusätzlichen Trainer anlegen)",
 				false, read_announcements, create_registrations, read_registrations, update_registrations,
-				delete_registrations, read_programs);
+				delete_registrations, read_programs, read_results);
 		insertRoleIfNotExists(em, "Mastersportler", "Mastersportler (Kann sich selbst melden)", false,
-				read_announcements, read_registrations, update_registrations, read_programs);
+				read_announcements, read_registrations, update_registrations, read_programs, read_results);
 		insertRoleIfNotExists(em, "Sportler", "Sportler (Kann nur Meldungen und Ausschreibungen ansehen)", false,
-				read_announcements, read_registrations, read_programs);
+				read_announcements, read_registrations, read_programs, read_results);
 		insertRoleIfNotExists(em, "Tester",
 				"Tester (Kann den Status von Ausschreibungen, Meldungen und Programmen zurücksetzen)", false);
 		createRoleView(em);
