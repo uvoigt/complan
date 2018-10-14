@@ -21,11 +21,17 @@ import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
+import org.planner.eo.Result;
+import org.planner.eo.Result_;
+import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.UploadBean;
 import org.planner.ui.beans.UploadBean.DownloadHandler;
 import org.planner.ui.util.BerichtGenerator;
 import org.planner.ui.util.JsfUtil;
+import org.primefaces.PrimeFaces;
+import org.primefaces.component.remotecommand.RemoteCommand;
+import org.primefaces.event.CellEditEvent;
 
 @Named
 @RequestScoped
@@ -46,6 +52,8 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	private List<ProgramRace> selectedRaces;
 
 	private boolean showTeams = true;
+
+	private RemoteCommand cancelCommand;
 
 	@Override
 	@PostConstruct
@@ -101,6 +109,14 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	public UploadBean getUploadBean() {
 		return uploadBean;
+	}
+
+	public RemoteCommand getCancelCommand() {
+		return cancelCommand;
+	}
+
+	public void setCancelCommand(RemoteCommand cancelCommand) {
+		this.cancelCommand = cancelCommand;
 	}
 
 	public Program getProgram() {
@@ -193,5 +209,74 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	public void setShowTeams(boolean showTeams) {
 		this.showTeams = showTeams;
+	}
+
+	private ProgramRace findProgramRace(Long programRaceId) {
+		for (ProgramRace programRace : program.getRaces()) {
+			if (programRace.getId().equals(programRaceId)) {
+				return programRace;
+			}
+		}
+		return null;
+	}
+
+	public void onResultUpdate(CellEditEvent evt) {
+		ProgramRace programRace = findProgramRace(Long.valueOf(evt.getRowKey()));
+		if (programRace != null) {
+			checkForExistingResults(programRace, programRace.getResults());
+			cancelCommand.setUpdate("programTable:@row(" + evt.getRowIndex() + ")");
+		}
+	}
+
+	public void checkForExistingResults(ProgramRace programRace, List<Long> ids) {
+		if (programRace == null && ids == null) {
+			// cancel dialog
+			PrimeFaces.current().dialog().closeDynamic(null);
+			return;
+		}
+		Suchkriterien criteria = new Suchkriterien();
+		criteria.addFilter(Result_.programRace.getName() + ".id", programRace.getId());
+		List<Result> list = service.search(Result.class, criteria).getListe();
+		Result result = list.size() > 0 ? list.get(0) : null;
+		if (result == null) {
+			doSaveResult(programRace.getId(), null, null, ids);
+		} else if (!result.getPlacements().toString().equals(ids.toString())) {
+			String message = JsfUtil.getScopedBundle().format("confirmResult", programRace.getRace().getNumber());
+			PrimeFaces.current()
+					.executeScript(String.format(
+							"programEdit.confirmResult('%s',{programRaceId:%s,resultId:%s,version:%s,placement:%s})",
+							message, programRace.getId(), result.getId(), result.getVersion(), ids));
+		}
+	}
+
+	public void saveResult() {
+		Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+		Long programRaceId = Long.valueOf(params.get("programRaceId"));
+		Long resultId = Long.valueOf(params.get("resultId"));
+		Integer version = Integer.valueOf(params.get("version"));
+		List<Long> ids = new ArrayList<>();
+		for (String string : params.get("placement").split(",")) {
+			ids.add(Long.valueOf(string));
+		}
+		doSaveResult(programRaceId, resultId, version, ids);
+	}
+
+	public void cancelResult() {
+		Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+		Long programRaceId = Long.valueOf(params.get("programRaceId"));
+		List<Long> result = service.getResult(programRaceId);
+		ProgramRace programRace = findProgramRace(programRaceId);
+		if (programRace != null)
+			programRace.setResults(result);
+	}
+
+	private void doSaveResult(Long programRaceId, Long resultId, Integer version, List<Long> ids) {
+		ProgramRace programRace = new ProgramRace();
+		programRace.setId(programRaceId);
+		Result result = new Result(program.getId(), programRace, ids);
+		result.setId(resultId);
+		if (version != null)
+			result.setVersion(version);
+		service.saveResult(result);
 	}
 }

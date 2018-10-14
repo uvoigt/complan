@@ -5,8 +5,7 @@
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:p="http://primefaces.org/ui"
-	xmlns:pe="http://primefaces.org/ui/extensions"
-	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	xmlns:pe="http://primefaces.org/ui/extensions">
 
 	<ui:composition template="/templates/title.xhtml">
 		<ui:param name="roleSuffix" value="programs"/>
@@ -20,7 +19,7 @@
 
 				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0"
 						legend="#{bundle.options}" widgetVar="optionsSet"
-						rendered="#{authBean.inRole('update_programs')}">
+						rendered="#{authBean.inRole('update_programs') and program.announcement.club.name == authBean.loggedInUser.club.name}">
 					<pe:javascript event="toggle" execute="programEdit.initExpr()"/>
 					<h:panelGroup layout="block" styleClass="ui-g">
 						<h:panelGroup layout="block" style="width: 100%">
@@ -78,13 +77,19 @@
 							</h:panelGroup>
 							<div class="ui-g">
 								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.racesPerDay}"/></div>
-								<h:panelGroup layout="block" style=""><p:spinner value="#{programBean.program.options.racesPerDay}" min="0" size="1" 
-										readonly="#{not programBean.program.options.childProtection}"/></h:panelGroup>
+								<h:panelGroup layout="block" style="">
+									<p:spinner value="#{programBean.program.options.racesPerDay}" min="0" size="1" 
+											readonly="#{not programBean.program.options.childProtection}"
+											disabled="#{programBean.program.status != 'created'}"/>
+								</h:panelGroup>
 							</div>
 							<div class="ui-g">
 								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.protectionPeriod}"/></div>
-								<h:panelGroup layout="block" style=""><p:spinner value="#{programBean.program.options.protectionPeriod}" min="0" size="1"
-										readonly="#{not programBean.program.options.childProtection}"/></h:panelGroup>
+								<h:panelGroup layout="block" style="">
+									<p:spinner value="#{programBean.program.options.protectionPeriod}" min="0" size="1"
+											readonly="#{not programBean.program.options.childProtection}"
+											disabled="#{programBean.program.status != 'created'}"/>
+									</h:panelGroup>
 							</div>
 						</h:panelGroup>
 
@@ -94,10 +99,12 @@
 				<h:panelGroup styleClass="ui-g">
 					<h:panelGroup styleClass="ui-g-12">
 						<p:commandButton value="#{bundle.generateProgram}" action="#{programBean.generateProgram()}"
-								process="@form" update="programTable" rendered="#{programBean.program.status == 'created'}"
+								process="@form" update="programTable" rendered="#{authBean.inRole('update_programs') and
+										programBean.program.status == 'created'}"
 								styleClass="gap"/>
 						<p:commandButton value="#{bundle.checkProgram}" action="#{programBean.checkProgram()}"
-								process="@form" update="programTable" rendered="#{programBean.program.status == 'created'}"
+								process="@form" update="programTable" rendered="#{authBean.inRole('update_programs') and
+										programBean.program.status == 'created'}"
 								styleClass="gap"/>
 						<h:panelGroup styleClass="gap">
 							<h:outputText value="#{bundle.showTeams}"/>
@@ -107,7 +114,8 @@
 						</h:panelGroup>
 						<p:commandButton widgetVar="swapRaces" value="#{bundle.swapRaces}" action="#{programBean.swapRaces()}"
 								process="@this programTable" update="programTable" partialSubmit="true"
-								onsuccess="programEdit.enableSwap()" rendered="#{programBean.program.status == 'created'}"
+								onsuccess="programEdit.enableSwap()" rendered="#{authBean.inRole('update_programs') and
+										programBean.program.status == 'created'}"
 								styleClass="gap"/>
 						<p:commandButton id="btnCancel" value="#{messages.backToOverview}"
 								action="#{startseiteBean.setMainContent('/announcement/programs.xhtml')}"

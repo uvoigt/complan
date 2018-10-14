@@ -14,46 +14,80 @@
 			widgetVar="programTable"
 			rowIndexVar="rowIndex"
 			selectionMode="multiple" rowKey="#{race.id}"
-			selection="#{programBean.selectedRaces}">
+			selection="#{programBean.selectedRaces}"
+			editable="true" editMode="cell">
+
+		<p:ajax event="cellEdit" listener="#{programBean.onResultUpdate}" partialSubmitFilter="[data-rk] .ui-cell-editing :input" partialSubmit="true"
+				update="@form:cancelCommand"/>
+		<p:ajax event="cellEditCancel" partialSubmitFilter="[data-rk] .ui-cell-editing :input" partialSubmit="true"/>
+
 		<p:column>
-			<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable">
-				<f:facet name="header">
-					<h:panelGroup styleClass="#{race.raceType}">
-						<h:panelGroup layout="block" styleClass="raceTitle">
-							<p:selectBooleanCheckbox style="margin-right: 5px" onchange="programEdit.toggleRaceSelection($(this))" rendered="#{programBean.program.status == 'created'}"/>
-							<h:outputText value="#{bundle.race} "/>
-							<h:outputText value="#{race.race.number}"/>
-							<h:outputText value="#{race.number != null ? '-'.concat(race.number) : null}"/><br/><h:outputText value="#{race.race.boatClass.text} "/>
-							<h:outputText value="#{race.race.gender.getAgeFriendlyText(race.race.ageType)} "/>
-							<h:outputText value="#{race.race.ageType.text} "/>
-							<h:outputText value="#{race.race.distance} m"/>
-						</h:panelGroup>
-						<h:panelGroup layout="block" styleClass="raceInfo">
-							<h:outputText value="#{race.number}#{not empty race.number ? '. ' : ''}#{race.raceType.text}"/><br /><h:outputText
-									value="#{renderBean.renderRaceMode(race)}"/>
-						</h:panelGroup>
-						<h:panelGroup layout="block" style="text-align: right">#{renderBean.renderStartTime(race.startTime)}</h:panelGroup>
-					</h:panelGroup>
+			<p:cellEditor disabled="#{programBean.program.status != 'running'}">
+				<f:facet name="output">
+					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable">
+						<f:facet name="header">
+							<h:panelGroup styleClass="#{race.raceType}">
+								<h:panelGroup layout="block" styleClass="raceTitle">
+									<p:selectBooleanCheckbox style="margin-right: 5px" onchange="programEdit.toggleRaceSelection($(this))" rendered="#{programBean.program.status == 'created'}"/>
+									<h:outputText value="#{bundle.race} "/>
+									<h:outputText value="#{race.race.number}"/>
+									<h:outputText value="#{race.number != null ? '-'.concat(race.number) : null}"/><br/><h:outputText value="#{race.race.boatClass.text} "/>
+									<h:outputText value="#{race.race.gender.getAgeFriendlyText(race.race.ageType)} "/>
+									<h:outputText value="#{race.race.ageType.text} "/>
+									<h:outputText value="#{race.race.distance} m"/>
+								</h:panelGroup>
+								<h:panelGroup layout="block" styleClass="raceInfo">
+									<h:outputText value="#{race.number}#{not empty race.number ? '. ' : ''}#{race.raceType.text}"/><br /><h:outputText
+											value="#{renderBean.renderRaceMode(race)}"/>
+								</h:panelGroup>
+								<h:panelGroup layout="block" style="text-align: right">#{renderBean.renderStartTime(race.startTime)}</h:panelGroup>
+							</h:panelGroup>
+						</f:facet>
+						<p:column styleClass="numberCol" rendered="#{programBean.showTeams}">
+							<h:outputText value="#{team.lane}"/>
+						</p:column>
+						<p:column styleClass="memberCol" rendered="#{programBean.showTeams}">
+							<p:dataGrid columns="2" var="member" value="#{team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
+								<h:panelGroup style="text-align: left">
+									<h:outputText value="#{member.remark != null ? member.remark : member.user.firstName} "/>
+									<h:outputText value="#{member.user.lastName} "/>
+									<h:outputText value="#{renderBean.renderAgeGroup(member.user)}"/>
+									<h:outputText value="(#{member.user.club.shortNameOrName})" rendered="#{member.user.club.id != team.club.id and member.remark == null}"/>
+								</h:panelGroup>
+							</p:dataGrid>
+						</p:column>
+						<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
+							<h:outputText value="#{not empty team.club.shortName ? team.club.shortName : team.club.name}"/>
+						</p:column>
+					</p:dataTable>
 				</f:facet>
-				<p:column styleClass="numberCol" rendered="#{programBean.showTeams}">
-					<h:outputText value="#{team.lane}"/>
-				</p:column>
-		
-				<p:column styleClass="memberCol" rendered="#{programBean.showTeams}">
-					<p:dataGrid columns="2" var="member" value="#{team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
-						<h:panelGroup style="text-align: left">
-							<h:outputText value="#{member.remark != null ? member.remark : member.user.firstName} "/>
-							<h:outputText value="#{member.user.lastName} "/>
-							<h:outputText value="#{renderBean.renderAgeGroup(member.user)}"/>
-							<h:outputText value="(#{member.user.club.shortNameOrName})" rendered="#{member.user.club.id != team.club.id and member.remark == null}"/>
-						</h:panelGroup>
-					</p:dataGrid>
-				</p:column>
-				<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
-					<h:outputText value="#{not empty team.club.shortName ? team.club.shortName : team.club.name}"/>
-				</p:column>
-		
-			</p:dataTable>
+				<f:facet name="input">
+					<p:orderList var="team" value="#{race.resultParticipants}" controlsLocation="none" converter="javax.faces.Long"
+							itemValue="#{team.id}" styleClass="resultEdit">
+						<f:facet name="caption">
+							<h:outputText value="Ordnen Sie die Teams der Reihenfolge des Zieleinlaufs nach" style="color: red"/>
+						</f:facet>
+						<p:column styleClass="numberCol" rendered="#{programBean.showTeams}">
+							<h:outputText value="#{team.lane}"/>
+						</p:column>
+						<p:column styleClass="memberCol" rendered="#{programBean.showTeams}">
+							<p:dataGrid columns="2" var="member" value="#{team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
+								<h:panelGroup style="text-align: left">
+									<h:outputText value="#{member.remark != null ? member.remark : member.user.firstName} "/>
+									<h:outputText value="#{member.user.lastName} "/>
+									<h:outputText value="#{renderBean.renderAgeGroup(member.user)}"/>
+									<h:outputText value="(#{member.user.club.shortNameOrName})" rendered="#{member.user.club.id != team.club.id and member.remark == null}"/>
+								</h:panelGroup>
+							</p:dataGrid>
+						</p:column>
+						<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
+							<h:outputText value="#{not empty team.club.shortName ? team.club.shortName : team.club.name}"/>
+						</p:column>
+					</p:orderList>
+					<p:commandButton type="button" value="#{bundle.save}" style="margin: 5px" onclick="programEdit.applyCellEdit(this, PF('programTable').jq)"/>
+					<p:commandButton type="button" value="#{bundle.cancel}" style="margin: 5px" onclick="programEdit.cancelCellEdit(this, PF('programTable').jq)"/>
+				</f:facet>
+			</p:cellEditor>
 
 			<h:outputLink value="#" onclick="return programEdit.gotoRace(#{race.followUpRace.id})"
 					style="font-style: italic" rendered="#{race.raceType == 'heat' or race.raceType == 'semiFinal'}">
@@ -65,6 +99,18 @@
 		</p:column>
 
 	</p:dataTable>
+	<p:contextMenu for="programTable" beforeShow="console.error(this)">
+		<p:menuitem value="Ergebnisse eintragen" icon="ui-icon-disk"/>
+	</p:contextMenu>
+	<p:remoteCommand action="#{programBean.saveResult()}" name="saveResult" process="@this" onsuccess="PF('confirmResult').hide()"/>
+	<p:remoteCommand id="cancelCommand" binding="#{programBean.cancelCommand}" action="#{programBean.cancelResult()}" name="cancelResult" process="@this" onsuccess="PF('confirmResult').hide()"
+			update="programTable:@row(0)"/>
+	<p:confirmDialog widgetVar="confirmResult" appendTo="body" header="#{bundle.confirmTitle}" closeOnEscape="true">
+		<p:commandButton type="button" value="#{bundle.yes}" styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+				onclick="saveResult(programEdit.argsToParams(PF('confirmResult').args))"/>
+		<p:commandButton type="button" value="#{bundle.cancel}" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
+				onclick="cancelResult(programEdit.argsToParams(PF('confirmResult').args))"/>
+	</p:confirmDialog>
 
 </ui:composition>
 

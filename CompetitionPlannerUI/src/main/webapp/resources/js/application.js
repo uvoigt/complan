@@ -209,15 +209,6 @@ var registrationEdit = {
 		if (count == undefined)
 			count = PF("registrationTable").tbody.children().length;
 		$("[id$=registrationsCountLabel]").text("{msg:registrations.athletesCount, xxx}".replace(/xxx/, count));
-	},
-	showRemarkDlg: function() {
-		var dlg = PF("remarkDlg");
-		dlg.loadContents();
-		dlg.show();
-	},
-	hideRemarkDlg: function() {
-		PF("remarkDlg").hide();
-		$("[id$=remark_panel]").remove();
 	}
 };
 var programEdit = {
@@ -279,6 +270,32 @@ var programEdit = {
 		var mainTop = $("#mainContent").offset().top;
 		$(".ui-layout-pane-center>.ui-layout-unit-content").animate({scrollTop: rowTop - mainTop}, "fast");
 		return false;
+	},
+	confirmResult: function(message, args) {
+		var dlg = PF("confirmResult");
+		dlg.message.text(message);
+		dlg.args = args;
+		dlg.show();
+	},
+	argsToParams: function(args) {
+		var b = [];
+		for (var a in args) {
+			var c = {name: a};
+			c.value = args[a];
+			b.push(c);
+		}
+		return b;
+	},
+	applyCellEdit: function(element, table) {
+		table.click();
+	},
+	cancelCellEdit: function(element, table) {
+		var evt = $.Event("keydown");
+		evt.which = evt.keyCode = 27;
+		$(element).trigger(evt);
+		setTimeout(function() {
+			table.click();
+		}, 100);
 	}
 };
 function initLoginDialog() {

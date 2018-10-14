@@ -1,6 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:p="http://primefaces.org/ui">
@@ -8,11 +9,59 @@
 <body>
 	<ui:composition template="/templates/title.xhtml">
 		<ui:param name="roles" value="User"/>
-		<ui:param name="bundle" value="#{messages.bundle('header')}"/>
+		<ui:param name="bundle" value="#{messages.bundle('start')}"/>
 		<ui:define name="content">
-			<div id="start">
+			<h:panelGroup layout="block" id="start" rendered="#{authBean.notInRole('Sportler', 'Mastersportler')}">
 				<h:outputText value="#{bundle.msg}"/>
-			</div>
+			</h:panelGroup>
+			<h:panelGroup layout="block" id="currentState" rendered="#{authBean.inRole('Sportler', 'Mastersportler')}">
+				<p:dataTable var="entry" value="#{startseiteBean.currentRegistrations}" emptyMessage="#{bundle.noRegistrations}"
+						styleClass="datalist-blank" style="margin-top: 1em">
+					<p:columnGroup type="header">
+						<p:row>
+							<p:column headerText="#{bundle.registration}" colspan="2"/>
+						</p:row>
+						<p:row>
+							<p:column headerText="#{bundle.competition}"/>
+							<p:column headerText="#{bundle.for}"/>
+						</p:row>
+					</p:columnGroup>
+					<p:column groupRow="true">
+						<h:outputText value="#{entry.registration.announcement.name} (#{entry.registration.announcement.club.shortNameOrName})"/>
+						<h:panelGroup style="float: right">
+							<h:outputText value="#{entry.registration.announcement.startDate}">
+								<f:convertDateTime pattern="#{bundle.longDate}" timeZone="#{bundle.timeZone}"/>
+							</h:outputText>
+						</h:panelGroup>
+					</p:column>
+					<p:column style="text-align: center" >
+						<h:outputText value="#{entry.race.boatClass.text} #{entry.race.ageType.text} #{entry.race.distance}m"/>
+					</p:column>
+				</p:dataTable>
+				<p:dataTable var="entry" value="#{startseiteBean.latestResults}" emptyMessage="#{bundle.noResults}"
+						styleClass="datalist-blank" style="margin-top: 1em">
+					<p:columnGroup type="header">
+						<p:row>
+							<p:column headerText="#{bundle.results}" colspan="2"/>
+						</p:row>
+						<p:row>
+							<p:column headerText="#{bundle.competition}"/>
+							<p:column headerText="#{bundle.placement}"/>
+						</p:row>
+					</p:columnGroup>
+					<p:column groupRow="true">
+						<h:outputText value="#{entry.programRace.race.announcement.name} (#{entry.programRace.race.announcement.club.name})"/>
+						<h:panelGroup style="float: right">
+							<h:outputText value="#{entry.programRace.race.announcement.startDate}">
+								<f:convertDateTime pattern="#{bundle.longDate}" timeZone="#{bundle.timeZone}"/>
+							</h:outputText>
+						</h:panelGroup>
+					</p:column>
+					<p:column style="text-align: center" >
+						<h:outputText value="#{entry.race.boatClass.text} #{entry.race.ageType.text} #{entry.race.distance}m"/>
+					</p:column>
+				</p:dataTable>
+			</h:panelGroup>
 		</ui:define>
 	</ui:composition>
 </body>

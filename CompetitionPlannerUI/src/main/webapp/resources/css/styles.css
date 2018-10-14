@@ -357,6 +357,23 @@ input[readonly=readonly] {
 	border: none;
 }
 
+.resultEdit {
+	width: 100%;
+}
+
+.resultEdit .ui-widget-header {
+	width: 100% !important;
+}
+
+.resultEdit .ui-widget-content {
+	height: unset !important;
+	width: 100% !important;
+}
+
+.resultEdit *> td {
+	border: none !important;
+}
+
 .syntaxProblem {
 	background: url(data:image/gif;base64,R0lGODlhCgAEAMIEAP9BGP6pl//Wy/7//P///////////////yH5BAEKAAQALAAAAAAKAAQAAAMROCOhK0oA0MIUMmTAZhsWBCYAOw==) repeat-x scroll 0 100% transparent
 }

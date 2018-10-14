@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Locale;
 import java.util.jar.Manifest;
 
@@ -17,6 +18,8 @@ import javax.inject.Named;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.planner.eo.RegEntry;
+import org.planner.eo.Result;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.common.AuthBean;
 import org.planner.ui.util.JsfUtil;
@@ -145,6 +148,8 @@ public class StartseiteBean implements Serializable {
 		menu.addElement(createMenuItem(id++, bundle.get("program"), "/announcement/programs.xhtml",
 				auth.inRole("read_programs")));
 		menu.addElement(
+				createMenuItem(id++, bundle.get("result"), "/announcement/results.xhtml", auth.inRole("read_results")));
+		menu.addElement(
 				createMenuItem(id++, bundle.get("users"), "/masterdata/users.xhtml", auth.inRole("read_users")));
 		menu.addElement(
 				createMenuItem(id++, bundle.get("clubs"), "/masterdata/clubs.xhtml", auth.inRole("read_clubs")));
@@ -194,6 +199,14 @@ public class StartseiteBean implements Serializable {
 
 	public void setProfileSaved() {
 		FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("firstLogin", Boolean.FALSE);
+	}
+
+	public List<RegEntry> getCurrentRegistrations() {
+		return service.getMyUpcomingRegistrations();
+	}
+
+	public List<Result> getLatestResults() {
+		return service.getMyLatestResults();
 	}
 
 	public String getHelp() throws IOException {
