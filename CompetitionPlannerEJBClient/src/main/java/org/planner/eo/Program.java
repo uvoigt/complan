@@ -26,7 +26,7 @@ import org.planner.util.Visible;
 public class Program extends AbstractEntity {
 
 	public enum ProgramStatus implements LocalizedEnum {
-		created, announced, finished;
+		created, announced, running, finished;
 
 		@Override
 		public String getText() {
