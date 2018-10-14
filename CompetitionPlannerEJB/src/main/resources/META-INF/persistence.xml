@@ -20,6 +20,7 @@
 		<class>org.planner.eo.Race</class>
 		<class>org.planner.eo.RegEntry</class>
 		<class>org.planner.eo.Registration</class>
+		<class>org.planner.eo.Result</class>
 		<class>org.planner.eo.Role</class>
 		<class>org.planner.eo.Team</class>
 		<class>org.planner.eo.TeamMember</class>
