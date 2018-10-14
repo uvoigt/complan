@@ -7,6 +7,8 @@
 <head />
 <body>
 	<ui:composition>
+		<p:hotkey bind="f1" action="#{startseiteBean.setHelpVisible(true)}" partialSubmit="true"
+				process="@this" update="help" oncomplete="toggleHelp()"/>
 		<h:panelGroup id="helpUI" layout="block" styleClass="help ui-widget ui-widget-content">
 			<h:panelGroup layout="block" styleClass="ui-layout-unit-header ui-widget-header ui-corner-all">
 				<h:panelGroup styleClass="ui-layout-unit-header-title"><h:outputText value="#{messages.help}"/></h:panelGroup>
