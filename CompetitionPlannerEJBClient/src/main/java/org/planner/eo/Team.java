@@ -35,6 +35,13 @@ public class Team implements Serializable {
 	@OrderBy("pos")
 	private List<TeamMember> members;
 
+	public Team() {
+	}
+
+	public Team(Long id) {
+		this.id = id;
+	}
+
 	public Long getId() {
 		return id;
 	}

@@ -1,6 +1,7 @@
 package org.planner.eo;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -63,6 +64,12 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	@Transient
 	private ProgramRace followUpRace;
 
+	@Transient
+	private List<Long> results;
+
+	@Transient
+	private transient List<Team> resultParticipants;
+
 	public Long getId() {
 		return id;
 	}
@@ -121,5 +128,33 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 
 	public void setFollowUpRace(ProgramRace followUpRace) {
 		this.followUpRace = followUpRace;
+	}
+
+	public List<Team> getResultParticipants() {
+		if (results == null)
+			return participants;
+		if (resultParticipants == null) {
+			resultParticipants = new ArrayList<>();
+			for (Long id : results) {
+				for (Team team : participants) {
+					if (team.getId().equals(id))
+						resultParticipants.add(team);
+				}
+			}
+		}
+		return resultParticipants;
+	}
+
+	// das wird nur durch den Converter aufgerufen
+	public void setResultParticipants(List<Long> ids) {
+		this.results = ids;
+	}
+
+	public List<Long> getResults() {
+		return results;
+	}
+
+	public void setResults(List<Long> results) {
+		this.results = results;
 	}
 }
