@@ -78,7 +78,7 @@ public class User extends AbstractEntity {
 
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	@JoinColumn(name = "user_id")
-	private Set<Token> tokens;
+	private Set<Token> tokens = new HashSet<>();
 
 	public String getUserId() {
 		return userId;
