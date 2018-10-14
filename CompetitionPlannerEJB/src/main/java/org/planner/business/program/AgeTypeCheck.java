@@ -1,6 +1,5 @@
 package org.planner.business.program;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.joda.time.DateTime;
@@ -9,6 +8,7 @@ import org.planner.eo.Program;
 import org.planner.eo.ProgramRace;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
+import org.planner.model.Change;
 import org.planner.model.Gender;
 
 public class AgeTypeCheck extends Check {
@@ -16,7 +16,8 @@ public class AgeTypeCheck extends Check {
 	// prüft, ob ein Rennen der gleichen Altersklasse von den Startern erreicht werden kann
 
 	@Override
-	protected List<Problem> executeOn(ProgramRace race, int offset, Program program, List<Problem> problems) {
+	protected void executeOn(ProgramRace race, int offset, Program program, List<ProgramRace> races,
+			List<Change> changes) {
 
 		// check 1: die Rennen gleicher Alters- Bootsklassen und Geschlecht (mixed berücksichtigt)
 		// müssen einen Mindestabstand haben
@@ -39,18 +40,15 @@ public class AgeTypeCheck extends Check {
 				int minNewOffset = minimumDistance / program.getOptions().getTimeLag();
 				if (offset - minNewOffset >= 0) {
 					int newOffset = offset - minNewOffset;
-					if (problems == null)
-						problems = new ArrayList<>();
-					// problems.add(new SwapChange(i, newOffset));
-					problems.add(new Problem(offset, text));
+					SwapChange change = new SwapChange(offset, newOffset, text);
+					changes.add(change);
+					change.applyTo(races);
 					// if (applyChanges)
 					// applyChanges(races, changes);
 					// checkProgram(program, createCopy)
 				}
 			}
 		}
-
-		return problems;
 	}
 
 	private int getTimeDistanceInMinutes(ProgramRace race1, ProgramRace race2) {

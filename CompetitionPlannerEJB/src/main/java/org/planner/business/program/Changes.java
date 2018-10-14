@@ -2,6 +2,8 @@ package org.planner.business.program;
 
 import java.util.List;
 
+import org.planner.model.Change;
+
 public class Changes {
 
 	private List<Change> changes;

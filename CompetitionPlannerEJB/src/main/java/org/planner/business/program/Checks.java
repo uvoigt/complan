@@ -8,6 +8,7 @@ import javax.enterprise.context.ApplicationScoped;
 
 import org.planner.eo.Program;
 import org.planner.eo.ProgramRace;
+import org.planner.model.Change;
 
 @ApplicationScoped
 public class Checks extends Check {
@@ -22,18 +23,14 @@ public class Checks extends Check {
 	}
 
 	@Override
-	public List<Problem> execute(Program program, List<ProgramRace> races, boolean applyChanges) {
-		List<Problem> overallResult = new ArrayList<>();
+	public void execute(Program program, List<ProgramRace> races, List<Change> changes) {
 		for (Check check : checks) {
-			List<Problem> result = check.execute(program, races, applyChanges);
-			if (result != null)
-				overallResult.addAll(result);
+			check.execute(program, races, changes);
 		}
-		return overallResult;
 	}
 
 	@Override
-	protected List<Problem> executeOn(ProgramRace race, int offset, Program program, List<Problem> problems) {
-		return null;
+	protected void executeOn(ProgramRace race, int offset, Program program, List<ProgramRace> races,
+			List<Change> changes) {
 	}
 }
