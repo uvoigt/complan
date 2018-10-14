@@ -91,10 +91,9 @@
 					<p:commandButton value="#{bundle.raceDelete}" widgetVar="btnRaceDelete"
 							action="#{racesEditBean.delete()}"
 							process="racesTable @this" update="@this racesTable"
-							onmousedown="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('raceComfirmMsg', 'xxx')}'.replace(/xxx/, PF('racesTable').getSelectedRowsCount()))"
 							rendered="#{racesEditBean.announcement.status != 'announced'}"
 							disabled="#{param.racesTable_selection == null or facesContext.currentPhaseId.name == 'RENDER_RESPONSE'}">
-						<p:confirm icon=""/>
+						<p:confirm icon="" beforeShow="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('raceComfirmMsg', 'xxx')}'.replace(/xxx/, PF('racesTable').getSelectedRowsCount()))"/>
 					</p:commandButton>
 					<p:commandButton value="#{messages.backToOverview}"
 							action="#{startseiteBean.setMainContent('/announcement/announcements.xhtml')}"
