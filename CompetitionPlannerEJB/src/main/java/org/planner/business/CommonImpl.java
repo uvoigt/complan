@@ -37,12 +37,14 @@ import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
+import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.Properties;
 import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
+import org.planner.eo.Result;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.Suchergebnis;
@@ -415,11 +417,21 @@ public class CommonImpl {
 		if ((!caller.isInRole("Sportwart") && !caller.isInRole("Trainer")) || announcement.getClub() != null
 				&& !announcement.getClub().getId().equals(callingUser.getClub().getId()))
 			throwAccessException(program, operation);
+
+		// Ein bereits gestartetes Programm darf nicht mehr gelöscht werden
+		if (operation == Operation.delete && program.getStatus() == ProgramStatus.running)
+			throw new FachlicheException(messages.getResourceBundle(), "program.alreadyRunning");
 	}
 
 	@SuppressWarnings("unused")
 	private void checkWriteAccess(ProgramRace race, Operation operation, User callingUser) {
 		Program program = getById(Program.class, race.getProgramId(), 0);
+		checkWriteAccess(program, operation, callingUser);
+	}
+
+	@SuppressWarnings("unused")
+	private void checkWriteAccess(Result result, Operation operation, User callingUser) {
+		Program program = getById(Program.class, result.getProgramId(), 0);
 		checkWriteAccess(program, operation, callingUser);
 	}
 
