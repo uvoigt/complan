@@ -71,7 +71,7 @@
 							onclick="registrationEdit.copyFilters()"
 							style="margin-bottom: 1em"/>
 						<p:commandButton type="button" icon="ui-icon-person" title="#{bundle.addRequest}"
-							onclick="registrationEdit.showRemarkDlg()"
+							onclick="PF('remarkDlg').show()"
 							widgetVar="btnAddRequest"
 							style="margin-bottom: 1em"/>
 						<p:commandButton icon="ui-icon-circle-arrow-s" title="#{bundle.addToRegistration}"
@@ -195,17 +195,17 @@
 			<p:dialog appendTo="body" widgetVar="remarkDlg" header="#{bundle.requestMsg}" closeOnEscape="true" styleClass="remarkDlg" modal="true">
 				<h:form>
 					<h:panelGroup layout="block" styleClass="ui-dialog-content">
-						<p:selectOneMenu id="remark" value="#{registrationBean.remark}" editable="true" maxlength="50">
+						<p:selectOneMenu id="remark" value="#{registrationBean.remark}" editable="true" maxlength="50" style="width: 90%">
 							<f:selectItems value="#{registrationBean.remarks}"/>
 						</p:selectOneMenu>
 					</h:panelGroup>
 					<h:panelGroup layout="block" styleClass="ui-dialog-buttonpane">
 						<p:commandButton value="#{messages.ok}" styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
 							partialSubmit="true"
-							process="@this main:registrationTable remark" update="main:registrationTable"
-							action="#{registrationBean.addRequest()}" oncomplete="registrationEdit.hideRemarkDlg()"/>
+							process="@this main:registrationTable remark" update="main:registrationTable remark"
+							action="#{registrationBean.addRequest()}" oncomplete="PF('remarkDlg').hide()"/>
 						<p:commandButton value="#{messages.cancel}" type="button" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
-							onclick="registrationEdit.hideRemarkDlg()" />
+							onclick="PF('remarkDlg').hide()" />
 					</h:panelGroup>
 				</h:form>
 			</p:dialog>
