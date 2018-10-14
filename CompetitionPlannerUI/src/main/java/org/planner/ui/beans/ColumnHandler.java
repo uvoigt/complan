@@ -191,8 +191,8 @@ public class ColumnHandler {
 		return columns;
 	}
 
-	private void getColumnsForType(Class<?> type, String parentProperty, List<Column> result, int level,
-			Visible visibility, Paths paths) throws IntrospectionException {
+	private void getColumnsForType(Class<?> type, String parentProperty, List<Column> result, int level, Visible first,
+			Paths paths) throws IntrospectionException {
 		for (Field field : type.getDeclaredFields()) {
 			boolean force = paths != null && paths.hasFirst(field.getName());
 			Visible visible = field.getAnnotation(Visible.class);
@@ -202,18 +202,18 @@ public class ColumnHandler {
 			Class<?> propertyType = field.getType();
 			if (field.getGenericType() instanceof ParameterizedType)
 				propertyType = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-			getColumnsForType(propertyType, propertyName, result, level + 1, visible,
+			getColumnsForType(propertyType, propertyName, result, level + 1, first != null ? first : visible,
 					paths != null ? paths.next() : new Paths(field.getAnnotation(Visibilities.class)));
 			if (propertyType.getAnnotation(Entity.class) == null) {
 				Visible v = paths != null ? paths.getVisibility() : null;
 				if (v == null)
 					v = visible;
-				result.add(new Column(propertyName, v, visibility));
+				result.add(new Column(propertyName, v, first));
 			}
 		}
 		Class<?> superclass = type.getSuperclass();
 		if (superclass != null)
-			getColumnsForType(superclass, parentProperty, result, level, visibility, paths);
+			getColumnsForType(superclass, parentProperty, result, level, first, paths);
 	}
 
 	private void applyRoleRestrictions(Column[] columns) {
