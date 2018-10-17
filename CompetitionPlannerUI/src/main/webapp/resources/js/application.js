@@ -286,16 +286,17 @@ var programEdit = {
 		}
 		return b;
 	},
-	applyCellEdit: function(element, table) {
-		table.click();
+	applyCellEdit: function() {
+		var table = PF("programTable");
+		if (table.currentCell)
+			table.saveCell(table.currentCell);
 	},
-	cancelCellEdit: function(element, table) {
-		var evt = $.Event("keydown");
-		evt.which = evt.keyCode = 27;
-		$(element).trigger(evt);
-		setTimeout(function() {
-			table.click();
-		}, 100);
+	cancelCellEdit: function() {
+		var table = PF("programTable");
+		if (table.currentCell)
+			table.currentCell.blur();
+		table.jq.parent().focus();
+		table.jq.click();
 	}
 };
 function initLoginDialog() {
