@@ -108,6 +108,10 @@ public class Race extends AbstractEntity {
 		return announcementId;
 	}
 
+	public Announcement getAnnouncement() {
+		return announcement;
+	}
+
 	public void setAnnouncement(Announcement announcement) {
 		this.announcement = announcement;
 	}

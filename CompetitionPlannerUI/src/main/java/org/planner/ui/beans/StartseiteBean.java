@@ -18,8 +18,12 @@ import javax.inject.Named;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.planner.eo.ProgramRace;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Result;
+import org.planner.eo.Team;
+import org.planner.eo.TeamMember;
+import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.common.AuthBean;
 import org.planner.ui.util.JsfUtil;
@@ -207,6 +211,21 @@ public class StartseiteBean implements Serializable {
 
 	public List<Result> getLatestResults() {
 		return service.getMyLatestResults();
+	}
+
+	public String getPlacement(ProgramRace race, List<Long> placements) {
+		Long myUserId = auth.getLoggedInUser().getId();
+		for (Team team : race.getParticipants()) {
+			int index = placements.indexOf(team.getId());
+			if (index == -1)
+				continue;
+			for (TeamMember member : team.getMembers()) {
+				User user = member.getUser();
+				if (user != null && user.getId().equals(myUserId))
+					return Integer.toString(index + 1);
+			}
+		}
+		return null;
 	}
 
 	public String getHelp() throws IOException {
