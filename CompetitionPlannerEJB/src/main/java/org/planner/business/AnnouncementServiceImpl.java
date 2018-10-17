@@ -583,6 +583,7 @@ public class AnnouncementServiceImpl {
 				Join<Result, ProgramRace> programRace = result.join(Result_.programRace);
 				Join<ProgramRace, Race> race = programRace.join(ProgramRace_.race);
 				Join<Race, Announcement> announcement = race.join(Race_.announcement);
+				// announcement.fetch(Announcement_.club);
 				ListJoin<ProgramRace, Team> team = programRace.join(ProgramRace_.participants);
 				ListJoin<Team, TeamMember> members = team.join(Team_.members);
 				Join<TeamMember, User> user = members.join(TeamMember_.user);
@@ -592,7 +593,15 @@ public class AnnouncementServiceImpl {
 				Predicate youAreMember = builder.equal(user.get(User_.userId), caller.getLoginName());
 				query.where(builder.and(latest, youAreMember));
 				query.orderBy(builder.asc(announcement.get(Announcement_.startDate)));
-				return em.createQuery(query).getResultList();
+				List<Result> list = em.createQuery(query).getResultList();
+				// fetch
+				for (Result r : list) {
+					r.getProgramRace().getRace().getAnnouncement().getId();
+					for (Team t : r.getProgramRace().getParticipants()) {
+						t.getMembers().size();
+					}
+				}
+				return list;
 			}
 		});
 	}
