@@ -534,7 +534,7 @@ public class ProgramServiceImpl {
 			sql.append("left outer join Result rs on pr.id=rs.programrace_id ");
 		}
 		sql.append("where p.id = :id " //
-				+ "order by pr.startTime");
+				+ "order by pr.startTime,  t.lane, tm.pos");
 		Query query = em.createNativeQuery(sql.toString());
 		query.setParameter("id", id);
 		@SuppressWarnings("unchecked")
