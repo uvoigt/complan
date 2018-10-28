@@ -1,4 +1,5 @@
 /target/
 /openshift.txt
 /*.bat
+/*.lnk
 /User.sql
