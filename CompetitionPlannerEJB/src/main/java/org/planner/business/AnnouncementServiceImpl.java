@@ -49,6 +49,7 @@ import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
 import org.planner.eo.Result;
+import org.planner.eo.Result.Placement;
 import org.planner.eo.Result_;
 import org.planner.eo.Role_;
 import org.planner.eo.Team;
@@ -612,16 +613,16 @@ public class AnnouncementServiceImpl {
 		common.save(result);
 	}
 
-	public List<Long> getResult(final Long programRaceId) {
-		return dao.executeOperation(new IOperation<List<Long>>() {
+	public List<Placement> getResult(final Long programRaceId) {
+		return dao.executeOperation(new IOperation<List<Placement>>() {
 			@Override
-			public List<Long> execute(EntityManager em) {
+			public List<Placement> execute(EntityManager em) {
 				CriteriaBuilder builder = em.getCriteriaBuilder();
 				CriteriaQuery<Result> query = builder.createQuery(Result.class);
 				Root<Result> root = query.from(Result.class);
 				query.where(builder.equal(root.get(Result_.programRace), programRaceId));
-				Result result = em.createQuery(query).getSingleResult();
-				return result.getPlacements();
+				List<Result> list = em.createQuery(query).getResultList();
+				return list.size() > 0 ? list.get(0).getPlacements() : null;
 			}
 		});
 	}

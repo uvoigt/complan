@@ -1,7 +1,6 @@
 package org.planner.eo;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -17,6 +16,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
+import org.planner.eo.Result.Placement;
 import org.planner.model.LocalizedEnum;
 import org.planner.util.CommonMessages;
 
@@ -65,10 +65,7 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	private ProgramRace followUpRace;
 
 	@Transient
-	private List<Long> results;
-
-	@Transient
-	private transient List<Team> resultParticipants;
+	private List<Placement> results;
 
 	public Long getId() {
 		return id;
@@ -130,31 +127,11 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 		this.followUpRace = followUpRace;
 	}
 
-	public List<Team> getResultParticipants() {
-		if (results == null)
-			return participants;
-		if (resultParticipants == null) {
-			resultParticipants = new ArrayList<>();
-			for (Long id : results) {
-				for (Team team : participants) {
-					if (team.getId().equals(id))
-						resultParticipants.add(team);
-				}
-			}
-		}
-		return resultParticipants;
-	}
-
-	// das wird nur durch den Converter aufgerufen
-	public void setResultParticipants(List<Long> ids) {
-		this.results = ids;
-	}
-
-	public List<Long> getResults() {
+	public List<Placement> getResults() {
 		return results;
 	}
 
-	public void setResults(List<Long> results) {
+	public void setResults(List<Placement> results) {
 		this.results = results;
 	}
 }

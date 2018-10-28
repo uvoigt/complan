@@ -3,6 +3,7 @@ package org.planner.ui.beans.announcement;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,9 @@ import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.Result;
+import org.planner.eo.Result.Placement;
 import org.planner.eo.Result_;
+import org.planner.eo.Team;
 import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.UploadBean;
@@ -66,8 +69,50 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
 		if (id != null) {
-			if (!isCancelPressed())
-				loadProgram(id);
+			if (!isCancelPressed()) {
+				Collection<String> execueIds = FacesContext.getCurrentInstance().getPartialViewContext()
+						.getExecuteIds();
+				String exId = execueIds.size() == 1 ? execueIds.iterator().next() : null;
+				if (exId != null) {
+					// beginn cell edit oder save cell
+					String cellInfo = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap()
+							.get(exId + "_cellInfo");
+					if (cellInfo != null) {
+						String[] split = cellInfo.split(",");
+						long programRaceId = Long.parseLong(split[2]);
+						// fetch Teams und Members
+						ProgramRace programRace = service.getObject(ProgramRace.class, programRaceId, 2);
+						int row = Integer.parseInt(split[0]);
+						program = new Program();
+						program.setId(id);
+						List<ProgramRace> races = new ArrayList<>();
+						for (int i = 0, n = row + 1; i < n; i++) {
+							races.add(null);
+						}
+						races.set(row, programRace);
+						List<Placement> placements = service.getResult(programRaceId);
+						if (placements == null)
+							placements = new ArrayList<>();
+						for (Team team : programRace.getParticipants()) {
+							boolean found = false;
+							for (int i = 0; i < placements.size(); i++) {
+								Placement placement = placements.get(i);
+								if (!placement.getTeam().getId().equals(team.getId()))
+									continue;
+								placement.setTeam(team);
+								found = true;
+								break;
+							}
+							if (!found)
+								placements.add(new Placement(team));
+						}
+						programRace.setResults(placements);
+						program.setRaces(races);
+					}
+				}
+				if (program == null)
+					loadProgram(id);
+			}
 			JsfUtil.setViewVariable("id", id);
 		}
 	}
@@ -213,7 +258,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	private ProgramRace findProgramRace(Long programRaceId) {
 		for (ProgramRace programRace : program.getRaces()) {
-			if (programRace.getId().equals(programRaceId)) {
+			if (programRace != null && programRace.getId().equals(programRaceId)) {
 				return programRace;
 			}
 		}
@@ -228,8 +273,8 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		}
 	}
 
-	public void checkForExistingResults(ProgramRace programRace, List<Long> ids) {
-		if (programRace == null && ids == null) {
+	private void checkForExistingResults(ProgramRace programRace, List<Placement> placements) {
+		if (programRace == null && placements == null) {
 			// cancel dialog
 			PrimeFaces.current().dialog().closeDynamic(null);
 			return;
@@ -239,13 +284,20 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		List<Result> list = service.search(Result.class, criteria).getListe();
 		Result result = list.size() > 0 ? list.get(0) : null;
 		if (result == null) {
-			doSaveResult(programRace.getId(), null, null, ids);
-		} else if (!result.getPlacements().toString().equals(ids.toString())) {
+			doSaveResult(programRace.getId(), null, null, placements);
+		} else if (!result.getPlacements().toString().equals(placements.toString())) {
 			String message = JsfUtil.getScopedBundle().format("confirmResult", programRace.getRace().getNumber());
+			StringBuilder sb = new StringBuilder("[");
+			for (Placement placement : placements) {
+				if (sb.length() > 1)
+					sb.append(",");
+				sb.append("'").append(placement).append("'");
+			}
+			sb.append("]");
 			PrimeFaces.current()
 					.executeScript(String.format(
 							"programEdit.confirmResult('%s',{programRaceId:%s,resultId:%s,version:%s,placement:%s})",
-							message, programRace.getId(), result.getId(), result.getVersion(), ids));
+							message, programRace.getId(), result.getId(), result.getVersion(), sb.toString()));
 		}
 	}
 
@@ -254,26 +306,26 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		Long programRaceId = Long.valueOf(params.get("programRaceId"));
 		Long resultId = Long.valueOf(params.get("resultId"));
 		Integer version = Integer.valueOf(params.get("version"));
-		List<Long> ids = new ArrayList<>();
+		List<Placement> placements = new ArrayList<>();
 		for (String string : params.get("placement").split(",")) {
-			ids.add(Long.valueOf(string));
+			placements.add(new Placement(string));
 		}
-		doSaveResult(programRaceId, resultId, version, ids);
+		doSaveResult(programRaceId, resultId, version, placements);
 	}
 
 	public void cancelResult() {
 		Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
 		Long programRaceId = Long.valueOf(params.get("programRaceId"));
-		List<Long> result = service.getResult(programRaceId);
+		List<Placement> result = service.getResult(programRaceId);
 		ProgramRace programRace = findProgramRace(programRaceId);
 		if (programRace != null)
 			programRace.setResults(result);
 	}
 
-	private void doSaveResult(Long programRaceId, Long resultId, Integer version, List<Long> ids) {
+	private void doSaveResult(Long programRaceId, Long resultId, Integer version, List<Placement> placements) {
 		ProgramRace programRace = new ProgramRace();
 		programRace.setId(programRaceId);
-		Result result = new Result(program.getId(), programRace, ids);
+		Result result = new Result(program.getId(), programRace, placements);
 		result.setId(resultId);
 		if (version != null)
 			result.setVersion(version);

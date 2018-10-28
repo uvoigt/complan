@@ -286,6 +286,26 @@ var programEdit = {
 		}
 		return b;
 	},
+	cellEditInit: function(options) {
+		options.global = true;
+		var oldOncomplete = options.oncomplete;
+		options.oncomplete = function(xhr, status, args) {
+			oldOncomplete(xhr, status, args);
+			programEdit.enableResultExtra(false);
+			var placement = PF("placement");
+			placement.items.each(function() {
+				var item = $(this);
+				var split = item.attr("data-item-value").split(";");
+				if (split.length > 1) {
+					item.attr("data-item-value", split[0]);
+					var resultExtra = PF("resultExtra");
+					var text = resultExtra.buttons.children("input[value=" + split[1] +"]").parent().text();
+					item.find(".extra").text(text);
+				}
+			});
+		};
+		PrimeFaces.ajax.Request.handle(options);
+	},
 	applyCellEdit: function() {
 		var table = PF("programTable");
 		if (table.currentCell)
@@ -297,6 +317,36 @@ var programEdit = {
 			table.currentCell.blur();
 		table.jq.parent().focus();
 		table.jq.click();
+	},
+	enableResultExtra: function(enable) {
+		var resultExtra = PF("resultExtra");
+		enable ? resultExtra.enable() : resultExtra.disable();
+		if (enable) {
+			var placement = PF("placement");
+			var text = placement.items.filter(".ui-state-highlight").find(".extra").text();
+			var change = resultExtra.cfg.change;
+			resultExtra.cfg.change = null;
+			resultExtra.unselect(resultExtra.buttons);
+			resultExtra.buttons.blur();
+			if (text) {
+				var btn = resultExtra.buttons.find(":contains(" + text + ")").parent();
+				resultExtra.select(btn);
+			}
+			resultExtra.cfg.change = change;
+		}
+	},
+	updateResultWithExtra: function(resultExtra) {
+		var selected = resultExtra.buttons.filter(".ui-state-active");
+		var text = selected.text();
+		var extra = selected.children("input").val();
+		var placement = PF("placement");
+		var highlight = placement.items.filter(".ui-state-highlight");
+		highlight.find(".extra").text(text);
+		var data = highlight.attr("data-item-value");
+		var value = data + ";" + extra;
+		if (selected.length == 0)
+			value = data;
+		placement.jq.find(".ui-helper-hidden>").eq(highlight.index()).attr("value", value).text(value);
 	}
 };
 function initLoginDialog() {
