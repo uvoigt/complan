@@ -6,6 +6,7 @@ import java.util.Set;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -68,7 +69,7 @@ public class Announcement extends AbstractEntity {
 
 	// Reihenfolge und Startzeiten der Rennen mit Angaben der Streckenlänge,
 	// Bootsgattungen, Bootsklassen- und Altersklassen
-	@OneToMany(mappedBy = "announcement")
+	@OneToMany(mappedBy = "announcement", cascade = CascadeType.REMOVE)
 	private Set<Race> races;
 
 	// Abmessungen der Regattabahn und Wassertiefen
