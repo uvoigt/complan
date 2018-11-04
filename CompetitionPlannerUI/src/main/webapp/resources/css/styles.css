@@ -2,6 +2,9 @@
 #heading {
 	overflow: hidden;
 }
+.ui-layout-north > div {
+	overflow: hidden !important;
+}
 #menuButton {
 	width: 16px;
 	height: 16px;
