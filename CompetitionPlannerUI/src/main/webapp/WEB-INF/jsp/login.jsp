@@ -47,7 +47,7 @@
 							</td>
 						</tr>
 						<tr>
-							<td colspan="2"><input id="submit" type="submit" class="submit" value="<f:message key="loginSubmit"/>" /></td>
+							<td colspan="2"><input type="submit" class="submit" value="<f:message key="loginSubmit"/>" /></td>
 						</tr>
 					</tbody>
 				</table>
@@ -59,7 +59,7 @@
 							<td><input type="text" name="email" placeholder="<f:message key="loginEmail"/>" autocomplete="off"/></td>
 						</tr>
 						<tr>
-							<td colspan="2"><input id="submit" type="submit" class="submit" value="<f:message key="loginSubmitRegister"/>" /></td>
+							<td colspan="2"><input type="submit" class="submit" value="<f:message key="loginSubmitRegister"/>" /></td>
 						</tr>
 					</tbody>
 				</table>
