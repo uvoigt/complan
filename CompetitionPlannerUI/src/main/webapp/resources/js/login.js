@@ -64,7 +64,7 @@ function sendLogin(title, msgError) {
 		}
 	}
 	enableFields(document.loginform, false);
-	req.send("j_username=" + document.loginform.j_username.value + "&j_password=" + document.loginform.j_password.value);
+	req.send("j_username=" + encodeURIComponent(document.loginform.j_username.value) + "&j_password=" + encodeURIComponent(document.loginform.j_password.value));
 }
 function createXMLHttpRequest() { 
 	if (typeof XMLHttpRequest != "undefined")

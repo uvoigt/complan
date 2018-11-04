@@ -35,7 +35,7 @@ function sendLogin(formId) {
 	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
 	req.onreadystatechange = function() {
 		if (req.readyState == 4) {
-			dlg.jq.find("input,button").attr("disabled", false).attr("readonly", false);
+			dlg.jq.find("input,button").attr("disabled", false).attr("readonly", false).removeClass("ui-state-disabled");
 			if (req.status == 200 && req.responseText.indexOf("<title>" + dlg.jq.find("#loginDlg_title").text() + "</title>") == -1) {
 				message("");
 				dlg.cfg.onHide = function() {
@@ -51,8 +51,8 @@ function sendLogin(formId) {
 			}
 		}
 	}
-	dlg.jq.find("input,button").attr("disabled", true).attr("readonly", true);
-	req.send("j_username=" + uname.val() + "&j_password=" + upass.val());
+	dlg.jq.find("input,button").attr("disabled", true).attr("readonly", true).addClass("ui-state-disabled");
+	req.send("j_username=" + encodeURIComponent(uname.val()) + "&j_password=" + encodeURIComponent(upass.val()));
 }
 function sendRecovery() {
 	var dlg = PF("loginDlg");
