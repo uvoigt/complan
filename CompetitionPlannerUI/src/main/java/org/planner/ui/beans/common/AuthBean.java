@@ -2,7 +2,7 @@ package org.planner.ui.beans.common;
 
 import java.io.Serializable;
 
-import javax.enterprise.context.SessionScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
@@ -12,7 +12,7 @@ import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
 
 @Named
-@SessionScoped
+@RequestScoped
 public class AuthBean implements Serializable {
 
 	private static final long serialVersionUID = 1L;
