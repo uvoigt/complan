@@ -51,7 +51,8 @@
 						<p:calendar id="endDate" binding="#{announcementBean.endDate}"
 							value="#{announcement.endDate}" pages="3" required="true"
 							requiredMessage="#{bundle.format('fieldValidation', bundle.endDate)}"
-							size="7" style="margin-left: 1em"/>
+							size="7" style="margin-left: 1em"
+							validator="#{announcementBean.validateDate()}" validatorMessage="#{bundle.invalidDate}"/>
 					</div>
 				</div>
 			</div>

@@ -10,6 +10,7 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
+import javax.faces.validator.ValidatorException;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -252,5 +253,11 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 	@Override
 	public void handleDownload(OutputStream out, String typ, Object selection) throws Exception {
 		generator.generate(announcement, out);
+	}
+
+	public boolean validateDate() {
+		if (announcement.getEndDate().before(announcement.getStartDate()))
+			throw new ValidatorException(new FacesMessage(endDate.getValidatorMessage()));
+		return true;
 	}
 }
