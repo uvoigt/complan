@@ -41,7 +41,7 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<div class="ui-g">
 						<h:outputText value="#{bundle.startDate}"/>
-						<p:calendar widgetVar="startDate"
+						<p:calendar widgetVar="startDate" binding="#{announcementBean.startDate}"
 								value="#{announcement.startDate}" pages="3" required="true"
 								requiredMessage="#{bundle.format('fieldValidation', bundle.startDate)}"
 								size="7" style="margin: 0 1em 0 1em">

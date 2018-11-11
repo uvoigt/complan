@@ -3,7 +3,10 @@ package org.planner.ui.beans.announcement;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -16,6 +19,7 @@ import javax.inject.Named;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
+import org.apache.commons.lang.StringUtils;
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.Address;
 import org.planner.eo.Announcement;
@@ -60,6 +64,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	private List<ColumnModel> columns;
 
+	private Calendar startDate;
 	private Calendar endDate;
 
 	@Override
@@ -112,12 +117,22 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		}
 	}
 
+	public Calendar getStartDate() {
+		return startDate;
+	}
+
+	public void setStartDate(Calendar startDate) {
+		this.startDate = startDate;
+	}
+
 	public Calendar getEndDate() {
 		return endDate;
 	}
 
 	public void setEndDate(Calendar endDate) {
 		this.endDate = endDate;
+		if (announcement.getStartDate() != null)
+			endDate.setMindate(announcement.getStartDate());
 	}
 
 	public Announcement getAnnouncement() {
@@ -194,6 +209,17 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		endDate.setMindate(value);
 	}
 
+	public void validateDate() throws ParseException {
+		String end = (String) endDate.getSubmittedValue();
+		if (StringUtils.isNotBlank(end)) {
+			Date startDate = (Date) this.startDate.getValue();
+			Date endDate = new SimpleDateFormat(this.endDate.calculatePattern()).parse(end);
+			if (endDate.before(startDate))
+				throw new ValidatorException(new FacesMessage(this.endDate.getValidatorMessage()));
+		}
+
+	}
+
 	public List<Category> getCategories(String text) {
 		return service.search(Category.class, createAutocompleteCriteria(text, Category_.name.getName())).getListe();
 	}
@@ -253,11 +279,5 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 	@Override
 	public void handleDownload(OutputStream out, String typ, Object selection) throws Exception {
 		generator.generate(announcement, out);
-	}
-
-	public boolean validateDate() {
-		if (announcement.getEndDate().before(announcement.getStartDate()))
-			throw new ValidatorException(new FacesMessage(endDate.getValidatorMessage()));
-		return true;
 	}
 }
