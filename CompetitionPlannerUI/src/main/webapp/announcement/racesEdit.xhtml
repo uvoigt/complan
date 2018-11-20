@@ -97,7 +97,8 @@
 					</p:commandButton>
 					<p:commandButton value="#{messages.backToOverview}"
 							action="#{startseiteBean.setMainContent('/announcement/announcements.xhtml')}"
-							process="@this" update="mainContent"/>
+							process="@this" update="mainContent"
+							partialSubmit="true"/>
 				</p:panelGrid>
 
 				<p:dataTable id="racesTable" widgetVar="racesTable"
