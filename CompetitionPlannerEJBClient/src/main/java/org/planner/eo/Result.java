@@ -27,19 +27,19 @@ public class Result extends AbstractEntity {
 
 		private ResultExtra extra;
 
-		private Team team;
+		private ProgramRaceTeam team;
 
-		public Placement(Team team) {
+		public Placement(ProgramRaceTeam team) {
 			this.team = team;
 		}
 
 		public Placement(String format) {
 			String[] split = format.split(";");
 			if (split.length == 2) {
-				team = new Team(Long.valueOf(split[0]));
+				team = new ProgramRaceTeam(new ProgramRace(), new Team(Long.valueOf(split[0])));
 				extra = ResultExtra.valueOf(split[1]);
 			} else {
-				team = new Team(Long.valueOf(format));
+				team = new ProgramRaceTeam(new ProgramRace(), new Team(Long.valueOf(format)));
 			}
 		}
 
@@ -51,11 +51,11 @@ public class Result extends AbstractEntity {
 			this.extra = extra;
 		}
 
-		public Team getTeam() {
+		public ProgramRaceTeam getTeam() {
 			return team;
 		}
 
-		public void setTeam(Team team) {
+		public void setTeam(ProgramRaceTeam team) {
 			this.team = team;
 		}
 
@@ -67,7 +67,7 @@ public class Result extends AbstractEntity {
 		}
 
 		public void toString(StringBuilder sb) {
-			sb.append(team.getId());
+			sb.append(team.getTeamId());
 			if (extra != null) {
 				sb.append(";");
 				sb.append(extra);
