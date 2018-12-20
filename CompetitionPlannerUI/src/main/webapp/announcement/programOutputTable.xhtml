@@ -16,15 +16,15 @@
 			rowIndexVar="rowIndex"
 			selectionMode="multiple" rowKey="#{race.id}"
 			selection="#{programBean.selectedRaces}"
+			filterEvent="enter"
 			editable="true" editMode="cell" cellEditMode="lazy" editInitEvent="dblclick" saveOnCellBlur="false">
 
 		<pe:javascript event="cellEditInit" execute="programEdit.cellEditInit(ext)"/>
-		<p:ajax event="cellEdit" listener="#{programBean.onResultUpdate}" partialSubmitFilter="[data-rk] .ui-cell-editing :input" partialSubmit="true"
-				update="@form:cancelCommand"/>
-		<p:ajax event="cellEditCancel" partialSubmitFilter="[data-rk] .ui-cell-editing :input" partialSubmit="true" onstart="return PF('programTable').jq.find('.ui-cell-editing').length>0"/>
+		<p:ajax event="cellEdit" listener="#{programBean.onResultUpdate}" partialSubmitFilter="[data-rk] .ui-cell-editing :input" partialSubmit="true" update="messagesPopup"/>
+		<pe:javascript event="cellEditCancel" execute="ext.oncomplete()"/>
 
-		<p:column>
-			<p:cellEditor disabled="#{programBean.program.status != 'running'}">
+		<p:column filterValue="#{programBean.filter}" filterBy="#{programBean.getRaceFilter(race)}" filterFunction="#{programBean.filterRaces}">
+			<p:cellEditor disabled="#{programBean.program.status != 'running' or programBean.program.announcement.club.name != authBean.loggedInUser.club.name}">
 				<f:facet name="output">
 					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable">
 						<f:facet name="header">
@@ -64,10 +64,13 @@
 					</p:dataTable>
 				</f:facet>
 				<f:facet name="input">
-					<p:orderList var="placement" widgetVar="placement" value="#{race.results}" controlsLocation="none" converter="#{resultConverter}"
-							itemValue="#{placement}" styleClass="resultEdit">
+					<p:orderList var="placement" widgetVar="placement" value="#{race.results}" controlsLocation="none"
+							itemValue="#{placement}" styleClass="resultEdit"
+							converter="#{placementConverter}" converterMessage="#{bundle.wrongTime}"
+							validator="#{programBean.validateResult}">
 						<pe:javascript event="select" execute="programEdit.enableResultExtra(true)"/>
 						<pe:javascript event="unselect" execute="programEdit.enableResultExtra(false)"/>
+						<f:event type="preRenderComponent" listener="#{programBean.onPrerenderResults}"/>
 						<f:facet name="caption">
 							<h:panelGroup layout="block" id="hallo">
 								<h:outputText value="#{bundle.resultEditMsg}"/>
@@ -88,7 +91,11 @@
 							</p:dataGrid>
 						</p:column>
 						<p:column style="width: 5%">
-							<p:outputLabel styleClass="extra"/>
+							<p:outputLabel styleClass="extra" style="display: none"/>
+							<h:panelGroup layout="block" styleClass="ui-inputnumber">
+								<h:inputText styleClass="time ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" size="8" maxlength="6"
+										onkeydown="programEdit.resultKeyDown(this, event)" onchange="programEdit.updateResultWithTime(this)"/>
+							</h:panelGroup>
 						</p:column>
 						<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
 							<h:outputText value="#{not empty placement.team.club.shortName ? placement.team.club.shortName : placement.team.club.name}"/>
@@ -101,6 +108,8 @@
 						<f:selectItem itemLabel="#{bundle.dnf}" itemValue="dnf"/>
 						<f:selectItem itemLabel="#{bundle.dq}" itemValue="dq"/>
 					</p:selectOneButton>
+					<p:selectBooleanCheckbox id="override" style="margin-right: 0.5em"/>
+					<p:outputLabel value="#{bundle.overrideResult}" for="override"/>
 				</f:facet>
 			</p:cellEditor>
 
@@ -114,14 +123,12 @@
 		</p:column>
 
 	</p:dataTable>
-	<p:remoteCommand action="#{programBean.saveResult()}" name="saveResult" process="@this" onsuccess="PF('confirmResult').hide()"/>
-	<p:remoteCommand id="cancelCommand" binding="#{programBean.cancelCommand}" action="#{programBean.cancelResult()}" name="cancelResult" process="@this" onsuccess="PF('confirmResult').hide()"
-			update="programTable:@row(0)" rendered="#{programBean.program.races.size() gt 0}"/>
+	<p:remoteCommand action="#{programBean.saveResult(component.namingContainer)}" name="saveResult" process="@this" onsuccess="PF('confirmResult').hide()"/>
 	<p:confirmDialog widgetVar="confirmResult" appendTo="body" header="#{bundle.confirmTitle}" closeOnEscape="true">
 		<p:commandButton type="button" value="#{bundle.yes}" styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
 				onclick="saveResult(programEdit.argsToParams(PF('confirmResult').args))"/>
 		<p:commandButton type="button" value="#{bundle.cancel}" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
-				onclick="cancelResult(programEdit.argsToParams(PF('confirmResult').args))"/>
+				onclick="PF('confirmResult').hide()"/>
 	</p:confirmDialog>
 
 </ui:composition>
