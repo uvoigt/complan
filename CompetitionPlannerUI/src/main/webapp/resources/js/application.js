@@ -292,15 +292,20 @@ var programEdit = {
 		options.oncomplete = function(xhr, status, args) {
 			oldOncomplete(xhr, status, args);
 			programEdit.enableResultExtra(false);
+			// replace tabCell function
+			PF("programTable").tabCell = function() {}
 			var placement = PF("placement");
 			placement.items.each(function() {
 				var item = $(this);
 				var split = item.attr("data-item-value").split(";");
-				if (split.length > 1) {
-					item.attr("data-item-value", split[0]);
+				if (split[2] && split[2] != 0) {
+					item.find(".time").val(split[2]);
+				}
+				if (split[3]) {
 					var resultExtra = PF("resultExtra");
-					var text = resultExtra.buttons.children("input[value=" + split[1] +"]").parent().text();
-					item.find(".extra").text(text);
+					var text = resultExtra.buttons.children("input[value=" + split[3] +"]").parent().text();
+					item.find(".extra").text(text).show();
+					item.find(".time").hide();
 				}
 			});
 		};
@@ -339,14 +344,41 @@ var programEdit = {
 		var selected = resultExtra.buttons.filter(".ui-state-active");
 		var text = selected.text();
 		var extra = selected.children("input").val();
+		var highlight = PF("placement").items.filter(".ui-state-highlight");
+		highlight.find(".extra").text(text).toggle(extra !== undefined);
+		highlight.find(".time").toggle(extra === undefined);
+		this.setInputData(highlight, undefined, selected.length > 0 ? extra : "");
+	},
+	updateResultWithTime: function(input) {
+		input = $(input);
+		var item = input.parents("li");
+		this.setInputData(item, input.val());
+	},
+	setInputData: function(selectedItem, time, extra) {
+		var dataItem = PF("placement").input.children().eq(selectedItem.index());
+		var data = dataItem.val().split(";");
+		var value = data[0] + ";" + data[1] + ";" + (time !== undefined ? time : data[2]);
+		if (extra !== undefined || data[3] !== undefined)
+			value += ";" + (extra !== undefined ? extra : data[3]);
+		dataItem.val(value).text(value);
+	},
+	resultKeyDown: function(input, evt) {
+		var keyCode = evt.keyCode;
+		if (keyCode != 40 && keyCode != 38 && keyCode != 9 && keyCode != 0)
+			return;
 		var placement = PF("placement");
-		var highlight = placement.items.filter(".ui-state-highlight");
-		highlight.find(".extra").text(text);
-		var data = highlight.attr("data-item-value");
-		var value = data + ";" + extra;
-		if (selected.length == 0)
-			value = data;
-		placement.jq.find(".ui-helper-hidden>").eq(highlight.index()).attr("value", value).text(value);
+		var inputs = placement.jq.find("input");
+		var index = inputs.index($(input));
+		if (keyCode == 40 || keyCode == 9 && !evt.shiftKey) { // down
+			if (++index >= inputs.length)
+				index = 0;
+		} else if (keyCode == 38 || keyCode == 9 && evt.shiftKey) { // up
+			if (--index < 0)
+				index = inputs.length - 1;
+		}
+		inputs.eq(index).focus().select();
+		evt.preventDefault();
+		evt.stopPropagation();
 	}
 };
 function initLoginDialog() {
