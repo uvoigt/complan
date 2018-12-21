@@ -96,7 +96,8 @@
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.roles}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:selectManyMenu binding="#{userBean.roleMenu}" value="#{userBean.selectedRoles}" showCheckbox="true" immediate="false"
-							required="true" requiredMessage="#{bundle.format('fieldValidation', bundle.roles)}">
+							required="true" requiredMessage="#{bundle.format('fieldValidation', bundle.roles)}"
+							style="width: 94%">
 						<f:selectItems value="#{userBean.roles}" var="role" itemValue="#{role.role}" itemLabel="#{role.role}"/>
 					</p:selectManyMenu>
 				</div>
