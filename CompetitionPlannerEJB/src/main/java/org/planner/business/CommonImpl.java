@@ -142,7 +142,7 @@ public class CommonImpl {
 		}
 	}
 
-	public <T extends Serializable> T getById(Class<T> typ, Long id, int fetchDepth) {
+	public <T extends Serializable> T getById(Class<T> typ, Object id, int fetchDepth) {
 		T entity = dao.getById(typ, id);
 		if (fetchDepth > 0 && entity != null)
 			fetch(entity, fetchDepth - 1);
