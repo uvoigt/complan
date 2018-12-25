@@ -6,17 +6,77 @@
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:p="http://primefaces.org/ui">
 
-	<ui:composition template="/templates/edit.xhtml">
-		<ui:param name="bundle" value="#{messages.bundle('announcements')}"/>
-		<ui:param name="bean" value="#{announcementBean}"/>
-		<ui:param name="searchLink" value="/announcement/announcements.xhtml"/>
+	<ui:composition template="/templates/title.xhtml">
+		<ui:param name="roleSuffix" value="results"/>
+		<ui:param name="bundle" value="#{messages.bundle('programs')}"/>
+		<ui:param name="bean" value="#{resultBean}"/>
+		<ui:param name="searchLink" value="/announcement/results.xhtml"/>
 
-		<ui:param name="announcement" value="#{announcementBean.announcement}"/>
+		<ui:define name="content">
 
-		<ui:define name="editArea">
-			<h:panelGrid columns="2" cellspacing="5">
+			<h:form>
+				<h:panelGroup styleClass="ui-g">
+					<h:panelGroup styleClass="ui-g-12">
+						<p:commandButton id="btnCancel" value="#{messages.backToOverview}"
+								action="#{startseiteBean.setMainContent('/announcement/results.xhtml')}"
+								process="@this" partialSubmit="true" update="mainContent"
+								styleClass="gap"/>
+					</h:panelGroup>
+				</h:panelGroup>
 
-			</h:panelGrid>
+				<p:dataTable id="programTable"
+						var="race"
+						value="#{resultBean.program.races}"
+						emptyMessage="#{bundle.noResults}"
+						widgetVar="programTable"
+						rowIndexVar="rowIndex"
+						filterEvent="enter">
+					<p:column filterValue="#{resultBean.filter}" filterBy="#{renderBean.getRaceFilter(race)}" filterFunction="#{renderBean.filterRaces}" styleClass="watermark">
+						<p:watermark value="#{bundle.filterHint}" for="@(.watermark)"/>
+						<p:dataTable var="placement" value="#{race.result.placements}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable">
+							<f:facet name="header">
+								<h:panelGroup styleClass="#{race.raceType}">
+									<h:panelGroup layout="block" styleClass="raceTitle">
+										<h:outputText value="#{bundle.race} "/>
+										<h:outputText value="#{race.race.number}"/>
+										<h:outputText value="#{race.number != null ? '-'.concat(race.number) : null}"/><br/><h:outputText value="#{race.race.boatClass.text} "/>
+										<h:outputText value="#{race.race.gender.getAgeFriendlyText(race.race.ageType)} "/>
+										<h:outputText value="#{race.race.ageType.text} "/>
+										<h:outputText value="#{race.race.distance} m"/>
+									</h:panelGroup>
+									<h:panelGroup layout="block" styleClass="raceInfo">
+										<h:outputText value="#{race.number}#{not empty race.number ? '. ' : ''}#{race.raceType.text}"/>
+									</h:panelGroup>
+									<h:panelGroup layout="block" style="text-align: right">#{renderBean.renderStartTime(race.startTime)}</h:panelGroup>
+								</h:panelGroup>
+							</f:facet>
+							<p:column styleClass="positionCol" headerText="Platz">
+								<h:outputText value="#{placement.position}"/>
+							</p:column>
+							<p:column styleClass="numberCol" headerText="Bahn">
+								<h:outputText value="#{placement.team.lane}"/>
+							</p:column>
+							<p:column styleClass="memberCol" headerText="Boot">
+								<p:dataGrid columns="2" var="member" value="#{placement.team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
+									<h:panelGroup style="text-align: left">
+										<h:outputText value="#{member.remark != null ? member.remark : member.user.firstName} "/>
+										<h:outputText value="#{member.user.lastName} "/>
+										<h:outputText value="#{renderBean.renderAgeGroup(member.user)}"/>
+										<h:outputText value="(#{member.user.club.shortNameOrName})" rendered="#{member.user.club.id != placement.team.club.id and member.remark == null}"/>
+									</h:panelGroup>
+								</p:dataGrid>
+							</p:column>
+							<p:column styleClass="teamCol" headerText="Verein">
+								<h:outputText value="#{placement.team.club.shortNameOrName}"/>
+							</p:column>
+							<p:column styleClass="timeCol" headerText="Zeit">
+								<h:outputText value="#{placement.time}" converter="#{placementConverter}"/>
+							</p:column>
+						</p:dataTable>
+					</p:column>
+				</p:dataTable>
+			</h:form>
+
 		</ui:define>
 	</ui:composition>
 </html>

@@ -1,6 +1,7 @@
 package org.planner.eo;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Access;
@@ -25,8 +26,6 @@ public class Team implements Serializable {
 	@GeneratedValue
 	private Long id;
 
-	private int lane;
-
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	private Club club;
 
@@ -46,14 +45,6 @@ public class Team implements Serializable {
 		return id;
 	}
 
-	public int getLane() {
-		return lane;
-	}
-
-	public void setLane(int lane) {
-		this.lane = lane;
-	}
-
 	public Club getClub() {
 		return club;
 	}
@@ -66,7 +57,9 @@ public class Team implements Serializable {
 		return members;
 	}
 
-	public void setMembers(List<TeamMember> members) {
-		this.members = members;
+	public void addMember(TeamMember member) {
+		if (members == null)
+			members = new ArrayList<>();
+		members.add(member);
 	}
 }

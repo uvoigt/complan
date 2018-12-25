@@ -50,6 +50,14 @@ public class JsfUtil {
 		ctx.setAttribute(name, value);
 	}
 
+	public static Object getRequestVariable(String name) {
+		return FacesContext.getCurrentInstance().getExternalContext().getRequestMap().get(name);
+	}
+
+	public static void setRequestVariable(String name, Object value) {
+		FacesContext.getCurrentInstance().getExternalContext().getRequestMap().put(name, value);
+	}
+
 	@SuppressWarnings("rawtypes")
 	public static Object getViewVariable(String name) {
 		FacesContext ctx = FacesContext.getCurrentInstance();

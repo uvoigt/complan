@@ -3,16 +3,19 @@ package org.planner.ui.beans.announcement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.apache.commons.lang.StringUtils;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRace.RaceType;
 import org.planner.eo.User;
 import org.planner.model.AgeType;
 import org.planner.ui.beans.Messages;
+import org.planner.ui.util.JsfUtil;
 
 @Named
 @ApplicationScoped
@@ -81,5 +84,27 @@ public class RenderBean {
 		case semiFinal:
 			return messages.format("programs.finalHint", renderStartTime(race.getFollowUpRace().getStartTime()));
 		}
+	}
+
+	public String getRaceFilter(ProgramRace race) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(JsfUtil.getScopedBundle().get("race")).append(" ");
+		sb.append(race.getRace().getNumber());
+		if (race.getNumber() != null)
+			sb.append("-").append(race.getNumber());
+		sb.append(" ").append(race.getRace().getBoatClass().getText()).append(" ");
+		sb.append(race.getRace().getGender().getAgeFriendlyText(race.getRace().getAgeType())).append(" ");
+		sb.append(race.getRace().getAgeType().getText()).append(" ");
+		sb.append(race.getRace().getDistance()).append(" m ");
+		sb.append(renderStartTime(race.getStartTime()));
+		return sb.toString();
+	}
+
+	public boolean filterRaces(String columnValue, String filterValue, @SuppressWarnings("unused") Locale locale) {
+		for (String value : filterValue.split(",")) {
+			if (StringUtils.containsIgnoreCase(columnValue, value.trim()))
+				return true;
+		}
+		return false;
 	}
 }

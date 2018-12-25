@@ -13,12 +13,15 @@
 		<class>org.planner.eo.Country</class>
 		<class>org.planner.eo.Location</class>
 		<class>org.planner.eo.Participant</class>
+		<class>org.planner.eo.Placement</class>
 		<class>org.planner.eo.Program</class>
 		<class>org.planner.eo.ProgramRace</class>
+		<class>org.planner.eo.ProgramRaceTeam</class>
 		<class>org.planner.eo.Properties</class>
 		<class>org.planner.eo.Race</class>
 		<class>org.planner.eo.RegEntry</class>
 		<class>org.planner.eo.Registration</class>
+		<class>org.planner.eo.Result</class>
 		<class>org.planner.eo.Role</class>
 		<class>org.planner.eo.Team</class>
 		<class>org.planner.eo.TeamMember</class>

@@ -28,7 +28,6 @@ import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Result;
-import org.planner.eo.Result.Placement;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.Change;
@@ -261,13 +260,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public void saveResult(Result result) {
-		announcement.saveResult(result);
-	}
-
-	@Override
-	public List<Placement> getResult(Long programRaceId) {
-		return announcement.getResult(programRaceId);
+	public List<ProgramRace> saveResult(Result result) {
+		return program.saveResult(result);
 	}
 
 	@Override
@@ -288,6 +282,11 @@ public class ServiceFacadeBean implements ServiceFacade {
 	@Override
 	public Program getProgram(Long id) {
 		return program.getProgram(id);
+	}
+
+	@Override
+	public Program getResults(Long id) {
+		return program.getResults(id);
 	}
 
 	@Override

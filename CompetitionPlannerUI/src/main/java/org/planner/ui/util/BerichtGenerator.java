@@ -30,6 +30,7 @@ import org.planner.eo.Announcement;
 import org.planner.eo.Club;
 import org.planner.eo.Program;
 import org.planner.eo.ProgramRace;
+import org.planner.eo.ProgramRaceTeam;
 import org.planner.eo.Race;
 import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
@@ -1000,9 +1001,9 @@ public class BerichtGenerator {
 	}
 
 	private void addRaceParticipants(PdfPTable table, ProgramRace programRace, Race race, Font italic) {
-		java.util.List<Team> participants = programRace.getParticipants();
+		java.util.List<ProgramRaceTeam> participants = programRace.getParticipants();
 		for (int i = 0; i < participants.size(); i++) {
-			Team team = participants.get(i);
+			Team team = participants.get(i).getTeam();
 
 			table.addCell(new Phrase(Integer.toString(i + 1), defaultFont));
 

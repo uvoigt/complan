@@ -1,6 +1,7 @@
 package org.planner.eo;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -11,12 +12,10 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
-import org.planner.eo.Result.Placement;
 import org.planner.model.LocalizedEnum;
 import org.planner.util.CommonMessages;
 
@@ -54,9 +53,8 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	// z.B. Vorlauf 1, 2 oder Finale A oder B
 	private Integer number;
 
-	@OneToMany(cascade = CascadeType.ALL)
-	@JoinColumn(name = "programrace_id")
-	private List<Team> participants;
+	@OneToMany(mappedBy = "programRace", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ProgramRaceTeam> participants;
 
 	@Column(name = "program_id", insertable = false, updatable = false)
 	private Long programId;
@@ -64,8 +62,8 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	@Transient
 	private ProgramRace followUpRace;
 
-	@Transient
-	private List<Placement> results;
+	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "programRace")
+	private Result result;
 
 	public Long getId() {
 		return id;
@@ -107,12 +105,14 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 		this.number = number;
 	}
 
-	public List<Team> getParticipants() {
+	public List<ProgramRaceTeam> getParticipants() {
 		return participants;
 	}
 
-	public void setParticipants(List<Team> participants) {
-		this.participants = participants;
+	public void addParticipant(ProgramRaceTeam participant) {
+		if (participants == null)
+			participants = new ArrayList<>();
+		participants.add(participant);
 	}
 
 	public Long getProgramId() {
@@ -127,11 +127,11 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 		this.followUpRace = followUpRace;
 	}
 
-	public List<Placement> getResults() {
-		return results;
+	public Result getResult() {
+		return result;
 	}
 
-	public void setResults(List<Placement> results) {
-		this.results = results;
+	public void setResult(Result result) {
+		this.result = result;
 	}
 }

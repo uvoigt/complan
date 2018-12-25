@@ -40,6 +40,8 @@ import org.planner.eo.Location;
 import org.planner.eo.Participant;
 import org.planner.eo.Participant_;
 import org.planner.eo.ProgramRace;
+import org.planner.eo.ProgramRaceTeam;
+import org.planner.eo.ProgramRaceTeam_;
 import org.planner.eo.ProgramRace_;
 import org.planner.eo.Race;
 import org.planner.eo.Race_;
@@ -49,7 +51,6 @@ import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
 import org.planner.eo.Result;
-import org.planner.eo.Result.Placement;
 import org.planner.eo.Result_;
 import org.planner.eo.Role_;
 import org.planner.eo.Team;
@@ -585,7 +586,8 @@ public class AnnouncementServiceImpl {
 				Join<ProgramRace, Race> race = programRace.join(ProgramRace_.race);
 				Join<Race, Announcement> announcement = race.join(Race_.announcement);
 				// announcement.fetch(Announcement_.club);
-				ListJoin<ProgramRace, Team> team = programRace.join(ProgramRace_.participants);
+				ListJoin<ProgramRace, ProgramRaceTeam> raceTeam = programRace.join(ProgramRace_.participants);
+				Join<ProgramRaceTeam, Team> team = raceTeam.join(ProgramRaceTeam_.team);
 				ListJoin<Team, TeamMember> members = team.join(Team_.members);
 				Join<TeamMember, User> user = members.join(TeamMember_.user);
 				Calendar date = Calendar.getInstance();
@@ -598,31 +600,11 @@ public class AnnouncementServiceImpl {
 				// fetch
 				for (Result r : list) {
 					r.getProgramRace().getRace().getAnnouncement().getId();
-					for (Team t : r.getProgramRace().getParticipants()) {
+					for (ProgramRaceTeam t : r.getProgramRace().getParticipants()) {
 						t.getMembers().size();
 					}
 				}
 				return list;
-			}
-		});
-	}
-
-	public void saveResult(final Result result) {
-		common.checkWriteAccess(result, Operation.save);
-
-		common.save(result);
-	}
-
-	public List<Placement> getResult(final Long programRaceId) {
-		return dao.executeOperation(new IOperation<List<Placement>>() {
-			@Override
-			public List<Placement> execute(EntityManager em) {
-				CriteriaBuilder builder = em.getCriteriaBuilder();
-				CriteriaQuery<Result> query = builder.createQuery(Result.class);
-				Root<Result> root = query.from(Result.class);
-				query.where(builder.equal(root.get(Result_.programRace), programRaceId));
-				List<Result> list = em.createQuery(query).getResultList();
-				return list.size() > 0 ? list.get(0).getPlacements() : null;
 			}
 		});
 	}

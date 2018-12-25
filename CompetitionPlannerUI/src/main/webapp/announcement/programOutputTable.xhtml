@@ -23,10 +23,11 @@
 		<p:ajax event="cellEdit" listener="#{programBean.onResultUpdate}" partialSubmitFilter="[data-rk] .ui-cell-editing :input" partialSubmit="true" update="messagesPopup"/>
 		<pe:javascript event="cellEditCancel" execute="ext.oncomplete()"/>
 
-		<p:column filterValue="#{programBean.filter}" filterBy="#{programBean.getRaceFilter(race)}" filterFunction="#{programBean.filterRaces}">
+		<p:column filterValue="#{programBean.filter}" filterBy="#{renderBean.getRaceFilter(race)}" filterFunction="#{renderBean.filterRaces}" styleClass="watermark">
+			<p:watermark value="#{bundle.filterHint}" for="@(.watermark)"/>
 			<p:cellEditor disabled="#{programBean.program.status != 'running' or programBean.program.announcement.club.name != authBean.loggedInUser.club.name}">
 				<f:facet name="output">
-					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable">
+					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable program">
 						<f:facet name="header">
 							<h:panelGroup styleClass="#{race.raceType}">
 								<h:panelGroup layout="block" styleClass="raceTitle">
@@ -59,12 +60,12 @@
 							</p:dataGrid>
 						</p:column>
 						<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
-							<h:outputText value="#{not empty team.club.shortName ? team.club.shortName : team.club.name}"/>
+							<h:outputText value="#{team.club.shortNameOrName}"/>
 						</p:column>
 					</p:dataTable>
 				</f:facet>
 				<f:facet name="input">
-					<p:orderList var="placement" widgetVar="placement" value="#{race.results}" controlsLocation="none"
+					<p:orderList var="placement" widgetVar="placement" value="#{race.result.placements}" controlsLocation="none"
 							itemValue="#{placement}" styleClass="resultEdit"
 							converter="#{placementConverter}" converterMessage="#{bundle.wrongTime}"
 							validator="#{programBean.validateResult}">
@@ -93,12 +94,12 @@
 						<p:column style="width: 5%">
 							<p:outputLabel styleClass="extra" style="display: none"/>
 							<h:panelGroup layout="block" styleClass="ui-inputnumber">
-								<h:inputText styleClass="time ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" size="8" maxlength="6"
+								<h:inputText styleClass="time ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" size="10" maxlength="12"
 										onkeydown="programEdit.resultKeyDown(this, event)" onchange="programEdit.updateResultWithTime(this)"/>
 							</h:panelGroup>
 						</p:column>
 						<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
-							<h:outputText value="#{not empty placement.team.club.shortName ? placement.team.club.shortName : placement.team.club.name}"/>
+							<h:outputText value="#{placement.team.club.shortNameOrName}"/>
 						</p:column>
 					</p:orderList>
 					<p:commandButton type="button" value="#{bundle.save}" style="margin: 5px" onclick="programEdit.applyCellEdit()"/>
@@ -109,7 +110,7 @@
 						<f:selectItem itemLabel="#{bundle.dq}" itemValue="dq"/>
 					</p:selectOneButton>
 					<p:selectBooleanCheckbox id="override" style="margin-right: 0.5em"/>
-					<p:outputLabel value="#{bundle.overrideResult}" for="override"/>
+					<p:outputLabel value="#{bundle.overrideResult}" for="override" style="cursor: pointer"/>
 				</f:facet>
 			</p:cellEditor>
 
@@ -123,13 +124,6 @@
 		</p:column>
 
 	</p:dataTable>
-	<p:remoteCommand action="#{programBean.saveResult(component.namingContainer)}" name="saveResult" process="@this" onsuccess="PF('confirmResult').hide()"/>
-	<p:confirmDialog widgetVar="confirmResult" appendTo="body" header="#{bundle.confirmTitle}" closeOnEscape="true">
-		<p:commandButton type="button" value="#{bundle.yes}" styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
-				onclick="saveResult(programEdit.argsToParams(PF('confirmResult').args))"/>
-		<p:commandButton type="button" value="#{bundle.cancel}" styleClass="ui-confirmdialog-no ui-state-focus" icon="ui-icon-close"
-				onclick="PF('confirmResult').hide()"/>
-	</p:confirmDialog>
 
 </ui:composition>
 

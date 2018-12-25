@@ -9,10 +9,20 @@
 	<ui:composition template="/templates/search.xhtml">
 		<ui:param name="roleSuffix" value="results"/>
 		<ui:param name="bundle" value="#{messages.bundle('results')}"/>
-		<ui:param name="typ" value="org.planner.eo.Result"/>
+		<ui:param name="typ" value="org.planner.eo.Program"/>
 		<ui:param name="bearbeitenLink" value="/announcement/resultEdit.xhtml"/>
 		<ui:param name="editBean" value="#{resultBean}"/>
 
+		<ui:param name="noButtons" value="true"/>
 		<ui:define name="newButton"/>
+		<ui:define name="copyButton"/>
+		<ui:define name="editButton">
+			<p:commandButton icon="ui-icon-document"
+					title="#{bundle.display}"
+					action="#{searchBean.bearbeiten(bearbeitenLink, typ, item, editBean)}"
+					process="@form"
+					update="mainContent"
+					styleClass="editButton"/>
+		</ui:define>
 	</ui:composition>
 </html>

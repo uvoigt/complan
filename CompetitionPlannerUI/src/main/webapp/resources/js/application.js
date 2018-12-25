@@ -271,21 +271,6 @@ var programEdit = {
 		$(".ui-layout-pane-center>.ui-layout-unit-content").animate({scrollTop: rowTop - mainTop}, "fast");
 		return false;
 	},
-	confirmResult: function(message, args) {
-		var dlg = PF("confirmResult");
-		dlg.message.text(message);
-		dlg.args = args;
-		dlg.show();
-	},
-	argsToParams: function(args) {
-		var b = [];
-		for (var a in args) {
-			var c = {name: a};
-			c.value = args[a];
-			b.push(c);
-		}
-		return b;
-	},
 	cellEditInit: function(options) {
 		options.global = true;
 		var oldOncomplete = options.oncomplete;

@@ -320,10 +320,10 @@ input[readonly=readonly] {
 .teamTable .ui-datatable-tablewrapper {
 	clear: both;
 }
-.teamTable thead {
+.teamTable.program thead {
 	display: none;
 }
-.teamTable .ui-column-title {
+.teamTable.program .ui-column-title {
 	display: none !important;
 }
 
@@ -343,7 +343,15 @@ input[readonly=readonly] {
 	border: none !important;
 }
 
+.positionCol {
+	width: 3em;
+}
+
 .numberCol {
+	width: 3em;	
+}
+
+.numberCol.program {
 	width: 10px;	
 }
 
@@ -351,7 +359,17 @@ input[readonly=readonly] {
 	width: 70%;
 }
 
+.teamCol.program {
+	text-align: right;
+}
+
 .teamCol {
+	text-align: right;
+	width: 12em;
+}
+
+.timeCol {
+	width: 4em;
 	text-align: right;
 }
 
@@ -375,6 +393,11 @@ input[readonly=readonly] {
 
 .resultEdit *> td {
 	border: none !important;
+}
+
+.time {
+	font-family: monospace !important;
+	font-size: smaller !important;
 }
 
 .syntaxProblem {

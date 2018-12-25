@@ -20,7 +20,6 @@ import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Result;
-import org.planner.eo.Result.Placement;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.Change;
@@ -104,9 +103,7 @@ public interface ServiceFacade extends IResultProvider {
 
 	List<Result> getMyLatestResults();
 
-	void saveResult(Result result);
-
-	List<Placement> getResult(Long programRaceId);
+	List<ProgramRace> saveResult(Result result);
 
 	Long createProgram(Program program);
 
@@ -115,6 +112,8 @@ public interface ServiceFacade extends IResultProvider {
 	void setProgramStatus(Long programId, ProgramStatus status);
 
 	Program getProgram(Long id);
+
+	Program getResults(Long id);
 
 	// TODO temporär
 	List<Change> checkProgram(Program program);

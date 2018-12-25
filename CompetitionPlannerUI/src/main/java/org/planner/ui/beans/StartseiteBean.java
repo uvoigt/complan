@@ -19,9 +19,9 @@ import javax.inject.Named;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.planner.eo.ProgramRace;
+import org.planner.eo.ProgramRaceTeam;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Result;
-import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
 import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
@@ -215,8 +215,8 @@ public class StartseiteBean implements Serializable {
 
 	public String getPlacement(ProgramRace race, List<Long> placements) {
 		Long myUserId = auth.getLoggedInUser().getId();
-		for (Team team : race.getParticipants()) {
-			int index = placements.indexOf(team.getId());
+		for (ProgramRaceTeam team : race.getParticipants()) {
+			int index = placements.indexOf(team.getTeamId());
 			if (index == -1)
 				continue;
 			for (TeamMember member : team.getMembers()) {
