@@ -88,7 +88,7 @@ public class PlannerDao {
 	private Messages messages;
 
 	@Transactional(TxType.SUPPORTS)
-	public <T extends Serializable> T getById(Class<T> type, Long id) {
+	public <T extends Serializable> T getById(Class<T> type, Object id) {
 		return em.find(type, id);
 	}
 
