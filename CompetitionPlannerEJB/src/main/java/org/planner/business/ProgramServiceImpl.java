@@ -794,7 +794,7 @@ public class ProgramServiceImpl {
 				em.flush();
 				em.refresh(result);
 				String sql = "select (select count(id) from ProgramRace where racetype=:raceType and race_id=:raceId)"
-						+ " - select count(id) from Result where programrace_id in (select id from ProgramRace where racetype=:raceType and race_id=:raceId)"
+						+ " - (select count(id) from Result where programrace_id in (select id from ProgramRace where racetype=:raceType and race_id=:raceId))"
 						+ " from Dual";
 				return (Number) em.createNativeQuery(sql).setParameter("raceId", programRace.getRace().getId())
 						.setParameter("raceType", programRace.getRaceType().ordinal()).getSingleResult();
