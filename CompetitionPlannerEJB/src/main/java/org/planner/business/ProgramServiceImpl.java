@@ -393,7 +393,6 @@ public class ProgramServiceImpl {
 				subquery.where(builder.equal(programQuery.get(ProgramRace_.programId), program.getId()));
 				del.where(result.get(Result_.programRace).get(ProgramRace_.id).in(subquery));
 				int updated = em.createQuery(del).executeUpdate();
-				System.out.println(updated);
 				return null;
 			}
 		});
@@ -768,7 +767,7 @@ public class ProgramServiceImpl {
 		common.save(program);
 	}
 
-	public List<ProgramRace> saveResult(final Result result) {
+	public List<ProgramRace> saveResult(Result result) {
 		common.checkWriteAccess(result, Operation.save);
 
 		// TODO ggf. Sortierung nach Zeit etc. hierher
@@ -792,7 +791,6 @@ public class ProgramServiceImpl {
 			@Override
 			public Number execute(EntityManager em) {
 				em.flush();
-				em.refresh(result);
 				String sql = "select (select count(id) from ProgramRace where racetype=:raceType and race_id=:raceId)"
 						+ " - (select count(id) from Result where programrace_id in (select id from ProgramRace where racetype=:raceType and race_id=:raceId))"
 						+ " from Dual";
