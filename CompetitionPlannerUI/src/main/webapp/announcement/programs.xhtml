@@ -65,8 +65,8 @@
 						action="#{searchBean.loeschen(typ, item.id)}"
 						process="@this"
 						update="searchTable messagesPopup"
-						rendered="#{authBean.inRole('delete_programs') and item['announcement.club.name'] == authBean.loggedInUser.club.name}
-								and item.status != 'running'">
+						rendered="#{authBean.inRole('delete_programs') and item['announcement.club.name'] == authBean.loggedInUser.club.name
+								and item.status != 'running'}">
 					<p:confirm icon="" beforeShow="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"/>
 				</p:menuitem>
 			</p:menuButton>
