@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.ExtendedMessageFormat;
 import org.apache.commons.lang.text.FormatFactory;
 
@@ -17,23 +18,33 @@ import org.apache.commons.lang.text.FormatFactory;
 public class CommonMessages {
 	private static class ArticleFormat extends Format implements FormatFactory {
 		private String sexSuffix;
+		boolean capitalize;
 
 		private static final long serialVersionUID = 1L;
 
 		@Override
 		public Format getFormat(String name, String arguments, Locale locale) {
-			sexSuffix = arguments;
+			if (arguments != null) {
+				String[] split = arguments.split(",");
+				sexSuffix = split[0];
+				if (split.length > 1)
+					capitalize = split[1].equals("c");
+			}
 			return this;
 		}
 
 		@Override
 		public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
 			int size = obj instanceof Collection ? ((Collection<?>) obj).size() : 1;
+			String article;
 			if (size > 1) {
-				toAppendTo.append(getMessage("plural"));
+				article = getMessage("plural");
 			} else {
-				toAppendTo.append(getMessage("singular_" + (sexSuffix != null ? sexSuffix : "m")));
+				article = getMessage("singular_" + (sexSuffix != null ? sexSuffix : "m"));
 			}
+			if (capitalize)
+				article = StringUtils.capitalize(article);
+			toAppendTo.append(article);
 			return toAppendTo;
 		}
 
