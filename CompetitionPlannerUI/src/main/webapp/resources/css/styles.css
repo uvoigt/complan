@@ -247,6 +247,14 @@ input[readonly=readonly] {
 	background-image: none;
 }
 
+.ui-growl {
+	width: 60% !important;
+}
+
+.ui-growl-message {
+	width: calc(100% - 42px) !important;
+}
+
 .planner-listbox li.ui-state-disabled {
 	background-color: inherit;
 	color: inherit;
