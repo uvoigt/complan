@@ -114,7 +114,8 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	}
 
 	public boolean canDelete(Map<String, String> item) {
-		return item.get("club.name").equals(auth.getLoggedInUser().getClub().getName());
+		return item.get("club.name").equals(auth.getLoggedInUser().getClub().getName())
+				&& RegistrationStatus.created.equals(item.get("status"));
 	}
 
 	private void loadRegistration(Long id) {
