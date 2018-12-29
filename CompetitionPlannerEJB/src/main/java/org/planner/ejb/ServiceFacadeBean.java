@@ -285,6 +285,11 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
+	public void deleteProgram(Long programId) {
+		program.deleteProgram(programId);
+	}
+
+	@Override
 	public Program getResults(Long id) {
 		return program.getResults(id);
 	}

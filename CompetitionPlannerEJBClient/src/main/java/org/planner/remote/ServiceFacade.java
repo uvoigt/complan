@@ -113,6 +113,8 @@ public interface ServiceFacade extends IResultProvider {
 
 	Program getProgram(Long id);
 
+	void deleteProgram(Long programId);
+
 	Program getResults(Long id);
 
 	// TODO temporär

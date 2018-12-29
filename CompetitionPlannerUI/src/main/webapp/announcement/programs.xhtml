@@ -33,8 +33,8 @@
 						action="#{programBean.setStatus(item, 'announced')}"
 						process="@this"
 						update="searchTable"
-						rendered="#{authBean.inRole('update_programs') and item.status == 'created' and item['announcement.club.name']
-								== authBean.loggedInUser.club.name}"/>
+						rendered="#{authBean.inRole('update_programs') and item.status == 'created'
+								and item['announcement.club.name'] == authBean.loggedInUser.club.name}"/>
 				<p:menuitem icon="ui-icon-play" value="#{bundle.start}"
 						action="#{programBean.setStatus(item, 'running')}"
 						process="@this"
@@ -51,22 +51,30 @@
 						action="#{programBean.setStatus(item, 'created')}"
 						process="@this"
 						update="searchTable"
-						rendered="#{authBean.inRole('update_programs') and authBean.inRole('Tester') and item.status == 'announced' and item['announcement.club.name'] == authBean.loggedInUser.club.name}"/>
+						rendered="#{authBean.inRole('update_programs') and authBean.inRole('Tester') and item.status == 'announced'
+								and item['announcement.club.name'] == authBean.loggedInUser.club.name}"/>
 				<p:menuitem icon="ui-icon-circle-arrow-w" value="#{bundle.revokeRunning}"
 						action="#{programBean.setStatus(item, 'announced')}"
 						process="@this"
 						update="searchTable"
-						rendered="#{authBean.inRole('update_programs') and authBean.inRole('Tester') and item.status == 'running' and item['announcement.club.name'] == authBean.loggedInUser.club.name}"/>
+						rendered="#{authBean.inRole('update_programs') and authBean.inRole('Tester') and item.status == 'running'
+								and item['announcement.club.name'] == authBean.loggedInUser.club.name}"/>
+				<p:menuitem icon="ui-icon-circle-arrow-w" value="#{bundle.revokeStopped}"
+						action="#{programBean.setStatus(item, 'running')}"
+						process="@this"
+						update="searchTable"
+						rendered="#{authBean.inRole('update_programs') and authBean.inRole('Tester') and item.status == 'finished'
+								and item['announcement.club.name'] == authBean.loggedInUser.club.name}"/>
 				<p:menuitem icon="ui-icon-print" value="#{bundle.createPdf}"
 						action="#{programBean.uploadBean.create(null, item)}"
 						process="@this"
 						oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('main',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
 				<p:menuitem icon="ui-icon-trash" value="#{bundle.delete}"
-						action="#{searchBean.loeschen(typ, item.id)}"
+						action="#{programBean.deleteProgram(item.id)}"
 						process="@this"
 						update="searchTable messagesPopup"
-						rendered="#{authBean.inRole('delete_programs') and item['announcement.club.name'] == authBean.loggedInUser.club.name
-								and item.status != 'running'}">
+						rendered="#{authBean.inRole('delete_programs') and item.status == 'created'
+								and item['announcement.club.name'] == authBean.loggedInUser.club.name}">
 					<p:confirm icon="" beforeShow="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"/>
 				</p:menuitem>
 			</p:menuButton>

@@ -43,6 +43,7 @@ import org.planner.ui.beans.UploadBean.DownloadHandler;
 import org.planner.ui.util.BerichtGenerator;
 import org.planner.ui.util.JsfUtil;
 import org.planner.util.CommonMessages;
+import org.primefaces.PrimeFaces;
 import org.primefaces.component.datatable.DataTable;
 import org.primefaces.event.CellEditEvent;
 
@@ -400,9 +401,12 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		List<ProgramRace> followUpRaces = service.saveResult(result);
 		if (followUpRaces != null) {
 			List<Integer> rowIndexes = new ArrayList<>();
-			List<Integer> raceNumbers = new ArrayList<>();
-			for (ProgramRace race : followUpRaces) {
-				raceNumbers.add(race.getNumber());
+			List<String> raceTexts = new ArrayList<>();
+			for (int i = followUpRaces.size() - 1; i >= 0; i--) {
+				ProgramRace race = followUpRaces.get(i);
+				StringBuilder text = new StringBuilder();
+				text.append(race.getRaceType().getText());
+				raceTexts.add(text.toString());
 				int index = indexOfProgramRace(program.getRaces(), race.getId());
 				if (index != -1)
 					rowIndexes.add(index);
@@ -412,10 +416,9 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 			for (Integer index : rowIndexes) {
 				expr.add(form.getClientId() + ":programTable:@row(" + index + ")");
 			}
-			// TODO
-			// PrimeFaces.current().ajax().update(expr);
+			PrimeFaces.current().executeScript("PF('programTable').filter()");
 			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null,
-					CommonMessages.formatMessage(JsfUtil.getScopedBundle().get("followUpRacesFilled"), raceNumbers)));
+					CommonMessages.formatMessage(JsfUtil.getScopedBundle().get("followUpRacesFilled"), raceTexts)));
 		}
 	}
 
@@ -441,5 +444,11 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 			String message = messages.format("resultsExisting", messages.get("overrideResult"));
 			throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR, message, null));
 		}
+	}
+
+	public void deleteProgram(Long programId) {
+		service.deleteProgram(programId);
+		String msg = JsfUtil.getScopedBundle().get("deleteSuccess");
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, msg));
 	}
 }

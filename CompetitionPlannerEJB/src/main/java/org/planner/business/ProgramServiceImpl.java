@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,6 +22,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
+import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 
@@ -45,6 +47,7 @@ import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRace.RaceType;
 import org.planner.eo.ProgramRaceTeam;
+import org.planner.eo.ProgramRaceTeam_;
 import org.planner.eo.ProgramRace_;
 import org.planner.eo.Program_;
 import org.planner.eo.Race;
@@ -53,7 +56,6 @@ import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
 import org.planner.eo.Result;
-import org.planner.eo.Result_;
 import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
 import org.planner.eo.User;
@@ -380,26 +382,7 @@ public class ProgramServiceImpl {
 		// jetzt haben wir alle Rennen beisammen
 		checkProgram(program.getRaces(), program);
 
-		// falls Ergebnisse existieren, lösche diese
-		dao.executeOperation(new IOperation<Void>() {
-			@Override
-			public Void execute(EntityManager em) {
-				CriteriaBuilder builder = em.getCriteriaBuilder();
-				CriteriaDelete<Result> del = builder.createCriteriaDelete(Result.class);
-				Root<Result> result = del.from(Result.class);
-				Subquery<Long> subquery = del.subquery(Long.class);
-				Root<ProgramRace> programQuery = subquery.from(ProgramRace.class);
-				subquery.select(programQuery.get(ProgramRace_.id));
-				subquery.where(builder.equal(programQuery.get(ProgramRace_.programId), program.getId()));
-				del.where(result.get(Result_.programRace).get(ProgramRace_.id).in(subquery));
-				int updated = em.createQuery(del).executeUpdate();
-				return null;
-			}
-		});
-		// leere dann auch das vorher generierte Programm
-		Program savedProgram = dao.getById(Program.class, program.getId());
-		savedProgram.getRaces().clear();
-		common.save(savedProgram);
+		clearResultsAndRaces(program.getId());
 
 		common.save(program);
 	}
@@ -714,6 +697,46 @@ public class ProgramServiceImpl {
 		throw new IllegalArgumentException();
 	}
 
+	public void deleteProgram(Long programId) {
+		clearResultsAndRaces(programId);
+		common.delete(Program.class, programId);
+	}
+
+	private void clearResultsAndRaces(final Long programId) {
+		Program program = dao.getById(Program.class, programId);
+		// falls Ergebnisse existieren, lösche diese
+		for (ProgramRace programRace : program.getRaces()) {
+			if (programRace.getResult() != null) {
+				dao.delete(programRace.getResult());
+			}
+		}
+		// da ein Team über ProgramRaceTeam mehreren ProgramRaces zugeordnet sein kann,
+		// ist es nicht möglich, dies gemeinsam über Hibernate-Kaskadierung zu löschen
+		// deshalb werden die Verknüpfungen für Folgerennen (Semifinale und Finale) explizit gelöscht
+		dao.executeOperation(new IOperation<Void>() {
+			@Override
+			public Void execute(EntityManager em) {
+				CriteriaBuilder builder = em.getCriteriaBuilder();
+				CriteriaDelete<ProgramRaceTeam> delete = builder.createCriteriaDelete(ProgramRaceTeam.class);
+				Root<ProgramRaceTeam> root = delete.from(ProgramRaceTeam.class);
+				Subquery<Long> subquery = delete.subquery(Long.class);
+				Root<ProgramRace> programRace = subquery.from(ProgramRace.class);
+				subquery.select(programRace.get(ProgramRace_.id));
+				ParameterExpression<Long> pProgramId = builder.parameter(Long.class, "programId");
+				ParameterExpression<RaceType> pRaceType = builder.parameter(RaceType.class, "raceType");
+				subquery.where(builder.and(builder.equal(programRace.get(ProgramRace_.programId), pProgramId),
+						builder.greaterThan(programRace.get(ProgramRace_.raceType), pRaceType)));
+				delete.where(root.get(ProgramRaceTeam_.programRace).get(ProgramRace_.id).in(subquery));
+				em.createQuery(delete).setParameter(pProgramId, programId).setParameter(pRaceType, RaceType.heat)
+						.executeUpdate();
+				return null;
+			}
+		});
+		// leere dann auch das vorher generierte Programm
+		program.getRaces().clear();
+		common.save(program);
+	}
+
 	public List<Change> checkProgram(Program program) {
 		return checkProgram(program.getRaces(), program);
 	}
@@ -767,7 +790,7 @@ public class ProgramServiceImpl {
 		common.save(program);
 	}
 
-	public List<ProgramRace> saveResult(Result result) {
+	public List<ProgramRace> saveResult(final Result result) {
 		common.checkWriteAccess(result, Operation.save);
 
 		// TODO ggf. Sortierung nach Zeit etc. hierher
@@ -800,7 +823,7 @@ public class ProgramServiceImpl {
 		});
 		if (difference.intValue() != 0)
 			return null;
-		// Fülle nun die nachfolgenden Rennen
+		// Fülle nun die nachfolgenden Rennen, beginnend mit dem Finale
 		List<ProgramRace> followUpRaces = dao.executeOperation(new IOperation<List<ProgramRace>>() {
 			@Override
 			public List<ProgramRace> execute(EntityManager em) {
@@ -811,16 +834,12 @@ public class ProgramServiceImpl {
 						.setParameter("raceType", programRace.getRaceType().ordinal()).getResultList();
 			}
 		});
-		// ermittle die Anzahl direkter Folgeläufe
-		int numDirectFollowUpRaces = 0;
-		for (ProgramRace next : followUpRaces) {
-			if (next.getRaceType().ordinal() == programRace.getRaceType().ordinal() + 1)
-				numDirectFollowUpRaces++;
-		}
 		// Resultate
 		List<Result> results = dao.executeOperation(new IOperation<List<Result>>() {
 			@Override
 			public List<Result> execute(EntityManager em) {
+				if (em.contains(result))
+					em.refresh(result);
 				String sql = "select r from Result r left join r.programRace p where p.race=:race and p.raceType=:raceType";
 				return em.createQuery(sql, Result.class).setParameter("race", programRace.getRace())
 						.setParameter("raceType", programRace.getRaceType()).getResultList();
@@ -829,6 +848,20 @@ public class ProgramServiceImpl {
 		if (LOG.isDebugEnabled())
 			LOG.debug(results.size() + " Ergebnisse liegen vor, ermittle Belegung der Folgerennen");
 
+		List<ProgramRace> semiFinals = new ArrayList<>();
+		for (ProgramRace next : followUpRaces) {
+			if (next.getRaceType() == RaceType.finalA)
+				addQualifiedTeams(Arrays.asList(next), results);
+			else
+				semiFinals.add(next);
+		}
+		if (!semiFinals.isEmpty())
+			addQualifiedTeams(semiFinals, results);
+
+		return followUpRaces;
+	}
+
+	private void addQualifiedTeams(List<ProgramRace> followUpRaces, List<Result> results) {
 		Map<Long, Iterator<Placement>> qualified = new HashMap<>();
 		for (int i = 0, j = 0, k = 0; !allIteratorsEmpty(qualified); i = ++i < results.size() ? i
 				: 0, j = ++j < followUpRaces.size() ? j : 0, k++) {
@@ -877,7 +910,8 @@ public class ProgramServiceImpl {
 			// jeweiligen Vorläufen
 			List<ProgramRaceTeam> participants = next.getParticipants();
 			// diese Prüfung erfolgt nur für den ersten Durchlauf der Folgerennen
-			if (k < followUpRaces.size() && participants.size() > 0)
+			if (k < followUpRaces.size() && next.getRaceType().ordinal() < RaceType.finalA.ordinal()
+					&& participants.size() > 0)
 				throw new FachlicheException(messages.getResourceBundle(), "program.followUpExists");
 			int lane = computeLane(participants);
 			raceTeam.setLane(lane);
@@ -886,8 +920,6 @@ public class ProgramServiceImpl {
 				LOG.debug("Der " + placement.getPosition() + "te aus Rennen " + r.getProgramRace().getId()
 						+ " wird im Rennen " + next.getId() + " auf Bahn " + lane + " gesetzt");
 		}
-
-		return followUpRaces;
 	}
 
 	private boolean allIteratorsEmpty(Map<Long, Iterator<Placement>> its) {
