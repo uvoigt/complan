@@ -63,7 +63,8 @@
 						action="#{searchBean.loeschen(typ, item.id)}"
 						process="@this"
 						update="searchTable messagesPopup"
-						rendered="#{authBean.inRole('delete_'.concat(roleSuffix)) and item['club.name'] == authBean.loggedInUser.club.name}">
+						rendered="#{authBean.inRole('delete_announcements') and item.status == 'created'
+								and item['club.name'] == authBean.loggedInUser.club.name}">
 					<p:confirm icon="" beforeShow="updateConfirmDlg('#{messages.deleteTitle}', '#{bundle.format('comfirmMsg', item[firstProperty])}')"/>
 				</p:menuitem>
 			</p:menuButton>
