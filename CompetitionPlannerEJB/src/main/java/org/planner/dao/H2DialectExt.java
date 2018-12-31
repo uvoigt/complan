@@ -10,5 +10,7 @@ public class H2DialectExt extends H2Dialect {
 
 		registerFunction("group_concat",
 				new SQLFunctionTemplate(StringType.INSTANCE, "group_concat(?1 order by ?1 separator ', ')"));
+		registerFunction("date_format",
+				new SQLFunctionTemplate(StringType.INSTANCE, "formatdatetime(?1, nvl2(?2, 'dd.MM.yyyy', ''))"));
 	}
 }
