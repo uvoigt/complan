@@ -106,9 +106,8 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	@Override
 	public void setItem(Object item) {
 		// wird nochmals geladen aufgrund der Detailtiefe
-		loadRegistration(((Registration) item).getId());
-		registrationId = registration.getId();
-		announcementId = registration.getAnnouncement().getId();
+		registrationId = ((Registration) item).getId();
+		announcementId = ((Registration) item).getAnnouncement().getId();
 		JsfUtil.setViewVariable("id", registrationId);
 		JsfUtil.setViewVariable("aid", announcementId);
 	}
@@ -124,6 +123,9 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		registration = service.getObject(Registration.class, id, 4);
 		// zentraler Ort, um diese zusätzliche Id "nachzuschieben"
 		setRequestParameter(2, registration.getAnnouncement().getId());
+		// für den View-Mode!
+		if (registrationTable != null && registration.getStatus() == RegistrationStatus.submitted)
+			registrationTable.setSelectionMode(null);
 	}
 
 	private void loadRegistrationAndUpdateModel() {
