@@ -25,7 +25,8 @@
 
 		<p:column filterValue="#{programBean.filter}" filterBy="#{renderBean.getRaceFilter(race)}" filterFunction="#{renderBean.filterRaces}" styleClass="watermark">
 			<p:watermark value="#{bundle.filterHint}" for="@(.watermark)"/>
-			<p:cellEditor disabled="#{programBean.program.status != 'running' or programBean.program.announcement.club.name != authBean.loggedInUser.club.name}">
+			<p:cellEditor disabled="#{programBean.program.status != 'running' or (authBean.notInRole('create_results'))
+					or programBean.program.announcement.club.name != authBean.loggedInUser.club.name}">
 				<f:facet name="output">
 					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable program">
 						<f:facet name="header">
