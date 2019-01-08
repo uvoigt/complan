@@ -23,7 +23,7 @@ public class Messages extends AbstractMap<String, String> implements Serializabl
 
 	// Applikations-Locale (nicht User-spezifisch!)
 	private Locale locale;
-	private Map<String, Messages> subs;
+	private Map<String, Messages> subs = new HashMap<>();
 	private Map<String, String> delegate;
 	private Messages parent;
 
@@ -100,21 +100,24 @@ public class Messages extends AbstractMap<String, String> implements Serializabl
 	}
 
 	public Messages bundle(String key) {
-		if (subs == null)
-			subs = new HashMap<>();
 		Messages messages = subs.get(key);
 		if (messages != null)
 			return messages;
 		Map<String, String> map = new HashMap<String, String>();
+		Messages parent = this;
 		for (String k : delegate.keySet()) {
 			int index = k.indexOf('.');
 			if (index == -1)
 				continue;
 			if (k.substring(0, index).equals(key)) {
-				map.put(k.substring(index + 1), delegate.get(k));
+				String sub = k.substring(index + 1);
+				if (sub.equals("parent"))
+					parent = bundle(delegate.get(k));
+				else
+					map.put(sub, delegate.get(k));
 			}
 		}
-		messages = new Messages(map, this);
+		messages = new Messages(map, parent);
 		subs.put(key, messages);
 		return messages;
 	}
