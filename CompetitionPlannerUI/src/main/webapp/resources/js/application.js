@@ -41,6 +41,7 @@ function sendLogin(formId) {
 				dlg.cfg.onHide = function() {
 					uname.val("");
 					upass.val("");
+					$(".ui-layout-unit").removeClass("blur");
 				};
 				dlg.hide();
 				var prevId = $("#userimg").attr("class");
@@ -372,6 +373,7 @@ function initLoginDialog() {
 			if (data.indexOf("{msg:loginTitle}") != -1) {
 				PrimeFaces.debug("Detected unauthenticated request");
 				PF("loginDlg").show();
+				$(".ui-layout-unit").addClass("blur");
 				data = "<?xml version='1.0' encoding='UTF-8'?><partial-response />";
 			}
 			return data;

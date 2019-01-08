@@ -209,10 +209,12 @@
 	cursor: pointer;
 }
 
-#loginDlg_modal {
-	background: black;
-	opacity: .85;
-	filter: Alpha(Opacity=85);
+.blur {
+	filter: blur(3px);
+    -webkit-filter: blur(3px);
+    -moz-filter: blur(3px);
+    -o-filter: blur(3px);
+    -ms-filter: blur(3px);
 }
 
 .loginTable.ui-panelgrid>*>tr,
