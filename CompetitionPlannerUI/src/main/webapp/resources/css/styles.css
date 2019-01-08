@@ -59,7 +59,7 @@
 }
 
 #leftMenuContainer {
-	float: left;
+	position: fixed;
 	display: inherit;
 }
 
@@ -111,7 +111,7 @@
 	z-index: 1000;
 }
 
-@media only screen and (max-width: 700px) {
+@media only screen and (max-width: 940px) {
 	#mainContent {
 		margin-left: 0;
 	}
@@ -302,6 +302,10 @@ input[readonly=readonly] {
 
 .ui-datalist-header {
 	text-align: left !important;	
+}
+
+.readonly tr {
+	cursor: inherit !important;
 }
 
 .teamTable .heat {
