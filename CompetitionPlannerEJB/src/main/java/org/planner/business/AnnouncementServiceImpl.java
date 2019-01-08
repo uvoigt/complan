@@ -15,6 +15,7 @@ import java.util.TreeSet;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
+import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
@@ -39,6 +40,8 @@ import org.planner.eo.Club_;
 import org.planner.eo.Location;
 import org.planner.eo.Participant;
 import org.planner.eo.Participant_;
+import org.planner.eo.Placement;
+import org.planner.eo.Placement_;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRaceTeam;
 import org.planner.eo.ProgramRaceTeam_;
@@ -50,8 +53,6 @@ import org.planner.eo.RegEntry_;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
-import org.planner.eo.Result;
-import org.planner.eo.Result_;
 import org.planner.eo.Role_;
 import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
@@ -573,38 +574,36 @@ public class AnnouncementServiceImpl {
 		});
 	}
 
-	public List<Result> getMyLatestResults() {
+	public List<Placement> getMyLatestResults(final int months) {
 		if (!caller.isInRole("Sportler") && !caller.isInRole("Mastersportler"))
 			return new ArrayList<>();
-		return dao.executeOperation(new IOperation<List<Result>>() {
+		return dao.executeOperation(new IOperation<List<Placement>>() {
 			@Override
-			public List<Result> execute(EntityManager em) {
+			public List<Placement> execute(EntityManager em) {
 				CriteriaBuilder builder = em.getCriteriaBuilder();
-				CriteriaQuery<Result> query = builder.createQuery(Result.class);
-				Root<Result> result = query.from(Result.class);
-				Join<Result, ProgramRace> programRace = result.join(Result_.programRace);
+				CriteriaQuery<Tuple> query = builder.createTupleQuery();
+				Root<Placement> placement = query.from(Placement.class);
+				Join<Placement, ProgramRaceTeam> raceTeam = placement.join(Placement_.team);
+				Join<ProgramRaceTeam, ProgramRace> programRace = raceTeam.join(ProgramRaceTeam_.programRace);
 				Join<ProgramRace, Race> race = programRace.join(ProgramRace_.race);
-				Join<Race, Announcement> announcement = race.join(Race_.announcement);
-				// announcement.fetch(Announcement_.club);
-				ListJoin<ProgramRace, ProgramRaceTeam> raceTeam = programRace.join(ProgramRace_.participants);
+				@SuppressWarnings("unchecked")
+				Join<Race, Announcement> announcement = (Join<Race, Announcement>) race.fetch(Race_.announcement);
 				Join<ProgramRaceTeam, Team> team = raceTeam.join(ProgramRaceTeam_.team);
 				ListJoin<Team, TeamMember> members = team.join(Team_.members);
 				Join<TeamMember, User> user = members.join(TeamMember_.user);
 				Calendar date = Calendar.getInstance();
-				date.add(Calendar.MONTH, -2);
+				date.add(Calendar.MONTH, -months);
 				Predicate latest = builder.greaterThan(announcement.get(Announcement_.startDate), date.getTime());
 				Predicate youAreMember = builder.equal(user.get(User_.userId), caller.getLoginName());
+				query.select(builder.tuple(placement, programRace, race));
 				query.where(builder.and(latest, youAreMember));
 				query.orderBy(builder.asc(announcement.get(Announcement_.startDate)));
-				List<Result> list = em.createQuery(query).getResultList();
-				// fetch
-				for (Result r : list) {
-					r.getProgramRace().getRace().getAnnouncement().getId();
-					for (ProgramRaceTeam t : r.getProgramRace().getParticipants()) {
-						t.getMembers().size();
-					}
+				List<Tuple> tuples = em.createQuery(query).getResultList();
+				List<Placement> result = new ArrayList<>();
+				for (Tuple tuple : tuples) {
+					result.add((Placement) tuple.get(0));
 				}
-				return list;
+				return result;
 			}
 		});
 	}

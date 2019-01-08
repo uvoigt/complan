@@ -9,11 +9,15 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ConstraintMode;
 import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.OrderBy;
 import javax.persistence.Transient;
 
 import org.planner.model.LocalizedEnum;
@@ -42,7 +46,7 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	@GeneratedValue
 	private Long id;
 
-	@OneToOne
+	@OneToOne(optional = false)
 	private Race race;
 
 	// ist ein DateTime, um den Tag zu identifizieren
@@ -62,8 +66,22 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	@Transient
 	private ProgramRace followUpRace;
 
-	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "programRace")
-	private Result result;
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@JoinColumn(name = "programrace_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+	@OrderBy("position")
+	private List<Placement> placements;
+
+	public List<Placement> getPlacements() {
+		return placements;
+	}
+
+	public void setPlacements(List<Placement> placements) {
+		if (this.placements == null)
+			this.placements = new ArrayList<>();
+		else
+			this.placements.clear();
+		this.placements.addAll(placements);
+	}
 
 	public Long getId() {
 		return id;
@@ -125,13 +143,5 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 
 	public void setFollowUpRace(ProgramRace followUpRace) {
 		this.followUpRace = followUpRace;
-	}
-
-	public Result getResult() {
-		return result;
-	}
-
-	public void setResult(Result result) {
-		this.result = result;
 	}
 }

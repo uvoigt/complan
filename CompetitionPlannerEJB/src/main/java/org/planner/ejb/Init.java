@@ -94,6 +94,7 @@ public class Init {
 		insertRoleIfNotExists(em, "Tester",
 				"Tester (Kann den Status von Ausschreibungen, Meldungen und Programmen zurücksetzen)", false);
 		createRoleView(em);
+		createResultView(em);
 	}
 
 	private Role insertRoleIfNotExists(EntityManager em, String role, String description, boolean internal,
@@ -138,5 +139,16 @@ public class Init {
 				+ "left join Role r on ur.role_id=r.id " //
 				+ "inner join Role_Role rr on rr.role_id=r.id " //
 				+ "left join Role r2 on r2.id=rr.roles_id ").executeUpdate();
+	}
+
+	private void createResultView(EntityManager em) {
+		em.createNativeQuery("create or replace view vresult as " //
+				+ "select distinct p.id, a.name aName, c.name cName, a.startDate, a.endDate, p.status " //
+				+ "from Program p " //
+				+ "left join Announcement a on p.announcement_id=a.id " //
+				+ "left join Club c on a.club_id=c.id " //
+				+ "where exists(" //
+				+ "select pl.position from Placement pl left join ProgramRace  pr on pl.programrace_id=pr.id " //
+				+ "where pr.program_id=p.id)").executeUpdate();
 	}
 }

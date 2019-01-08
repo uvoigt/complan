@@ -252,8 +252,8 @@ public class CommonImpl {
 		return result.getGesamtgroesse() == 1 ? result.getListe().get(0) : null;
 	}
 
-	public void delete(Class<? extends AbstractEntity> entityType, Long id) {
-		AbstractEntity entity = dao.getById(entityType, id);
+	public void delete(Class<? extends Serializable> entityType, Long id) {
+		Serializable entity = dao.getById(entityType, id);
 		if (entity != null) {
 			checkWriteAccess(entity, Operation.delete);
 			dao.delete(entity);
@@ -425,6 +425,8 @@ public class CommonImpl {
 
 	@SuppressWarnings("unused")
 	private void checkWriteAccess(ProgramRace race, Operation operation, User callingUser) {
+		if (race.getProgramId() == null)
+			race = getById(ProgramRace.class, race.getId(), 0);
 		Program program = getById(Program.class, race.getProgramId(), 0);
 		checkWriteAccess(program, operation, callingUser);
 	}

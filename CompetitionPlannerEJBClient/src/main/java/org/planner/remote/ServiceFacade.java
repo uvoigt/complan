@@ -11,6 +11,7 @@ import org.planner.eo.AbstractEnum;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
+import org.planner.eo.Placement;
 import org.planner.eo.Program;
 import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramRace;
@@ -19,7 +20,6 @@ import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
-import org.planner.eo.Result;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.Change;
@@ -36,7 +36,7 @@ public interface ServiceFacade extends IResultProvider {
 
 	<T extends AbstractEntity> T getObjectForCopy(Class<T> type, long id);
 
-	void delete(Class<? extends AbstractEntity> entityType, Long id);
+	void delete(Class<? extends Serializable> entityType, Long id);
 
 	void deleteRaces(Long announcementId, List<Long> raceIds);
 
@@ -101,9 +101,9 @@ public interface ServiceFacade extends IResultProvider {
 
 	List<RegEntry> getMyUpcomingRegistrations();
 
-	List<Result> getMyLatestResults();
+	List<Placement> getMyLatestResults(int months);
 
-	List<ProgramRace> saveResult(Result result);
+	List<ProgramRace> saveResult(Long programRaceId, List<Placement> placements);
 
 	Long createProgram(Program program);
 
@@ -111,11 +111,9 @@ public interface ServiceFacade extends IResultProvider {
 
 	void setProgramStatus(Long programId, ProgramStatus status);
 
-	Program getProgram(Long id);
+	Program getProgram(Long id, boolean withResults, boolean orderByResults);
 
 	void deleteProgram(Long programId);
-
-	Program getResults(Long id);
 
 	// TODO temporär
 	List<Change> checkProgram(Program program);

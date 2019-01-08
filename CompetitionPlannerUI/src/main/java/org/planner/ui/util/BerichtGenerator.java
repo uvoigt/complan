@@ -969,7 +969,7 @@ public class BerichtGenerator {
 		cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
 		table.addCell(cell);
 
-		cell = new PdfPCell(new Phrase(renderer.renderRaceNumer(programRace), defaultFont));
+		cell = new PdfPCell(new Phrase(renderer.renderRaceNumber(programRace), defaultFont));
 		cell.disableBorderSide(Rectangle.BOX);
 		cell.setMinimumHeight(20);
 		cell.setVerticalAlignment(Element.ALIGN_BOTTOM);

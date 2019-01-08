@@ -18,12 +18,8 @@ import javax.inject.Named;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.planner.eo.ProgramRace;
-import org.planner.eo.ProgramRaceTeam;
+import org.planner.eo.Placement;
 import org.planner.eo.RegEntry;
-import org.planner.eo.Result;
-import org.planner.eo.TeamMember;
-import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.common.AuthBean;
 import org.planner.ui.util.JsfUtil;
@@ -57,6 +53,14 @@ public class StartseiteBean implements Serializable {
 	private AuthBean auth;
 
 	private String mainContent;
+
+	private int[] allMonths = { 2, 6, 12 };
+
+	private int months = allMonths[1];
+
+	private List<RegEntry> currentRegistrations;
+
+	private List<Placement> latestResults;
 
 	@Silent
 	public String getMainContent() {
@@ -124,6 +128,18 @@ public class StartseiteBean implements Serializable {
 		JsfUtil.setViewVariable("filters", null);
 		JsfUtil.setViewVariable("sortState", null);
 		JsfUtil.setViewVariable("selectedItem", null);
+	}
+
+	public int[] getAllMonths() {
+		return allMonths;
+	}
+
+	public int getMonths() {
+		return months;
+	}
+
+	public void setMonths(int months) {
+		this.months = months;
 	}
 
 	public void setHelpVisible(boolean visible) {
@@ -206,26 +222,15 @@ public class StartseiteBean implements Serializable {
 	}
 
 	public List<RegEntry> getCurrentRegistrations() {
-		return service.getMyUpcomingRegistrations();
+		if (currentRegistrations == null)
+			currentRegistrations = service.getMyUpcomingRegistrations();
+		return currentRegistrations;
 	}
 
-	public List<Result> getLatestResults() {
-		return service.getMyLatestResults();
-	}
-
-	public String getPlacement(ProgramRace race, List<Long> placements) {
-		Long myUserId = auth.getLoggedInUser().getId();
-		for (ProgramRaceTeam team : race.getParticipants()) {
-			int index = placements.indexOf(team.getTeamId());
-			if (index == -1)
-				continue;
-			for (TeamMember member : team.getMembers()) {
-				User user = member.getUser();
-				if (user != null && user.getId().equals(myUserId))
-					return Integer.toString(index + 1);
-			}
-		}
-		return null;
+	public List<Placement> getLatestResults() {
+		if (latestResults == null && FacesContext.getCurrentInstance().getCurrentPhaseId() == PhaseId.RENDER_RESPONSE)
+			latestResults = service.getMyLatestResults(months);
+		return latestResults;
 	}
 
 	public String getHelp() throws IOException {

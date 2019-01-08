@@ -11,8 +11,11 @@ import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 /**
@@ -90,6 +93,11 @@ public class ProgramRaceTeam implements Serializable {
 	private Team team;
 
 	private int lane;
+
+	// Dient lediglich dem Erzeugen eines Foreign Keys
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@JoinColumns({ @JoinColumn(name = "programrace_id"), @JoinColumn(name = "team_id") })
+	private List<Placement> placements;
 
 	public ProgramRaceTeam() {
 	}

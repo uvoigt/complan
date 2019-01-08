@@ -12,10 +12,10 @@ import javax.inject.Named;
 import org.apache.commons.lang.StringUtils;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRace.RaceType;
+import org.planner.eo.Race;
 import org.planner.eo.User;
 import org.planner.model.AgeType;
 import org.planner.ui.beans.Messages;
-import org.planner.ui.util.JsfUtil;
 
 @Named
 @ApplicationScoped
@@ -26,19 +26,15 @@ public class RenderBean {
 
 	public String renderRaceTitle(ProgramRace race) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(messages.get("programs.race")); // TODO evtl. woanders hin
-		sb.append(" ");
-		sb.append(race.getRace().getNumber());
-		if (race.getNumber() != null)
-			sb.append("-").append(race.getNumber());
+		createRaceTitle(race, sb);
 		return sb.toString();
 	}
 
-	public String renderRaceNumer(ProgramRace race) {
+	public String renderRaceNumber(ProgramRace race) {
 		StringBuilder sb = new StringBuilder();
 		if (race.getNumber() != null) {
 			sb.append(race.getNumber());
-			sb.append(".");
+			sb.append(". ");
 		}
 		sb.append(race.getRaceType().getText());
 		return sb.toString();
@@ -86,16 +82,37 @@ public class RenderBean {
 		}
 	}
 
-	public String getRaceFilter(ProgramRace race) {
+	public String renderRaceText(Race race) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(JsfUtil.getScopedBundle().get("race")).append(" ");
+		createRaceText(race, sb);
+		return sb.toString();
+	}
+
+	private void createRaceText(Race race, StringBuilder sb) {
+		sb.append(race.getBoatClass().getText());
+		sb.append(' ');
+		sb.append(race.getGender().getAgeFriendlyText(race.getAgeType()));
+		sb.append(' ');
+		sb.append(race.getAgeType().getText());
+		sb.append(' ');
+		sb.append(race.getDistance());
+		sb.append(" m");
+	}
+
+	private void createRaceTitle(ProgramRace race, StringBuilder sb) {
+		sb.append(messages.get("programs.race"));
+		sb.append(' ');
 		sb.append(race.getRace().getNumber());
 		if (race.getNumber() != null)
-			sb.append("-").append(race.getNumber());
-		sb.append(" ").append(race.getRace().getBoatClass().getText()).append(" ");
-		sb.append(race.getRace().getGender().getAgeFriendlyText(race.getRace().getAgeType())).append(" ");
-		sb.append(race.getRace().getAgeType().getText()).append(" ");
-		sb.append(race.getRace().getDistance()).append(" m ");
+			sb.append('-').append(race.getNumber());
+	}
+
+	public String getRaceFilter(ProgramRace race) {
+		StringBuilder sb = new StringBuilder();
+		createRaceTitle(race, sb);
+		sb.append(' ');
+		createRaceText(race.getRace(), sb);
+		sb.append(' ');
 		sb.append(renderStartTime(race.getStartTime()));
 		return sb.toString();
 	}

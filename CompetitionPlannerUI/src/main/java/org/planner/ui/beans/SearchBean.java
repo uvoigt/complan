@@ -277,7 +277,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	public void bearbeiten(String link, String typ, Object selectedItem, ITarget targetBean) throws Exception {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selectedItem, "id");
-		AbstractEntity item = service.getObject(loadTyp(typ, AbstractEntity.class), id, 1);
+		Serializable item = service.getObject(loadTyp(typ, Serializable.class), id, 1);
 		targetBean.setItem(item);
 		startseiteBean.setMainContent(link, id);
 	}
@@ -298,7 +298,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	public void loeschen(String typ, Object id) throws Exception {
-		service.delete(loadTyp(typ, AbstractEntity.class), (Long) id);
+		service.delete(loadTyp(typ, Serializable.class), (Long) id);
 		String msg = JsfUtil.getScopedBundle().get("deleteSuccess");
 		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, msg));
 	}

@@ -19,6 +19,7 @@ import org.planner.eo.AbstractEnum;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
+import org.planner.eo.Placement;
 import org.planner.eo.Program;
 import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramRace;
@@ -27,7 +28,6 @@ import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
-import org.planner.eo.Result;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.Change;
@@ -91,7 +91,7 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public void delete(Class<? extends AbstractEntity> entityType, Long id) {
+	public void delete(Class<? extends Serializable> entityType, Long id) {
 		common.delete(entityType, id);
 	}
 
@@ -255,13 +255,13 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public List<Result> getMyLatestResults() {
-		return announcement.getMyLatestResults();
+	public List<Placement> getMyLatestResults(int months) {
+		return announcement.getMyLatestResults(months);
 	}
 
 	@Override
-	public List<ProgramRace> saveResult(Result result) {
-		return program.saveResult(result);
+	public List<ProgramRace> saveResult(Long programRaceId, List<Placement> placements) {
+		return program.saveResult(programRaceId, placements);
 	}
 
 	@Override
@@ -280,18 +280,13 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public Program getProgram(Long id) {
-		return program.getProgram(id);
+	public Program getProgram(Long id, boolean withResults, boolean orderByResults) {
+		return program.getProgram(id, withResults, orderByResults);
 	}
 
 	@Override
 	public void deleteProgram(Long programId) {
 		program.deleteProgram(programId);
-	}
-
-	@Override
-	public Program getResults(Long id) {
-		return program.getResults(id);
 	}
 
 	@Override

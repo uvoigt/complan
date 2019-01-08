@@ -9,9 +9,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -26,14 +25,14 @@ import javax.inject.Named;
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.Announcement;
 import org.planner.eo.Placement;
+import org.planner.eo.Placement_;
 import org.planner.eo.Program;
 import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRaceTeam;
-import org.planner.eo.Result;
-import org.planner.eo.Result_;
+import org.planner.eo.ProgramRaceTeam_;
 import org.planner.model.ResultExtra;
 import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.AbstractEditBean;
@@ -44,7 +43,6 @@ import org.planner.ui.util.BerichtGenerator;
 import org.planner.ui.util.JsfUtil;
 import org.planner.util.CommonMessages;
 import org.primefaces.PrimeFaces;
-import org.primefaces.component.datatable.DataTable;
 import org.primefaces.event.CellEditEvent;
 
 @Named
@@ -58,6 +56,9 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	@Inject
 	private BerichtGenerator generator;
+
+	@Inject
+	private RenderBean renderBean;
 
 	private UploadBean uploadBean;
 
@@ -82,8 +83,8 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		if (id != null) {
 			JsfUtil.setViewVariable("id", id);
 			if (!isCancelPressed()) {
-				loadProgram(id);
 				cellEditingProgramRaceId = detectCellEvent();
+				loadProgram(id);
 				if (cellEditingProgramRaceId != null)
 					loadResult(cellEditingProgramRaceId);
 			}
@@ -105,10 +106,10 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	}
 
 	private void loadResult(Long programRaceId) {
-		ProgramRace programRace = findProgramRace(null, programRaceId);
-		if (programRace.getResult() == null)
-			programRace.setResult(new Result(programRace.getProgramId(), programRace, new ArrayList<Placement>()));
-		List<Placement> placements = programRace.getResult().getPlacements();
+		ProgramRace programRace = findProgramRace(programRaceId);
+		if (programRace.getPlacements() == null)
+			programRace.setPlacements(new ArrayList<Placement>());
+		List<Placement> placements = programRace.getPlacements();
 		List<ProgramRaceTeam> participants = programRace.getParticipants();
 		if (participants != null) {
 			for (ProgramRaceTeam team : participants) {
@@ -132,14 +133,18 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		});
 	}
 
-	@SuppressWarnings("unchecked")
-	public void onPrerenderResults(ComponentSystemEvent event) {
-		if (cellEditingProgramRaceId != null) {
-			DataTable dataTable = (DataTable) event.getComponent().getNamingContainer();
-			// der Wert ist ggf. gefiltert
-			Object value = dataTable.getValue();
-			program.setRaces((List<ProgramRace>) value);
-			loadResult(cellEditingProgramRaceId);
+	/*
+	 * Diese Variante des Filterns (lazy=true und anstelle filterBy="#{renderBean.getRaceFilter(race)}"
+	 * filterFunction="#{renderBean.filterRaces}" diese Lösung dient dem Vermeiden von setValue(filteredValue).
+	 */
+	public void onPrerenderTable(@SuppressWarnings("unused") ComponentSystemEvent event) {
+		String filter = getFilter();
+		if (program != null && filter != null) {
+			for (Iterator<ProgramRace> it = program.getRaces().iterator(); it.hasNext();) {
+				ProgramRace race = it.next();
+				if (!renderBean.filterRaces(renderBean.getRaceFilter(race), filter, Locale.getDefault()))
+					it.remove();
+			}
 		}
 	}
 
@@ -157,7 +162,8 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	}
 
 	private void loadProgram(Long id) {
-		program = service.getProgram(id);
+		// implizite Abfrage, ob es sich um ein CellEditing handelt
+		program = service.getProgram(id, cellEditingProgramRaceId != null, false);
 		options.setProgram(program);
 	}
 
@@ -260,6 +266,10 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		}
 	}
 
+	public ResultExtra[] getResultExtras() {
+		return ResultExtra.values();
+	}
+
 	public String getFilter() {
 		return (String) JsfUtil.getViewVariable("filter");
 	}
@@ -289,10 +299,8 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		return component.getParent().getChildren().get(index + 1).getClientId();
 	}
 
-	private ProgramRace findProgramRace(List<ProgramRace> races, Long programRaceId) {
-		if (races == null)
-			races = program.getRaces();
-		for (ProgramRace programRace : races) {
+	private ProgramRace findProgramRace(Long programRaceId) {
+		for (ProgramRace programRace : program.getRaces()) {
 			if (programRace != null && programRace.getId().equals(programRaceId)) {
 				return programRace;
 			}
@@ -311,15 +319,13 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	}
 
 	public void onResultUpdate(final CellEditEvent evt) {
-		DataTable dataTable = (DataTable) evt.getSource();
+		List<?> newValue = (List<?>) evt.getNewValue();
 		@SuppressWarnings("unchecked")
-		List<ProgramRace> races = (List<ProgramRace>) dataTable.getValue();
-		ProgramRace programRace = findProgramRace(races, Long.valueOf(evt.getRowKey()));
-		if (programRace != null && programRace.getResult() != null
+		List<Placement> placements = (List<Placement>) newValue.get(0);
+		ProgramRace programRace = findProgramRace(Long.valueOf(evt.getRowKey()));
+		if (programRace != null && programRace.getPlacements() != null
 				&& !Boolean.FALSE.equals(JsfUtil.getRequestVariable("modified"))) {
-			Result result = (Result) JsfUtil.getRequestVariable("result");
-			doSaveResult(dataTable.getNamingContainer(), programRace.getId(), result != null ? result.getId() : null,
-					result != null ? result.getVersion() : null, programRace.getResult().getPlacements());
+			doSaveResult(programRace, placements);
 		}
 	}
 
@@ -328,16 +334,14 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	 */
 	private Boolean checkForExistingResults(ProgramRace programRace, List<Placement> placements) {
 		Suchkriterien criteria = new Suchkriterien();
-		criteria.addFilter(Result_.programRace.getName() + ".id", programRace.getId());
-		List<Result> list = service.search(Result.class, criteria).getListe();
-		Result result = list.size() > 0 ? list.get(0) : null;
+		criteria.addFilter(Placement_.team.getName() + "." + ProgramRaceTeam_.programRace.getName() + ".id",
+				programRace.getId());
+		List<Placement> savedPlacements = service.search(Placement.class, criteria).getListe();
+		Placement result = savedPlacements.size() > 0 ? savedPlacements.get(0) : null;
 		if (result == null) {
 			return null;
 		} else {
-			result = service.getObject(Result.class, result.getId(), 1);
-			// zwischenspeichern
-			JsfUtil.setRequestVariable("result", result);
-			boolean modified = !placementsEqual(result.getPlacements(), placements);
+			boolean modified = !placementsEqual(savedPlacements, placements);
 			JsfUtil.setRequestVariable("modified", modified);
 			return modified;
 		}
@@ -361,61 +365,21 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		return true;
 	}
 
-	private void doSaveResult(UIComponent form, Long programRaceId, Long resultId, Integer version,
-			List<Placement> placements) {
-		ProgramRace programRace = new ProgramRace();
-		programRace.setId(programRaceId);
-		// ordnen
-		SortedSet<Placement> timed = new TreeSet<>(new Comparator<Placement>() {
-			@Override
-			public int compare(Placement o1, Placement o2) {
-				return (int) (o1.getTime() - o2.getTime());
-			}
-		});
-		List<Placement> dns = new ArrayList<>();
-		List<Placement> dnf = new ArrayList<>();
-		List<Placement> dq = new ArrayList<>();
-		for (Iterator<Placement> it = placements.iterator(); it.hasNext();) {
-			Placement p = it.next();
-			if (p.getExtra() == ResultExtra.dns)
-				dns.add(p);
-			else if (p.getExtra() == ResultExtra.dnf)
-				dnf.add(p);
-			else if (p.getExtra() == ResultExtra.dq)
-				dq.add(p);
-			else if (p.getTime() != null)
-				timed.add(p);
-			else
-				continue;
-			it.remove();
-		}
-		placements.addAll(timed);
-		placements.addAll(dns);
-		placements.addAll(dnf);
-		placements.addAll(dq);
-		//
-		Result result = new Result(program.getId(), programRace, placements);
-		result.setId(resultId);
-		if (version != null)
-			result.setVersion(version);
-		List<ProgramRace> followUpRaces = service.saveResult(result);
+	private void doSaveResult(ProgramRace programRace, List<Placement> placements) {
+		List<ProgramRace> followUpRaces = service.saveResult(programRace.getId(), placements);
 		if (followUpRaces != null) {
 			List<Integer> rowIndexes = new ArrayList<>();
 			List<String> raceTexts = new ArrayList<>();
 			for (int i = followUpRaces.size() - 1; i >= 0; i--) {
 				ProgramRace race = followUpRaces.get(i);
 				StringBuilder text = new StringBuilder();
-				text.append(race.getRaceType().getText());
+				text.append(renderBean.renderRaceNumber(race));
 				raceTexts.add(text.toString());
 				int index = indexOfProgramRace(program.getRaces(), race.getId());
 				if (index != -1)
 					rowIndexes.add(index);
 			}
 
-			List<String> expr = new ArrayList<>();
-			for (Integer index : rowIndexes) {
-				expr.add(form.getClientId() + ":programTable:@row(" + index + ")");
-			}
 			PrimeFaces.current().executeScript("PF('programTable').filter()");
 			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null,
 					CommonMessages.formatMessage(JsfUtil.getScopedBundle().get("followUpRacesFilled"), raceTexts)));

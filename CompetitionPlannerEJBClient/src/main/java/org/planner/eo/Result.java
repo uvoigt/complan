@@ -1,66 +1,65 @@
 package org.planner.eo;
 
-import java.util.List;
+import java.io.Serializable;
+import java.util.Date;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.OrderBy;
-import javax.persistence.Transient;
+import javax.persistence.EntityManager;
+import javax.persistence.Id;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
+import org.hibernate.annotations.Subselect;
+import org.planner.eo.Program.ProgramStatus;
 import org.planner.util.NLSBundle;
-import org.planner.util.Visibilities;
 import org.planner.util.Visible;
 
 @Entity
+@Subselect("select * from vresult")
 @Access(AccessType.FIELD)
 @NLSBundle("results")
-public class Result extends AbstractEntity {
+public class Result implements CanDelete, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	@OneToOne
+	@Id
+	private Long id;
+
 	@Visible
-	@Visibilities({ @Visible(path = "race.announcement.name", order = 1),
-			@Visible(path = "race.announcement.club.name", order = 2),
-			@Visible(path = "race.announcement.startDate", order = 3),
-			@Visible(path = "race.announcement.endDate", initial = false, order = 4) })
-	private ProgramRace programRace;
+	private String aName;
 
-	@Transient
-	private Long programId;
+	@Visible
+	private String cName;
 
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-	@JoinColumn(name = "result_id")
-	@OrderBy("position")
-	private List<Placement> placements;
+	@Visible
+	@Temporal(TemporalType.DATE)
+	private Date startDate;
 
-	public Result() {
-	}
+	@Visible(initial = false)
+	@Temporal(TemporalType.DATE)
+	private Date endDate;
 
-	public Result(Long programId, ProgramRace programRace, List<Placement> placements) {
-		this.programId = programId;
-		this.programRace = programRace;
-		this.placements = placements;
+	@Visible
+	private ProgramStatus status;
+
+	@Override
+	public void delete(EntityManager em) {
+		em.createQuery(
+				"delete from Placement where id.programRaceId in (select id from ProgramRace where programId=:programId)")
+				.setParameter("programId", getProgramId()).executeUpdate();
 	}
 
 	public Long getProgramId() {
-		return programId;
+		return id;
 	}
 
-	public ProgramRace getProgramRace() {
-		return programRace;
+	public Long getId() {
+		return id;
 	}
 
-	public List<Placement> getPlacements() {
-		return placements;
-	}
-
-	public void setPlacements(List<Placement> placements) {
-		this.placements = placements;
+	public void setId(Long id) {
+		this.id = id;
 	}
 }

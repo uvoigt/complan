@@ -4,13 +4,13 @@ import java.io.Serializable;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
 import javax.persistence.OneToOne;
 
+import org.planner.eo.ProgramRaceTeam.Id;
 import org.planner.model.ResultExtra;
 
 @Entity
@@ -19,9 +19,8 @@ public class Placement implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	@Id
-	@GeneratedValue
-	private Long id;
+	@EmbeddedId
+	private Id id;
 
 	private int position;
 
@@ -37,6 +36,7 @@ public class Placement implements Serializable {
 	}
 
 	public Placement(ProgramRaceTeam team, Long time, ResultExtra extra) {
+		this.id = new Id(team.getProgramRace().getId(), team.getTeam().getId());
 		this.team = team;
 		this.time = time;
 		this.extra = extra;
@@ -60,9 +60,5 @@ public class Placement implements Serializable {
 
 	public ProgramRaceTeam getTeam() {
 		return team;
-	}
-
-	public void setTeam(ProgramRaceTeam team) {
-		this.team = team;
 	}
 }

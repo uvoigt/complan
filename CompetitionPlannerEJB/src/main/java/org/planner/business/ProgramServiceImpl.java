@@ -502,31 +502,21 @@ public class ProgramServiceImpl {
 		});
 	}
 
-	public Program getProgram(final Long id) {
+	public Program getProgram(final Long id, final boolean withResults, final boolean orderByResults) {
 		return dao.executeOperation(new IOperation<Program>() {
 			@Override
 			public Program execute(EntityManager em) {
-				return doGetProgram(em, id, false);
+				return doGetProgram(em, id, withResults, orderByResults);
 			}
 		});
 	}
 
-	public Program getResults(final Long programId) {
-		return dao.executeOperation(new IOperation<Program>() {
-			@Override
-			public Program execute(EntityManager em) {
-				return doGetProgram(em, programId, true);
-			}
-		});
-	}
-
-	private Program doGetProgram(EntityManager em, Long id, boolean orderByResults) {
+	private Program doGetProgram(EntityManager em, Long id, boolean withResults, boolean orderByResults) {
 		// so werden die Options mitgeladen
 		Program program = em.find(Program.class, id);
 		if (program == null)
 			throw new FachlicheException(messages.getResourceBundle(), "program.notfound");
 		em.detach(program);
-		boolean withResults = program.getStatus() == ProgramStatus.running;
 
 		// in JPQL gibt es eine MultipleBagException
 		StringBuilder sql = new StringBuilder("select " //
@@ -538,25 +528,24 @@ public class ProgramServiceImpl {
 				+ "tu.firstName, tu.lastName, tu.birthDate, " //
 				+ "uc.id UserClubId, uc.shortName UCShort, uc.name UCName");
 		if (withResults) {
-			sql.append(", rs.id ResultId, pl.position, pl.time, pl.extra");
+			sql.append(", pl.position, pl.time, pl.extra");
 		}
 		sql.append(" from Program p " //
 				+ "inner join Announcement a on p.announcement_id=a.id "
 				+ "inner join ProgramRace pr on pr.program_id=p.id " //
-				+ "left outer join Race r on pr.race_id=r.id " //
-				+ "left outer join ProgramRace_Team pt on pt.programrace_id=pr.id " //
-				+ "left outer join Team t on pt.team_id=t.id " //
-				+ "left outer join Club tc on t.club_id=tc.id " //
-				+ "left outer join TeamMember tm on tm.team_id=t.id " //
-				+ "left outer join User tu on tm.user_id=tu.id " //
-				+ "left outer join Club uc on tu.club_id=uc.id ");
+				+ "left join Race r on pr.race_id=r.id " //
+				+ "left join ProgramRace_Team pt on pt.programrace_id=pr.id " //
+				+ "left join Team t on pt.team_id=t.id " //
+				+ "left join Club tc on t.club_id=tc.id " //
+				+ "left join TeamMember tm on tm.team_id=t.id " //
+				+ "left join User tu on tm.user_id=tu.id " //
+				+ "left join Club uc on tu.club_id=uc.id ");
 		if (withResults) {
-			sql.append("left outer join Result rs on pr.id=rs.programrace_id " //
-					+ "left outer join Placement pl on rs.id=pl.result_id and t.id=pl.team_id ");
+			sql.append("left join Placement pl on pt.programrace_id=pl.programrace_id and pt.team_id=pl.team_id ");
 		}
 		sql.append("where p.id = :id ");
 		sql.append("order by pr.startTime, ");
-		sql.append(orderByResults && withResults ? "pl.position" : "pt.lane");
+		sql.append(orderByResults && withResults ? "pl.position, pt.lane" : "pt.lane");
 		sql.append(", tm.pos");
 		Query query = em.createNativeQuery(sql.toString());
 		query.setParameter("id", id);
@@ -619,6 +608,18 @@ public class ProgramServiceImpl {
 					raceTeam = new ProgramRaceTeam(programRace, team);
 					raceTeam.setLane((int) row[12]);
 					programRace.addParticipant(raceTeam);
+
+					if (withResults && row[25] != null) {
+						if (programRace.getPlacements() == null)
+							programRace.setPlacements(new ArrayList<Placement>());
+						int position = (int) row[25];
+						Long resultTime = row[26] != null ? ((BigInteger) row[26]).longValue() : null;
+						ResultExtra extra = row[27] != null ? ResultExtra.class.getEnumConstants()[(int) row[27]]
+								: null;
+						Placement placement = new Placement(raceTeam, resultTime, extra);
+						placement.setPosition(position);
+						programRace.getPlacements().add(placement);
+					}
 				}
 
 				BigInteger memberId = (BigInteger) row[16];
@@ -638,16 +639,6 @@ public class ProgramServiceImpl {
 					members.put(memberId, member);
 				}
 				raceTeam.getTeam().addMember(member);
-				if (withResults && row[25] != null) {
-					if (programRace.getResult() == null)
-						programRace.setResult(new Result(id, programRace, new ArrayList<Placement>()));
-					int position = (int) row[26];
-					Long resultTime = row[27] != null ? ((BigInteger) row[27]).longValue() : null;
-					ResultExtra extra = row[28] != null ? ResultExtra.class.getEnumConstants()[(int) row[28]] : null;
-					Placement placement = new Placement(raceTeam, resultTime, extra);
-					placement.setPosition(position);
-					programRace.getResult().getPlacements().add(placement);
-				}
 			}
 		}
 
@@ -704,30 +695,30 @@ public class ProgramServiceImpl {
 
 	private void clearResultsAndRaces(final Long programId) {
 		Program program = dao.getById(Program.class, programId);
-		// falls Ergebnisse existieren, lösche diese
-		for (ProgramRace programRace : program.getRaces()) {
-			if (programRace.getResult() != null) {
-				dao.delete(programRace.getResult());
-			}
-		}
+
 		// da ein Team über ProgramRaceTeam mehreren ProgramRaces zugeordnet sein kann,
 		// ist es nicht möglich, dies gemeinsam über Hibernate-Kaskadierung zu löschen
 		// deshalb werden die Verknüpfungen für Folgerennen (Semifinale und Finale) explizit gelöscht
 		dao.executeOperation(new IOperation<Void>() {
 			@Override
 			public Void execute(EntityManager em) {
+				// falls Ergebnisse existieren, lösche diese
+				Result result = dao.getById(Result.class, programId);
+				if (result != null)
+					result.delete(em);
+
 				CriteriaBuilder builder = em.getCriteriaBuilder();
-				CriteriaDelete<ProgramRaceTeam> delete = builder.createCriteriaDelete(ProgramRaceTeam.class);
-				Root<ProgramRaceTeam> root = delete.from(ProgramRaceTeam.class);
-				Subquery<Long> subquery = delete.subquery(Long.class);
+				CriteriaDelete<ProgramRaceTeam> deleteMapping = builder.createCriteriaDelete(ProgramRaceTeam.class);
+				Root<ProgramRaceTeam> root = deleteMapping.from(ProgramRaceTeam.class);
+				Subquery<Long> subquery = deleteMapping.subquery(Long.class);
 				Root<ProgramRace> programRace = subquery.from(ProgramRace.class);
 				subquery.select(programRace.get(ProgramRace_.id));
 				ParameterExpression<Long> pProgramId = builder.parameter(Long.class, "programId");
 				ParameterExpression<RaceType> pRaceType = builder.parameter(RaceType.class, "raceType");
 				subquery.where(builder.and(builder.equal(programRace.get(ProgramRace_.programId), pProgramId),
 						builder.greaterThan(programRace.get(ProgramRace_.raceType), pRaceType)));
-				delete.where(root.get(ProgramRaceTeam_.programRace).get(ProgramRace_.id).in(subquery));
-				em.createQuery(delete).setParameter(pProgramId, programId).setParameter(pRaceType, RaceType.heat)
+				deleteMapping.where(root.get(ProgramRaceTeam_.programRace).get(ProgramRace_.id).in(subquery));
+				em.createQuery(deleteMapping).setParameter(pProgramId, programId).setParameter(pRaceType, RaceType.heat)
 						.executeUpdate();
 				return null;
 			}
@@ -790,22 +781,54 @@ public class ProgramServiceImpl {
 		common.save(program);
 	}
 
-	public List<ProgramRace> saveResult(final Result result) {
-		common.checkWriteAccess(result, Operation.save);
+	public List<ProgramRace> saveResult(Long programRaceId, List<Placement> placements) {
+		final ProgramRace programRace = common.getById(ProgramRace.class, programRaceId, 0);
+		common.checkWriteAccess(programRace, Operation.save);
 
-		// TODO ggf. Sortierung nach Zeit etc. hierher
-		List<Placement> placements = result.getPlacements();
+		// ordnen
+		List<Placement> timed = new ArrayList<>();
+		List<Placement> dns = new ArrayList<>();
+		List<Placement> dnf = new ArrayList<>();
+		List<Placement> dq = new ArrayList<>();
+		for (Iterator<Placement> it = placements.iterator(); it.hasNext();) {
+			Placement p = it.next();
+			if (p.getExtra() == ResultExtra.dns)
+				dns.add(p);
+			else if (p.getExtra() == ResultExtra.dnf)
+				dnf.add(p);
+			else if (p.getExtra() == ResultExtra.dq)
+				dq.add(p);
+			else if (p.getTime() != null)
+				timed.add(p);
+			else
+				continue;
+			it.remove();
+		}
+		Collections.sort(timed, new Comparator<Placement>() {
+			@Override
+			public int compare(Placement o1, Placement o2) {
+				return (int) (o1.getTime() - o2.getTime());
+			}
+		});
+		placements.addAll(timed);
+		placements.addAll(dns);
+		placements.addAll(dnf);
+		placements.addAll(dq);
+
 		for (int i = 0; i < placements.size(); i++) {
 			Placement placement = placements.get(i);
-			ProgramRaceTeam team = placement.getTeam();
-			ProgramRaceTeam persistentTeam = common.getById(ProgramRaceTeam.class, team.getId(), 0);
-			placement.setTeam(persistentTeam);
 			placement.setPosition(i + 1);
 		}
+		programRace.setPlacements(placements);
 
-		common.save(result);
+		dao.executeOperation(new IOperation<Void>() {
+			@Override
+			public Void execute(EntityManager em) {
+				em.merge(programRace);
+				return null;
+			}
+		});
 		// handelt es sich um einen Vor- oder Zwischenlauf?
-		final ProgramRace programRace = dao.getById(ProgramRace.class, result.getProgramRace().getId());
 		if (programRace.getRaceType() != RaceType.heat && programRace.getRaceType() != RaceType.semiFinal)
 			return null;
 		// sind alle anderen zugehörigen Läufe bereits gespeichert?
@@ -815,7 +838,7 @@ public class ProgramServiceImpl {
 			public Number execute(EntityManager em) {
 				em.flush();
 				String sql = "select (select count(id) from ProgramRace where racetype=:raceType and race_id=:raceId)"
-						+ " - (select count(id) from Result where programrace_id in (select id from ProgramRace where racetype=:raceType and race_id=:raceId))"
+						+ " - (select count(distinct programrace_id) from Placement where programrace_id in (select id from ProgramRace where racetype=:raceType and race_id=:raceId))"
 						+ " from Dual";
 				return (Number) em.createNativeQuery(sql).setParameter("raceId", programRace.getRace().getId())
 						.setParameter("raceType", programRace.getRaceType().ordinal()).getSingleResult();
@@ -829,65 +852,72 @@ public class ProgramServiceImpl {
 			public List<ProgramRace> execute(EntityManager em) {
 				return em
 						.createQuery("from ProgramRace where race=:race and racetype>:raceType " //
-								+ "order by racetype desc", ProgramRace.class)
+								+ "order by racetype desc, number", ProgramRace.class)
 						.setParameter("race", programRace.getRace())
 						.setParameter("raceType", programRace.getRaceType().ordinal()).getResultList();
 			}
 		});
 		// Resultate
-		List<Result> results = dao.executeOperation(new IOperation<List<Result>>() {
+		List<ProgramRace> results = dao.executeOperation(new IOperation<List<ProgramRace>>() {
 			@Override
-			public List<Result> execute(EntityManager em) {
-				if (em.contains(result))
-					em.refresh(result);
-				String sql = "select r from Result r left join r.programRace p where p.race=:race and p.raceType=:raceType";
-				return em.createQuery(sql, Result.class).setParameter("race", programRace.getRace())
+			public List<ProgramRace> execute(EntityManager em) {
+				if (em.contains(programRace))
+					em.refresh(programRace);
+				String sql = "select p from ProgramRace p where p.race=:race and p.raceType=:raceType";
+				return em.createQuery(sql, ProgramRace.class).setParameter("race", programRace.getRace())
 						.setParameter("raceType", programRace.getRaceType()).getResultList();
 			}
 		});
 		if (LOG.isDebugEnabled())
-			LOG.debug(results.size() + " Ergebnisse liegen vor, ermittle Belegung der Folgerennen");
+			LOG.debug("Es liegen Ergebnisse für " + results.size() + " Rennen vor, ermittle Belegung der Folgerennen");
 
 		List<ProgramRace> semiFinals = new ArrayList<>();
-		for (ProgramRace next : followUpRaces) {
-			if (next.getRaceType() == RaceType.finalA)
-				addQualifiedTeams(Arrays.asList(next), results);
-			else
+		for (Iterator<ProgramRace> it = followUpRaces.iterator(); it.hasNext();) {
+			ProgramRace next = it.next();
+			if (next.getRaceType() == RaceType.finalA) {
+				if (!addQualifiedTeams(Arrays.asList(next), results))
+					it.remove();
+			} else {
 				semiFinals.add(next);
+			}
 		}
-		if (!semiFinals.isEmpty())
-			addQualifiedTeams(semiFinals, results);
+		if (!semiFinals.isEmpty()) {
+			if (!addQualifiedTeams(semiFinals, results))
+				followUpRaces.removeAll(semiFinals);
+		}
 
 		return followUpRaces;
 	}
 
-	private void addQualifiedTeams(List<ProgramRace> followUpRaces, List<Result> results) {
+	private boolean addQualifiedTeams(List<ProgramRace> followUpRaces, List<ProgramRace> results) {
+		boolean followUpModified = false;
 		Map<Long, Iterator<Placement>> qualified = new HashMap<>();
 		for (int i = 0, j = 0, k = 0; !allIteratorsEmpty(qualified); i = ++i < results.size() ? i
 				: 0, j = ++j < followUpRaces.size() ? j : 0, k++) {
 
-			Result r = results.get(i);
+			ProgramRace r = results.get(i);
 			ProgramRace next = followUpRaces.get(j);
+			if (!next.getPlacements().isEmpty())
+				throw new FachlicheException(messages.getResourceBundle(), "program.followUpResultsExist",
+						getRaceText(next), getRaceText(r));
 
 			int from = 0;
 			int to = 0;
 			RaceType raceType = next.getRaceType();
 			if (raceType == RaceType.finalA) {
-				to = r.getProgramRace().getIntoFinal();
+				to = r.getIntoFinal();
 			} else if (raceType == RaceType.semiFinal) {
-				from = r.getProgramRace().getIntoFinal();
-				to = r.getProgramRace().getIntoSemiFinal();
+				from = r.getIntoFinal();
+				to = r.getIntoSemiFinal();
 			}
-			if (to == 0) {
-				i--;
-				continue;
-			}
+			if (to == 0)
+				break;
 
 			Iterator<Placement> qualifiedIt = qualified.get(r.getId());
 			if (qualifiedIt == null) {
 				if (LOG.isDebugEnabled())
-					LOG.debug("Im Rennen " + r.getProgramRace().getId() + " qualifizierten sich Platz " + (from + 1)
-							+ " bis " + to + " für das Rennen " + next.getId() + " ein " + raceType);
+					LOG.debug("Im Rennen " + r.getId() + " qualifizierten sich Platz " + (from + 1) + " bis " + to
+							+ " für das Rennen " + next.getId() + " ein " + raceType);
 
 				// kopiert die sub-list für Modifikation
 				qualifiedIt = new ArrayList<>(r.getPlacements().subList(from, Math.min(to, r.getPlacements().size())))
@@ -916,10 +946,12 @@ public class ProgramServiceImpl {
 			int lane = computeLane(participants);
 			raceTeam.setLane(lane);
 			participants.add(raceTeam);
+			followUpModified = true;
 			if (LOG.isDebugEnabled())
-				LOG.debug("Der " + placement.getPosition() + "te aus Rennen " + r.getProgramRace().getId()
-						+ " wird im Rennen " + next.getId() + " auf Bahn " + lane + " gesetzt");
+				LOG.debug("Der " + placement.getPosition() + "te aus Rennen " + r.getId() + " wird im Rennen "
+						+ next.getId() + " auf Bahn " + lane + " gesetzt");
 		}
+		return followUpModified;
 	}
 
 	private boolean allIteratorsEmpty(Map<Long, Iterator<Placement>> its) {
@@ -950,5 +982,22 @@ public class ProgramServiceImpl {
 				return true;
 		}
 		return false;
+	}
+
+	private String getRaceText(ProgramRace race) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(messages.getMessage("program.race"));
+		sb.append(" ");
+		sb.append(race.getRace().getNumber());
+		if (race.getNumber() != null)
+			sb.append("-").append(race.getNumber());
+		sb.append(" (");
+		if (race.getNumber() != null) {
+			sb.append(race.getNumber());
+			sb.append(". ");
+		}
+		sb.append(race.getRaceType().getText());
+		sb.append(")");
+		return sb.toString();
 	}
 }

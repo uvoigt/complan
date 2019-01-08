@@ -1,6 +1,7 @@
 package org.planner.eo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
 import org.planner.model.Gender;
+import org.planner.model.ResultExtra;
 import org.planner.util.BaseTestWithEm;
 
 import junit.framework.Assert;
@@ -149,5 +151,72 @@ public class EntityTest extends BaseTestWithEm {
 		user.setClub(null);
 		em.persist(user);
 		em.getTransaction().commit();
+	}
+
+	@Test
+	public void createResultAndPlacement() {
+		Club club = getClub("for program");
+		Announcement announcement = getAnnouncement("for program", club);
+		addRace(announcement, AgeType.akA, BoatClass.c1, Gender.m, 100);
+		Long programId = getProgram(announcement, club, getUser("mem1", club), getUser("mem2", club));
+		em.clear();
+		Program program = em.find(Program.class, programId);
+
+		// Placements
+		List<ProgramRaceTeam> participants = program.getRaces().get(0).getParticipants();
+		Placement p1 = new Placement(participants.get(0), 1123L, null);
+		Placement p2 = new Placement(participants.get(1), null, ResultExtra.dnf);
+		program.getRaces().get(0).setPlacements(new ArrayList<>(Arrays.asList(p1, p2)));
+		em.getTransaction().begin();
+		em.merge(program.getRaces().get(0));
+		em.getTransaction().commit();
+		em.clear();
+		program = em.find(Program.class, programId);
+		participants = program.getRaces().get(0).getParticipants();
+		List<Placement> placements = program.getRaces().get(0).getPlacements();
+		Assert.assertEquals(2, participants.size());
+		Assert.assertEquals(2, placements.size());
+		Assert.assertEquals(1123L, placements.get(0).getTime().longValue());
+		Assert.assertEquals(ResultExtra.dnf, placements.get(1).getExtra());
+		p1 = new Placement(participants.get(0), 22L, null);
+		p2 = new Placement(participants.get(1), null, ResultExtra.dq);
+		program.getRaces().get(0).setPlacements(new ArrayList<>(Arrays.asList(p1, p2)));
+		em.getTransaction().begin();
+		em.merge(program.getRaces().get(0));
+		em.getTransaction().commit();
+		em.clear();
+		program = em.find(Program.class, programId);
+		participants = program.getRaces().get(0).getParticipants();
+		placements = program.getRaces().get(0).getPlacements();
+		Assert.assertEquals(2, participants.size());
+		Assert.assertEquals(2, placements.size());
+	}
+
+	private Long getProgram(Announcement announcement, Club club, User user1, User user2) {
+		Program program = new Program();
+		program.setAnnouncement(announcement);
+		program.setOptions(new ProgramOptions());
+		Race race = announcement.getRaces().iterator().next();
+		List<ProgramRace> races = new ArrayList<>();
+		ProgramRace programRace = new ProgramRace();
+		Team team1 = new Team();
+		team1.setClub(club);
+		TeamMember member1 = new TeamMember();
+		member1.setUser(user1);
+		team1.addMember(member1);
+		programRace.setRace(race);
+		programRace.addParticipant(new ProgramRaceTeam(programRace, team1));
+		Team team2 = new Team();
+		team2.setClub(club);
+		TeamMember member2 = new TeamMember();
+		member2.setUser(user2);
+		team2.addMember(member2);
+		programRace.addParticipant(new ProgramRaceTeam(programRace, team2));
+		races.add(programRace);
+		program.setRaces(races);
+		em.getTransaction().begin();
+		em.persist(program);
+		em.getTransaction().commit();
+		return program.getId();
 	}
 }

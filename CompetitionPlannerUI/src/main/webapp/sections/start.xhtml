@@ -16,7 +16,7 @@
 			</h:panelGroup>
 			<h:panelGroup layout="block" id="currentState" rendered="#{authBean.inRole('Sportler', 'Mastersportler')}">
 				<p:dataTable var="entry" value="#{startseiteBean.currentRegistrations}" emptyMessage="#{bundle.noRegistrations}"
-						styleClass="datalist-blank" style="margin-top: 1em">
+						styleClass="datalist-blank" style="margin: 1em 0 1em 0">
 					<p:columnGroup type="header">
 						<p:row>
 							<p:column headerText="#{bundle.registration}" colspan="2"/>
@@ -38,31 +38,51 @@
 						<h:outputText value="#{entry.race.boatClass.text} #{entry.race.ageType.text} #{entry.race.distance}m"/>
 					</p:column>
 				</p:dataTable>
-				<p:dataTable var="entry" value="#{startseiteBean.latestResults}" emptyMessage="#{bundle.noResults}"
-						styleClass="datalist-blank" style="margin-top: 1em">
+				<p:dataTable var="placement" id="results" value="#{startseiteBean.latestResults}" emptyMessage="#{bundle.noResults}"
+						styleClass="datalist-blank" tableStyle="table-layout: inherit">
 					<p:columnGroup type="header">
 						<p:row>
-							<p:column headerText="#{bundle.results}" colspan="3"/>
+							<p:column colspan="5">
+								<f:facet name="header">
+									<h:form>
+										<h:outputLabel value="#{bundle.results}" style="vertical-align: middle"/>
+										<p:selectOneMenu value="#{startseiteBean.months}" converter="javax.faces.Integer" style="margin: 0 .5em 0 .5em">
+											<f:selectItems value="#{startseiteBean.allMonths}"/>
+											<p:ajax process="@this" update="results"/>
+										</p:selectOneMenu>
+										<h:outputLabel value="#{bundle.months}" style="vertical-align: middle"/>
+									</h:form>
+								</f:facet>
+							</p:column>
 						</p:row>
 						<p:row>
-							<p:column headerText="#{bundle.competition}"/>
-							<p:column headerText="#{bundle.for}"/>
-							<p:column headerText="#{bundle.placement}"/>
+							<p:column headerText="#{bundle.competition}" width="40%"/>
+							<p:column headerText="#{bundle.for}" width="30%"/>
+							<p:column headerText="#{bundle.race}" width="10%"/>
+							<p:column headerText="#{bundle.placement}" width="10%"/>
+							<p:column headerText="#{bundle.time}" width="10%"/>
 						</p:row>
 					</p:columnGroup>
 					<p:column groupRow="true">
-						<h:outputText value="#{entry.programRace.race.announcement.name} (#{entry.programRace.race.announcement.club.name})"/>
+						<h:outputText value="#{placement.team.programRace.race.announcement.name} (#{placement.team.programRace.race.announcement.club.name})"/>
 						<h:panelGroup style="float: right">
-							<h:outputText value="#{entry.programRace.race.announcement.startDate}">
+							<h:outputText value="#{placement.team.programRace.race.announcement.startDate}">
 								<f:convertDateTime pattern="#{bundle.longDate}" timeZone="#{bundle.timeZone}"/>
 							</h:outputText>
 						</h:panelGroup>
 					</p:column>
-					<p:column style="text-align: center">
-						<h:outputText value="#{entry.programRace.race.boatClass.text} #{entry.programRace.race.ageType.text} #{entry.programRace.race.distance}m"/>
+					<p:column groupRow="true">
+						<h:outputText value="#{renderBean.renderRaceText(placement.team.programRace.race)}"/>
 					</p:column>
 					<p:column style="text-align: center">
-						<h:outputText value="#{startseiteBean.getPlacement(entry.programRace, entry.placements)}"/>
+						<h:outputText value="#{placement.team.programRace.raceType.text}"/>
+					</p:column>
+					<p:column style="text-align: center">
+						<h:outputText value="#{placement.position}." rendered="#{placement.extra == null}"/>
+						<h:outputText value="#{placement.extra.text}" rendered="#{placement.extra != null}"/>
+					</p:column>
+					<p:column style="text-align: center">
+						<h:outputText value="#{placement.time}" converter="#{placementConverter}"/>
 					</p:column>
 				</p:dataTable>
 			</h:panelGroup>

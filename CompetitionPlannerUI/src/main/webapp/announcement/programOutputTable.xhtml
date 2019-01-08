@@ -8,40 +8,40 @@
 	xmlns:pe="http://primefaces.org/ui/extensions">
 
 <ui:composition>
+	<ui:param name="isEditable" value="#{programBean.program.status == 'running' and (authBean.inRole('create_results'))
+					and programBean.program.announcement.club.name == authBean.loggedInUser.club.name}"/>
 	<p:dataTable id="programTable"
 			var="race"
 			value="#{programBean.program.races}"
-			emptyMessage="#{bundle.noProgram}"
+			lazy="true"
+			emptyMessage="#{empty programBean.filter ? bundle.noProgram : bundle.noMatch}"
 			widgetVar="programTable"
 			rowIndexVar="rowIndex"
 			selectionMode="multiple" rowKey="#{race.id}"
 			selection="#{programBean.selectedRaces}"
 			filterEvent="enter"
-			editable="true" editMode="cell" cellEditMode="lazy" editInitEvent="dblclick" saveOnCellBlur="false">
+			editable="true" editMode="cell" cellEditMode="lazy" editInitEvent="dblclick" saveOnCellBlur="false"
+			styleClass="#{isEditable ? '' : 'readonly'}">
 
 		<pe:javascript event="cellEditInit" execute="programEdit.cellEditInit(ext)"/>
 		<p:ajax event="cellEdit" listener="#{programBean.onResultUpdate}" partialSubmitFilter="[data-rk] .ui-cell-editing :input" partialSubmit="true" update="messagesPopup"/>
 		<pe:javascript event="cellEditCancel" execute="ext.oncomplete()"/>
+		<f:event type="preRenderComponent" listener="#{programBean.onPrerenderTable}"/>
 
-		<p:column filterValue="#{programBean.filter}" filterBy="#{renderBean.getRaceFilter(race)}" filterFunction="#{renderBean.filterRaces}" styleClass="watermark">
+		<p:column filterValue="#{programBean.filter}" filterBy="#{true}" styleClass="watermark">
 			<p:watermark value="#{bundle.filterHint}" for="@(.watermark)"/>
-			<p:cellEditor disabled="#{programBean.program.status != 'running' or (authBean.notInRole('create_results'))
-					or programBean.program.announcement.club.name != authBean.loggedInUser.club.name}">
+			<p:cellEditor disabled="#{not isEditable}">
 				<f:facet name="output">
 					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable program">
 						<f:facet name="header">
 							<h:panelGroup styleClass="#{race.raceType}">
 								<h:panelGroup layout="block" styleClass="raceTitle">
 									<p:selectBooleanCheckbox style="margin-right: 5px" onchange="programEdit.toggleRaceSelection($(this))" rendered="#{programBean.program.status == 'created'}"/>
-									<h:outputText value="#{bundle.race} "/>
-									<h:outputText value="#{race.race.number}"/>
-									<h:outputText value="#{race.number != null ? '-'.concat(race.number) : null}"/><br/><h:outputText value="#{race.race.boatClass.text} "/>
-									<h:outputText value="#{race.race.gender.getAgeFriendlyText(race.race.ageType)} "/>
-									<h:outputText value="#{race.race.ageType.text} "/>
-									<h:outputText value="#{race.race.distance} m"/>
+									<h:outputText value="#{renderBean.renderRaceTitle(race)} "/><br /><h:outputText
+											value="#{renderBean.renderRaceText(race.race)} "/>
 								</h:panelGroup>
 								<h:panelGroup layout="block" styleClass="raceInfo">
-									<h:outputText value="#{race.number}#{not empty race.number ? '. ' : ''}#{race.raceType.text}"/><br /><h:outputText
+									<h:outputText value="#{renderBean.renderRaceNumber(race)}"/><br /><h:outputText
 											value="#{renderBean.renderRaceMode(race)}"/>
 								</h:panelGroup>
 								<h:panelGroup layout="block" style="text-align: right">#{renderBean.renderStartTime(race.startTime)}</h:panelGroup>
@@ -66,23 +66,22 @@
 					</p:dataTable>
 				</f:facet>
 				<f:facet name="input">
-					<p:orderList var="placement" widgetVar="placement" value="#{race.result.placements}" controlsLocation="none"
+					<p:orderList var="placement" widgetVar="placement" value="#{race.placements}" controlsLocation="none"
 							itemValue="#{placement}" styleClass="resultEdit"
 							converter="#{placementConverter}" converterMessage="#{bundle.wrongTime}"
 							validator="#{programBean.validateResult}">
 						<pe:javascript event="select" execute="programEdit.enableResultExtra(true)"/>
 						<pe:javascript event="unselect" execute="programEdit.enableResultExtra(false)"/>
-						<f:event type="preRenderComponent" listener="#{programBean.onPrerenderResults}"/>
 						<f:facet name="caption">
 							<h:panelGroup layout="block" id="hallo">
 								<h:outputText value="#{bundle.resultEditMsg}"/>
 								<p:effect event="load" type="slide"/>
 							</h:panelGroup>
 						</f:facet>
-						<p:column styleClass="numberCol" rendered="#{programBean.showTeams}">
+						<p:column styleClass="numberCol">
 							<h:outputText value="#{placement.team.lane}"/>
 						</p:column>
-						<p:column styleClass="memberCol" rendered="#{programBean.showTeams}">
+						<p:column styleClass="memberCol">
 							<p:dataGrid columns="2" var="member" value="#{placement.team.members}" styleClass="teamMembers ui-panelgrid-blank" layout="grid">
 								<h:panelGroup style="text-align: left">
 									<h:outputText value="#{member.remark != null ? member.remark : member.user.firstName} "/>
@@ -99,19 +98,16 @@
 										onkeydown="programEdit.resultKeyDown(this, event)" onchange="programEdit.updateResultWithTime(this)"/>
 							</h:panelGroup>
 						</p:column>
-						<p:column styleClass="teamCol" rendered="#{programBean.showTeams}">
+						<p:column styleClass="teamCol">
 							<h:outputText value="#{placement.team.club.shortNameOrName}"/>
 						</p:column>
 					</p:orderList>
 					<p:commandButton type="button" value="#{bundle.save}" style="margin: 5px" onclick="programEdit.applyCellEdit()"/>
 					<p:commandButton type="button" value="#{bundle.cancel}" style="margin: 5px" onclick="programEdit.cancelCellEdit()"/>
 					<p:selectOneButton widgetVar="resultExtra" style="margin-left: 10px" onchange="programEdit.updateResultWithExtra(this)">
-						<f:selectItem itemLabel="#{bundle.dns}" itemValue="dns"/>
-						<f:selectItem itemLabel="#{bundle.dnf}" itemValue="dnf"/>
-						<f:selectItem itemLabel="#{bundle.dq}" itemValue="dq"/>
+						<f:selectItems value="#{programBean.resultExtras}" var="item" itemValue="#{item.name()}" itemLabel="#{item.text}"/>
 					</p:selectOneButton>
-					<p:selectBooleanCheckbox id="override" style="margin-right: 0.5em"/>
-					<p:outputLabel value="#{bundle.overrideResult}" for="override" style="cursor: pointer"/>
+					<p:selectBooleanCheckbox id="override" itemLabel="#{bundle.overrideResult}"/>
 				</f:facet>
 			</p:cellEditor>
 

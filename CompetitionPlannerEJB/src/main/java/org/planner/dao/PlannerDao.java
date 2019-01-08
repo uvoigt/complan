@@ -47,6 +47,7 @@ import org.apache.commons.lang.StringUtils;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.AbstractEnum;
+import org.planner.eo.CanDelete;
 import org.planner.eo.Properties;
 import org.planner.eo.Properties_;
 import org.planner.eo.User;
@@ -104,8 +105,10 @@ public class PlannerDao {
 		return executePagingQuery(em, entityType, kriterien, entityType, queryModifier);
 	}
 
-	public void delete(AbstractEntity entity) {
-		if (entity != null)
+	public void delete(Object entity) {
+		if (entity instanceof CanDelete)
+			((CanDelete) entity).delete(em);
+		else if (entity != null)
 			em.remove(entity);
 	}
 

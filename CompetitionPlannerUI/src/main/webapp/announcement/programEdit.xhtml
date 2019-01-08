@@ -15,8 +15,11 @@
 
 		<ui:define name="content">
 
-			<h:form>
-
+			<h:form id="prog">
+			<ui:remove>
+				<!-- die form id muss angegeben werden, da ansonsten die cell edit click handler immer neue Namespaces bekommen
+				und somit mehrfach vorhanden sind -->
+			</ui:remove>
 				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0"
 						legend="#{bundle.options}" widgetVar="optionsSet"
 						rendered="#{authBean.inRole('update_programs') and program.announcement.club.name == authBean.loggedInUser.club.name}">
@@ -107,8 +110,7 @@
 										programBean.program.status == 'created'}"
 								styleClass="gap"/>
 						<h:panelGroup styleClass="gap">
-							<h:outputText value="#{bundle.showTeams}"/>
-							<p:selectBooleanCheckbox value="#{programBean.showTeams}" style="margin-left: 0.5em">
+							<p:selectBooleanCheckbox value="#{programBean.showTeams}" itemLabel="#{bundle.showTeams}">
 								<p:ajax partialSubmit="true" update="programTable"/>
 							</p:selectBooleanCheckbox>
 						</h:panelGroup>
