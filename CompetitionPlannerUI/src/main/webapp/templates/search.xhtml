@@ -92,10 +92,9 @@
 			<!--  diese column is ggf. nicht sichtbar.. dann ist der Property-Value null -->
 			<ui:param name="firstProperty" value="#{searchBean.getColumns(typ)[0].property}"/>
 
-			<p:column id="aktionenColumn" toggleable="false" style="width: calc(2.5em * #{searchBean.getButtonCount(component)} + 10px)">
+			<p:column id="aktionenColumn" toggleable="false" style="min-width: calc(2.5em * #{searchBean.getButtonCount(component)} + 10px)" styleClass="toggler">
 				<f:facet name="header">
-					<h:outputText value="#{messages.tableHeaderActions}"/>
-					<p:commandButton id="toggler" type="button" title="Spalten" style="float:right" icon="ui-icon-wrench" />
+					<p:commandButton id="toggler" type="button" title="#{bundle.columns}" icon="ui-icon-wrench"/>
 					<p:columnToggler datasource="searchTable" trigger="toggler" widgetVar="toggler">
 						<p:ajax event="toggle" listener="#{searchBean.columnChooserListener}" update="searchTable" onstart="PF('toggler').hide()"/>
 					</p:columnToggler>

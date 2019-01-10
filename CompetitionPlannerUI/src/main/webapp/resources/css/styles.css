@@ -134,7 +134,7 @@
 	}
 	.help {
 		width: 100%;
-	}
+	}	
 /* 	input {
 	haut nicht hin beim spinner!
 		width: 94%;
@@ -354,7 +354,8 @@ input[readonly=readonly] {
 }
 
 .teamTable tbody, .teamTable tr, .teamTable td {
-	border: none !important;
+	border-width: 0px !important;
+	border-style: none !important;
 }
 
 .positionCol {
@@ -416,4 +417,15 @@ input[readonly=readonly] {
 
 .syntaxProblem {
 	background: url(data:image/gif;base64,R0lGODlhCgAEAMIEAP9BGP6pl//Wy/7//P///////////////yH5BAEKAAQALAAAAAAKAAQAAAMROCOhK0oA0MIUMmTAZhsWBCYAOw==) repeat-x scroll 0 100% transparent
+}
+
+@media only screen and (max-width: 640px) {
+	/* reflow styles */
+	.toggler > .ui-column-title {
+		visibility: hidden;
+	}
+	.teamTable tbody, .teamTable tr {
+		border-bottom-width: 1px !important;
+		border-bottom-style: solid !important;
+	}
 }
