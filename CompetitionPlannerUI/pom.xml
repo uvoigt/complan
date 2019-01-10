@@ -164,6 +164,12 @@
 			<version>4.9.6.Final</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.google.javascript</groupId>
+			<artifactId>closure-compiler</artifactId>
+			<version>v20180402</version>
+			<scope>provided</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>
@@ -196,6 +202,7 @@
 				<version>2.6</version>
 				<configuration>
 					<filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
+					<useCache>true</useCache>
 					<archive>
 						<manifestEntries>
 							<!--Class-Path>model-${project.version}.jar commons-lang-2.6.jar</Class-Path-->
@@ -205,6 +212,60 @@
 						</manifestEntries>
 					</archive>
 				</configuration>
+				<executions>
+					<execution>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>exploded</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<id>compress</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<property name="warSourceDir" location="${project.build.directory}/${project.build.finalName}"/>
+								<property name="jsSource" location="${warSourceDir}/resources/js"/>
+
+								<!-- Kopieren der Web-Ressourcen -->
+								<copy todir="${warSourceDir}">
+									<fileset dir="${basedir}/src/main/webapp">
+										<include name="**/*" />
+									</fileset>
+								</copy>
+								<!-- Umbenennen der JS-Dateien -->
+								<move todir="${jsSource}">
+									<fileset dir="${jsSource}"/>
+									<mapper type="glob" from="*.js" to="*.jss"/>
+								</move>
+
+								<!-- Komprimieren des Javascripts -->
+								<apply executable="java" verbose="true" dest="${jsSource}">
+									<arg value="-jar"/>
+									<arg file="${maven.dependency.com.google.javascript.closure-compiler.jar.path}"/>
+									<arg value="--js_output_file"/>
+									<targetfile/>
+									<arg value="--rewrite_polyfills=false"/>
+									<srcfile/>
+									<fileset dir="${jsSource}" includes="*.jss"/> 
+									<mapper type="glob" from="*.jss" to="*.js"/>
+								</apply>
+								<!-- Löschen der unkomprimierten Dateien -->
+								<delete dir="${jsSource}" includes="*.jss"/>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 			<plugin>
