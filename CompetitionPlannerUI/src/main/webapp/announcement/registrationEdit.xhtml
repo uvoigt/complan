@@ -46,7 +46,7 @@
 
 						<pe:javascript event="rowSelect" execute="PF('registrationTable').unselectAllRows(); registrationEdit.enableButtons()"/>
 						<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons()"/>
-						<pe:javascript event="rowDblselect" execute="registrationEdit.copyFilters(true)"/>
+						<pe:javascript event="rowDblselect" execute="registrationEdit.copyFiltersR2A(true)"/>
 						<p:ajax event="filter" oncomplete="PF('racesTable').unselectAllRows(); registrationEdit.enableButtons()"/>
 
 						<p:column id="raceNumber" headerText="#{bundle.number}" sortBy="#{race.number}" filterBy="#{race.number}" filterMatchMode="exact">
@@ -68,7 +68,7 @@
 
 					<h:panelGroup>
 						<p:commandButton type="button" icon="ui-icon-circle-arrow-e" title="#{bundle.copyFilter}"
-							onclick="registrationEdit.copyFilters()"
+							onclick="registrationEdit.copyFiltersR2A()"
 							style="margin-bottom: 1em"/>
 						<p:commandButton type="button" icon="ui-icon-person" title="#{bundle.addRequest}"
 							onclick="PF('remarkDlg').show()"
@@ -122,6 +122,7 @@
 							<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons().updateResultSelected()"/>
 							<p:ajax event="filter" process="@form:clubVisible" update="@form:clubVisible"
 								oncomplete="PF('athletesTable').unselectAllRows(); registrationEdit.enableButtons().checkEmpty().updateResultSelected()"/>
+							<pe:javascript event="rowDblselect" execute="registrationEdit.copyFiltersA2R()"/>
 							<p:ajax event="rowDblselect" onstart="return !PF('btnAddAthlete').jq.attr('disabled')"
 								listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
 

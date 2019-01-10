@@ -175,7 +175,7 @@ var registrationEdit = {
 		$("[id$=resultSelectedLabel]").text("{msg:registrations.selected, xxx}".replace(/xxx/, count));
 		return this;
 	},
-	copyFilters: function(fromSelection) {
+	copyFiltersR2A: function(fromSelection) {
 		var racesTable = PF("racesTable");
 		var athletesTable = PF("athletesTable");
 		var copyToRegistrationTable = true; // TODO
@@ -200,6 +200,21 @@ var registrationEdit = {
 			registrationTable.jq.find("[name$=raceNumber\\:filter]").val(raceFilterPattern.replace(/\$/, raceNumber));
 			registrationTable.filter();
 		}
+	},
+	copyFiltersA2R: function(fromSelection) {
+		if (!PF('btnAddAthlete').jq.attr('disabled'))
+			return;
+		var athletesTable = PF("athletesTable");
+		var racesTable = PF("racesTable");
+
+		var selectedId = athletesTable.jq.find("[id$=athletesTable_selection]").val();
+		var row = athletesTable.jq.find("tr[data-rk=" + selectedId + "]");
+		var ageType = row.children().eq(3).text();
+		var gender = row.children().eq(4).text();
+		
+		racesTable.jq.find("[name$=ageType\\:filter]").val(ageType);
+		racesTable.jq.find("[name$=gender\\:filter]").val(gender);
+		racesTable.filter();
 	},
 	toggleColumn: function(table, index) {
 		var columnHeader = table.thead.children("tr").find("th:nth-child(" + index + ")");
@@ -350,8 +365,14 @@ var programEdit = {
 	},
 	resultKeyDown: function(input, evt) {
 		var keyCode = evt.keyCode;
-		if (keyCode != 40 && keyCode != 38 && keyCode != 9 && keyCode != 0)
+		if (keyCode != 40 && keyCode != 38 && keyCode != 9 && keyCode != 0 && keyCode != 13)
 			return;
+		evt.preventDefault();
+		evt.stopPropagation();
+		if (keyCode == 13) {
+			this.updateResultWithTime(input);
+			return;
+		}
 		var placement = PF("placement");
 		var inputs = placement.jq.find("input");
 		var index = inputs.index($(input));
@@ -363,8 +384,6 @@ var programEdit = {
 				index = inputs.length - 1;
 		}
 		inputs.eq(index).focus().select();
-		evt.preventDefault();
-		evt.stopPropagation();
 	}
 };
 function initLoginDialog() {
