@@ -1,0 +1,43 @@
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<h1>Programmdetails</h1>
+<p>
+Diese Seite dient der Programmerstellung, der Anzeige der Programmdetails und der Ergebniseingabe.
+</p>
+<h2>Program bearbeiten</h2>
+Ein Programm, welches sich im Status "In Bearbeitung" oder "Wird durchgeführt" befindet, kann bearbeitet werden. Das bedeutet im Wesentlichen
+die Bestimmung der Reihenfolge der Rennen. Dabei ist nur in ersterem Status, also vor der Veröffentlichung eine komplette automatische Neuordnung
+möglich, wogegen in letzterem nur einzelne Rennen verschoben werden können.
+<h3>Einstellungen für die Erzeugung des Programmes</h3>
+Der Button "Einstellungen" kann benutzt werden, um die Anzeige der Optionen aufzuklappen.
+<dl>
+<dt>Qualifikationsmodus</dt>
+<dd>Das Textfeld für den Qualifikationsmodus erlaubt die Texteingabe eines standardisierten Textes, nach dem die Zuordnung von in Vorläufen
+qualifizierten Sportlern zu Zwischen- und Endläufen erfolgt. Das Format beginnt immer mit dem Schlüsselwort "Wenn", auf das logischer Ausdruck folgt.<br />
+Dieser Ausdruck bezieht sich auf die Anzahl der Meldungen und/oder Anzahl der Bahnen. z.B. besagt der Ausdruck
+<blockquote>Wenn AnzahlMeldungen &lt;= 18 Dann DirektInDenEndlauf = 3, InDenZwischenLauf = 7, InDenEndlauf = 3</blockquote>
+dass sich in einem Vorlauf eines Rennens, für das bis zu 18 Starter gemeldet wurden, die Plätze 1-3 direkt in den Endlauf und die Plätze 4-7 in den
+Zwischenlauf qualifizieren. Die Anzahl der Zwischenläufe ergibt sich implizit aus der Anzahl der Bahnen, welche in der Ausschreibung vorgegeben wird
+(im Regelfall sind das 9).
+</dd>
+<dt>Anfangszeiten</dt>
+<dd>Hier werden so viele Tage angezeigt wie in der Ausschreibung vorgegeben. Die Anfangs- und Endzeiten können eingestellt, sowie Pausen hinzugefügt werden.</dd>
+<dt>Abstand der Starts</dt>
+<dd>Hier wird Abstand zwischen den Rennen in Minuten angegeben. Bei der Erzeugung des Programms wird ggf. festgestellt, dass dieser Abstand zu kurz ist.
+Dann wir ein Änderungsvorschlag unterbreitet.</dd>
+<dt>Schutzmodus</dt>
+<dd>Hier kann der Schutzmodus für Kinder und Jugendliche eingestellt werden. Dies betrifft die maximale Anzahl an Starts pro Tag sowie den Mindestabstand
+zwischen zwei Starts.</dd>
+</dl>
+<h2>Ergebnisse bearbeiten</h2>
+Ein Programm im Status "Wird durchgeführt" erlaubt die Eingabe der Ergebnisse. Dafür muss lediglich ein einzelnes Rennen doppelt angeklickt werden.<br />
+Die Zeile mit dem Rennen ändert dann ihr Aussehen und erlaubt sowohl die Umordnung der einzelnen Starter mit Hilfe der Maus, als auch die Eingabe von
+Zeiten in das rechts neben dem Boot angezeigte Textfeld.<br />
+Wenn Sie sich entscheiden, Zeiten einzugeben, dann müssen Sie das für jeden Starter, der das Ziel erreicht hat. Eine Umordnung ist dann nicht notwending,
+sie wird anhand der Zeiten automatisch vorgenommen.
+<p>Außerdem kann ein einzelner Eintrag ausgewählt werden und mittels der unter dem Startfeld dargestellten Buttons "DNS", "DNF" oder "DQ" markiert werden.
+<br />Die so markierten Starter werden in der Ergebnisliste bei der Speicherung automatisch an das Ende des Feldes gesetzt</p>
+<p><i>Bedienungshinweis: Befindet sich der Eingabecursor in einem der Textfelder zur Eingabe der Zeit, können Sie mit den Tasten
+<font face="Courier"><b>«Hoch»</b></font> und <font face="Courier"><b>«Runter»</b></font> zwischen den Eingaben der einzelnen Starter navigieren.
+<font face="Courier"><b>«Enter»</b></font> speichert die Ergebnisse für das Rennen.</i>
+</p>
