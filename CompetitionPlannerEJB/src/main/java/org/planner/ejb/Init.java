@@ -130,12 +130,12 @@ public class Init {
 		em.createNativeQuery("create or replace view vrole as " //
 				+ "select userid, r.role " //
 				+ "from User u " //
-				+ "left join User_Role ur on ur.user_id=u.id " //
+				+ "inner join User_Role ur on ur.user_id=u.id " //
 				+ "left join Role r on ur.role_id=r.id " //
 				+ "union all " //
 				+ "select userid, r2.role " //
 				+ "from User u " //
-				+ "left join User_Role ur on ur.user_id=u.id " //
+				+ "inner join User_Role ur on ur.user_id=u.id " //
 				+ "left join Role r on ur.role_id=r.id " //
 				+ "inner join Role_Role rr on rr.role_id=r.id " //
 				+ "left join Role r2 on r2.id=rr.roles_id ").executeUpdate();
