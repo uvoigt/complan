@@ -164,12 +164,6 @@
 			<version>4.9.6.Final</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.google.javascript</groupId>
-			<artifactId>closure-compiler</artifactId>
-			<version>v20180402</version>
-			<scope>provided</scope>
-		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>
@@ -223,11 +217,29 @@
 			</plugin>
 
 			<plugin>
+				<groupId>net.alchim31.maven</groupId>
+				<artifactId>yuicompressor-maven-plugin</artifactId>
+				<version>1.4.0</version>
+				<configuration>
+					<excludes>
+						<exclude>Parser/**</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>compress</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>1.8</version>
 				<executions>
 					<execution>
-						<id>compress</id>
+						<id>renameCompressed</id>
 						<phase>prepare-package</phase>
 						<goals>
 							<goal>run</goal>
@@ -236,32 +248,17 @@
 							<target>
 								<property name="warSourceDir" location="${project.build.directory}/${project.build.finalName}"/>
 								<property name="jsSource" location="${warSourceDir}/resources/js"/>
+								<property name="cssSource" location="${warSourceDir}/resources/css"/>
 
-								<!-- Kopieren der Web-Ressourcen -->
-								<copy todir="${warSourceDir}">
-									<fileset dir="${basedir}/src/main/webapp">
-										<include name="**/*" />
-									</fileset>
-								</copy>
-								<!-- Umbenennen der JS-Dateien -->
+								<!-- Umbenennen der min-Dateien -->
 								<move todir="${jsSource}">
 									<fileset dir="${jsSource}"/>
-									<mapper type="glob" from="*.js" to="*.jss"/>
+									<mapper type="glob" from="*-min.js" to="*.js"/>
 								</move>
-
-								<!-- Komprimieren des Javascripts -->
-								<apply executable="java" verbose="true" dest="${jsSource}">
-									<arg value="-jar"/>
-									<arg file="${maven.dependency.com.google.javascript.closure-compiler.jar.path}"/>
-									<arg value="--js_output_file"/>
-									<targetfile/>
-									<arg value="--rewrite_polyfills=false"/>
-									<srcfile/>
-									<fileset dir="${jsSource}" includes="*.jss"/> 
-									<mapper type="glob" from="*.jss" to="*.js"/>
-								</apply>
-								<!-- Löschen der unkomprimierten Dateien -->
-								<delete dir="${jsSource}" includes="*.jss"/>
+								<move todir="${cssSource}">
+									<fileset dir="${cssSource}"/>
+									<mapper type="glob" from="*-min.css" to="*.css"/>
+								</move>
 							</target>
 						</configuration>
 					</execution>
