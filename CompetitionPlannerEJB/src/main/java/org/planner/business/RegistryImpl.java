@@ -256,7 +256,7 @@ public class RegistryImpl {
 				return getFormattedMessage("email.passwordreset.alreadysent", CommonMessages.niceTimeString(
 						(int) ((emailToken.getTokenExpires() - System.currentTimeMillis()) / 1000 / 60)));
 		}
-		emailToken = createAndStoreToken(user, TokenType.email, 120);
+		emailToken = createAndStoreToken(user, TokenType.email, 12 * 60); // email token Lebensdauer 12 Stunden
 		String encodedToken = createEncodedToken(user, emailToken);
 
 		String emailText = getFormattedMessage("email.passwordreset.html", user.getFirstName(), user.getLastName(),
