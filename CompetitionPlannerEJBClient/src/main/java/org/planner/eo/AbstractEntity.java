@@ -14,7 +14,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 @MappedSuperclass
 @Cacheable
-public abstract class AbstractEntity implements Serializable {
+public abstract class AbstractEntity implements HasId, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -37,6 +37,7 @@ public abstract class AbstractEntity implements Serializable {
 	@Column
 	private Date updateTime;
 
+	@Override
 	public Long getId() {
 		return id;
 	}

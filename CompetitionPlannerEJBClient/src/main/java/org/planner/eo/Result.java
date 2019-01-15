@@ -20,7 +20,7 @@ import org.planner.util.Visible;
 @Subselect("select * from vresult")
 @Access(AccessType.FIELD)
 @NLSBundle("results")
-public class Result implements CanDelete, Serializable {
+public class Result implements CanDelete, HasId, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -55,6 +55,7 @@ public class Result implements CanDelete, Serializable {
 		return id;
 	}
 
+	@Override
 	public Long getId() {
 		return id;
 	}

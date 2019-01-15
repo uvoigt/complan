@@ -27,6 +27,7 @@ import javax.inject.Named;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.planner.eo.AbstractEntity;
+import org.planner.eo.HasId;
 import org.planner.model.LocalizedEnum;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.ColumnHandler.Column;
@@ -241,11 +242,16 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	public Object getSelectedItem() {
-		return JsfUtil.getViewVariable("selectedItem");
+		Long id = (Long) JsfUtil.getViewVariable("selectedItem");
+		if (id == null)
+			return null;
+		Map<String, Long> item = new HashMap<>();
+		item.put("id", id);
+		return item;
 	}
 
-	public void setSelectedItem(Object selectedItem) {
-		JsfUtil.setViewVariable("selectedItem", selectedItem);
+	public void setSelectedItem(HasId selectedItem) {
+		JsfUtil.setViewVariable("selectedItem", selectedItem != null ? selectedItem.getId() : null);
 	}
 
 	public RemoteDataModel<? extends Serializable> getDataModel(String typ) throws Exception {
