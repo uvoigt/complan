@@ -93,7 +93,9 @@ public class ExpressionParser {
 			boolean result = false;
 			for (int i = 0; i < node.jjtGetNumChildren(); i++) {
 				Object o = node.children[i].jjtAccept(this, data);
-				result |= o instanceof Boolean && ((Boolean) o).booleanValue();
+				if (!(o instanceof Boolean))
+					throw new RuntimeException(messages.incompatibleBoolean(getNodeValue(node.children[i])));
+				result |= ((Boolean) o).booleanValue();
 			}
 			return result;
 		}
@@ -103,7 +105,9 @@ public class ExpressionParser {
 			boolean result = true;
 			for (int i = 0; i < node.jjtGetNumChildren(); i++) {
 				Object o = node.children[i].jjtAccept(this, data);
-				result &= o instanceof Boolean && ((Boolean) o).booleanValue();
+				if (!(o instanceof Boolean))
+					throw new RuntimeException(messages.incompatibleBoolean(getNodeValue(node.children[i])));
+				result &= ((Boolean) o).booleanValue();
 			}
 			return result;
 		}
