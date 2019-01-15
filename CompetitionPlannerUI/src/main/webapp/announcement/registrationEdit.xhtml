@@ -141,7 +141,9 @@
 							</p:column>
 							<p:column id="gender" headerText="#{bundle.gender}" sortBy="#{user.gender}" filterBy="#{user.gender}" filterMatchMode="contains">
 								<h:outputText value="#{user.gender.text}"/>
-								<h:outputScript rendered="#{rowIndex == 0}">registrationEdit.updateAthletesCount(#{registrationBean.athletes.rowCount});</h:outputScript>
+							</p:column>
+							<p:column visible="false" rendered="#{rowIndex == 0}">
+								<h:outputScript>registrationEdit.updateAthletesCount(#{registrationBean.athletes.rowCount});</h:outputScript>
 							</p:column>
 						</p:dataTable>
 					</h:panelGroup>
