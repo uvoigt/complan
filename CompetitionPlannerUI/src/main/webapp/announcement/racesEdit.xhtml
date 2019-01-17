@@ -14,7 +14,7 @@
 		<ui:param name="title" value="#{bundle.races}"/>
 		<ui:define name="content">
 
-			<h:form prependId="false">
+			<h:form prependId="false" transient="true">
 
 				<h:panelGroup rendered="#{racesEditBean.announcement.status != 'announced'}">
 
