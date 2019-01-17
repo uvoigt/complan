@@ -68,13 +68,11 @@
 				reflow="true">
 
 			<f:facet name="header">
-				<h:panelGroup id="resultCount">
-					<p:outputLabel id="resultCountLabel"/>
-				</h:panelGroup>
+				<p:outputLabel styleClass="resultCount"/>
 			</f:facet>
 
 			<p:ajax event="page" listener="#{searchBean.onPagination}"/>
-			<p:ajax event="filter" listener="#{searchBean.onFilter}" oncomplete="checkEmpty('#{bundle.format('count', 'xxx')}')"/>
+			<p:ajax event="filter" listener="#{searchBean.onFilter}" oncomplete="checkEmpty('#{bundle.count}')"/>
 			<p:ajax event="sort" listener="#{searchBean.onSort}"/>
 			<pe:javascript event="rowDblselect" execute="rowDoubleClicked(PF('searchTable'), params[0].value)"/>
 			<f:event type="preRenderComponent" listener="#{searchBean.onPrerenderTable}"/>
@@ -92,7 +90,7 @@
 			<!--  diese column is ggf. nicht sichtbar.. dann ist der Property-Value null -->
 			<ui:param name="firstProperty" value="#{searchBean.getColumns(typ)[0].property}"/>
 
-			<p:column id="aktionenColumn" toggleable="false" style="min-width: calc(2.5em * #{searchBean.getButtonCount(component)} + 10px)" styleClass="toggler">
+			<p:column id="aktionenColumn" toggleable="false" style="width: calc(2.5em * #{searchBean.getButtonCount(component)} + 10px)" styleClass="toggler">
 				<f:facet name="header">
 					<p:commandButton id="toggler" type="button" title="#{bundle.columns}" icon="ui-icon-wrench"/>
 					<p:columnToggler datasource="searchTable" trigger="toggler" widgetVar="toggler">
@@ -131,7 +129,7 @@
 					</p:commandButton>
 				</ui:insert>
 
-				<h:outputScript rendered="#{rowIndex == searchBean.lastRow}">updateResultCount('#{bundle.format("count", "xxx")}', #{searchBean.getDataModel(typ).rowCount});updateColumnWidth(#{searchBean.getMaxButtonCount(component.parent.parent)})</h:outputScript>
+				<h:outputScript rendered="#{rowIndex == searchBean.lastRow}">updateCount(".resultCount","#{bundle.count}",#{searchBean.getDataModel(typ).rowCount});updateColumnWidth(#{searchBean.getMaxButtonCount(component.parent.parent)})</h:outputScript>
 			</p:column>
 		</p:dataTable>
 

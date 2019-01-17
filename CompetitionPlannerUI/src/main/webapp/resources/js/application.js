@@ -92,12 +92,10 @@ function setUrlParam(val) {
 }
 function checkEmpty(countLabel) {
 	if ($(".ui-datatable-empty-message").length > 0)
-		updateResultCount(countLabel, 0);
+		updateCount(".resultCount", countLabel, 0);
 }
-function updateResultCount(countLabel, count) {
-	if (count == undefined)
-		count = PF("searchTable").tbody.children().length;
-	$("[id$=resultCountLabel]").text(countLabel.replace(/xxx/, count));
+function updateCount(selector, countLabel, count) {
+	$(selector).text(countLabel.replace(/\{0\}/, count));
 }
 function updateColumnWidth(buttonCount) {
 	$("[id$=aktionenColumn]").css("width", "calc(2.5em * " + buttonCount + " + 10px)");
@@ -388,6 +386,22 @@ var programEdit = {
 };
 function initLoginDialog() {
 	$.ajaxSetup({
+		complete: function(xhr) {
+			if (xhr.pfSettings) {
+				var split = xhr.pfSettings.data.split("&");
+				var viewState = split[split.length - 1];
+				viewState = viewState.split("=")[1];
+				console.warn("request view state length: " + viewState.length);
+			}
+			if (xhr.responseXML) {
+				var children = xhr.responseXML.firstChild.firstChild.children;
+				for (var i = 0; i < children.length; i++) {
+					var child = children[i];
+					if (child.attributes && child.attributes.id && child.attributes.id.nodeValue.indexOf("javax.faces.ViewState") != -1)
+						console.warn("response view state length: " + child.textContent.length);
+				}
+			}
+		},
 		dataFilter: function(data) {
 			if (data.indexOf("{msg:loginTitle}") != -1) {
 				PrimeFaces.debug("Detected unauthenticated request");

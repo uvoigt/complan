@@ -145,6 +145,8 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 				if (!renderBean.filterRaces(renderBean.getRaceFilter(race), filter, Locale.getDefault()))
 					it.remove();
 			}
+			PrimeFaces.current().executeScript("updateCount('.raceCount', '"
+					+ JsfUtil.getScopedBundle().get("raceCount") + "', " + program.getRaces().size() + ")");
 		}
 	}
 
@@ -336,6 +338,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		Suchkriterien criteria = new Suchkriterien();
 		criteria.addFilter(Placement_.team.getName() + "." + ProgramRaceTeam_.programRace.getName() + ".id",
 				programRace.getId());
+		criteria.addSortierung(Placement_.position.getName(), true);
 		List<Placement> savedPlacements = service.search(Placement.class, criteria).getListe();
 		Placement result = savedPlacements.size() > 0 ? savedPlacements.get(0) : null;
 		if (result == null) {
@@ -370,7 +373,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		if (followUpRaces != null) {
 			List<Integer> rowIndexes = new ArrayList<>();
 			List<String> raceTexts = new ArrayList<>();
-			for (int i = followUpRaces.size() - 1; i >= 0; i--) {
+			for (int i = 0; i < followUpRaces.size(); i++) {
 				ProgramRace race = followUpRaces.get(i);
 				StringBuilder text = new StringBuilder();
 				text.append(renderBean.renderRaceNumber(race));
