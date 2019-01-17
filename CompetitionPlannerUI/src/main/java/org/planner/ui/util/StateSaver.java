@@ -1,13 +1,11 @@
 package org.planner.ui.util;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.el.MethodExpression;
 import javax.faces.component.FacesComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
@@ -15,11 +13,10 @@ import javax.faces.context.FacesContext;
 import org.primefaces.component.api.UIColumn;
 import org.primefaces.component.column.Column;
 import org.primefaces.model.SortMeta;
-import org.primefaces.model.SortOrder;
 
 @FacesComponent(tagName = "stateSaver", createTag = true, namespace = "http://planner.org/ui")
 public class StateSaver extends UIComponentBase {
-	private static class SerializableSortMeta extends SortMeta implements Serializable {
+	private static class MySortMeta extends SortMeta {
 		private static class MyColumn extends Column {
 			private String column;
 
@@ -37,15 +34,12 @@ public class StateSaver extends UIComponentBase {
 
 		private transient MyColumn column;
 		private String sortBy;
-		private String sortField;
-		private MethodExpression sortFunction;
-		private SortOrder sortOrder;
 
-		private SerializableSortMeta(SortMeta meta) {
+		private MySortMeta(SortMeta meta) {
 			sortBy = meta.getColumn().getColumnKey();
-			sortField = meta.getSortField();
-			sortFunction = meta.getSortFunction();
-			sortOrder = meta.getSortOrder();
+			setSortField(meta.getSortField());
+			setSortFunction(meta.getSortFunction());
+			setSortOrder(meta.getSortOrder());
 		}
 
 		@Override
@@ -53,21 +47,6 @@ public class StateSaver extends UIComponentBase {
 			if (column == null)
 				column = new MyColumn(sortBy);
 			return column;
-		}
-
-		@Override
-		public String getSortField() {
-			return sortField;
-		}
-
-		@Override
-		public MethodExpression getSortFunction() {
-			return sortFunction;
-		}
-
-		@Override
-		public SortOrder getSortOrder() {
-			return sortOrder;
 		}
 	}
 
@@ -86,14 +65,14 @@ public class StateSaver extends UIComponentBase {
 
 	@Override
 	public Object saveState(FacesContext context) {
-		// Leider steckt da irgendwo ein nicht serialisierbarer SortMeta drin :-/
+		// Leider steckt da irgendwo eine nicht serialisierbare Column drin :-/
 		for (Entry<String, Object> e : map.entrySet()) {
 			if (e.getValue() instanceof List) {
 				List<?> list = (List<?>) e.getValue();
 				if (list.size() > 0 && list.get(0) instanceof SortMeta) {
-					List<SerializableSortMeta> replacement = new ArrayList<>();
+					List<MySortMeta> replacement = new ArrayList<>();
 					for (Object object : list) {
-						replacement.add(new SerializableSortMeta((SortMeta) object));
+						replacement.add(new MySortMeta((SortMeta) object));
 					}
 					e.setValue(replacement);
 				}
