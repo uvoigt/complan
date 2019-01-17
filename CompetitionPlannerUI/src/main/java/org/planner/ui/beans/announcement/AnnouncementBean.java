@@ -95,7 +95,10 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	@Override
 	public void setItem(Object item) {
-		announcement = service.getObject(Announcement.class, ((Announcement) item).getId(), 3);
+		if (((Announcement) item).getId() != null)
+			announcement = service.getObject(Announcement.class, ((Announcement) item).getId(), 3);
+		else
+			announcement = (Announcement) item;
 		populateLocation();
 		if (announcement.getText() == null) {
 			announcement.setText(getTemplate());
