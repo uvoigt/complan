@@ -102,14 +102,10 @@
 								scrollable="false" scrollHeight="20%">
 
 							<f:facet name="header">
-								<h:panelGroup id="resultCount">
-									<h:outputLabel id="athletesCountLabel"/>
-								</h:panelGroup>
-								<h:panelGroup id="resultSelected">
-									<h:outputText value=" - "/>
-									<h:outputLabel id="resultSelectedLabel"
-										value="#{bundle.format('selected', registrationBean.selectedAthletes != null ? registrationBean.selectedAthletes.size() : 0)}"/>
-								</h:panelGroup>
+								<h:outputLabel id="athletesCountLabel"/>
+								<h:outputText value=" - "/>
+								<h:outputLabel id="resultSelectedLabel"
+									value="#{bundle.format('selected', registrationBean.selectedAthletes != null ? registrationBean.selectedAthletes.size() : 0)}"/>
 								<p:selectBooleanButton id="toggler" type="button"
 									style="float:right; margin: -5px -10px 0 0;"
 									onIcon="ui-icon-minus" offIcon="ui-icon-plus" title="#{bundle.chooseClub}"
@@ -154,7 +150,7 @@
 						var="entry" rowKey="#{entry.id}"
 						value="#{registrationBean.registration.entries}"
 						binding="#{registrationBean.registrationTable}"
-						emptyMessage="#{bundle.noRegistrations}"
+						emptyMessage="#{empty registrationBean.registrationTable.filters ? bundle.noRegistrations : bundle.noRegistrationMatch}"
 						sortMode="single"
 						selectionMode="single"
 						selection="#{registrationBean.selectedEntry}"
@@ -163,7 +159,7 @@
 						rowStyleClass="#{entry.race.boatClass.minimalTeamSize gt entry.participants.size() ? 'registrationIncomplete' : ''}">
 
 					<f:facet name="header">
-						<h:panelGroup layout="block" id="hallo">
+						<h:panelGroup layout="block" styleClass="">
 							<h:outputText value="#{bundle.format('registrationsCount', registrationBean.registration.entries.size())}"/>
 							<p:effect event="load" type="bounce" rendered="#{registrationBean.showEffect}"/>
 						</h:panelGroup>
