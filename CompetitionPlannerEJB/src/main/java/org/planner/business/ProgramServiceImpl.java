@@ -90,6 +90,7 @@ public class ProgramServiceImpl {
 		private int day;
 		private MutableDateTime time;
 		private int nextBreakIndex = -1;
+		private List<Long> times = new ArrayList<>();
 
 		private EvalContext(Announcement announcement, ProgramOptions options) {
 			this.announcement = announcement;
@@ -135,7 +136,9 @@ public class ProgramServiceImpl {
 					nextBreakIndex = 0;
 				}
 			}
-			return time.toDate();
+			Date date = time.toDate();
+			times.add(date.getTime());
+			return date;
 		}
 
 		private int getTimeOfDay(Date d) {
@@ -275,6 +278,8 @@ public class ProgramServiceImpl {
 	public void generateProgram(final Program program) {
 		common.checkWriteAccess(program, Operation.save);
 
+		long time = System.currentTimeMillis();
+
 		// lade alle Meldungen
 		Suchkriterien crit = new Suchkriterien();
 		crit.addFilter(Registration_.announcement.getName(), program.getAnnouncement().getId());
@@ -374,10 +379,17 @@ public class ProgramServiceImpl {
 			aFinal.setStartTime(context.nextTime());
 		}
 
+//		System.out.println(context.times);
+//		RaceMatrix matrix = new RaceMatrix(context.times, allHeats, semiFinals, instantFinals, finals);
+//		checkWithMatrix(matrix);
+
 		program.getRaces().addAll(allHeats);
 		program.getRaces().addAll(semiFinals);
 		program.getRaces().addAll(instantFinals);
 		program.getRaces().addAll(finals);
+
+		if (LOG.isDebugEnabled())
+			LOG.debug("Programmgenerierung dauerte " + (System.currentTimeMillis() - time) / 1000.0 + "s");
 
 		// jetzt haben wir alle Rennen beisammen
 		checkProgram(program.getRaces(), program);
@@ -528,7 +540,7 @@ public class ProgramServiceImpl {
 				+ "tu.firstName, tu.lastName, tu.birthDate, " //
 				+ "uc.id UserClubId, uc.shortName UCShort, uc.name UCName");
 		if (withResults) {
-			sql.append(", pl.position, pl.time, pl.extra");
+			sql.append(", pl.position, pl.time, pl.extra, pl.qualifiedFor");
 		}
 		sql.append(" from Program p " //
 				+ "inner join Announcement a on p.announcement_id=a.id "
@@ -616,8 +628,11 @@ public class ProgramServiceImpl {
 						Long resultTime = row[26] != null ? ((BigInteger) row[26]).longValue() : null;
 						ResultExtra extra = row[27] != null ? ResultExtra.class.getEnumConstants()[(int) row[27]]
 								: null;
+						RaceType qualifiedFor = row[28] != null ? RaceType.class.getEnumConstants()[(int) row[28]]
+								: null;
 						Placement placement = new Placement(raceTeam, resultTime, extra);
 						placement.setPosition(position);
+						placement.setQualifiedFor(qualifiedFor);
 						programRace.getPlacements().add(placement);
 					}
 				}
@@ -739,6 +754,7 @@ public class ProgramServiceImpl {
 		// Rennen Austausch muss gemerkt und nicht wiederholt werden
 		if (LOG.isDebugEnabled())
 			LOG.debug("Prüfe das Programm " + program.getAnnouncement().getName());
+		long time = System.currentTimeMillis();
 
 		List<ProgramRace> wrappedRaces = new ListView<>(races);
 		List<Change> changes = new ArrayList<>();
@@ -750,6 +766,8 @@ public class ProgramServiceImpl {
 		// copies.addAll(races);
 		// }
 
+		if (LOG.isDebugEnabled())
+			LOG.debug("Prüfung dauerte " + (System.currentTimeMillis() - time) / 1000.0 + "s");
 		return changes;
 	}
 
@@ -818,6 +836,12 @@ public class ProgramServiceImpl {
 		for (int i = 0; i < placements.size(); i++) {
 			Placement placement = placements.get(i);
 			placement.setPosition(i + 1);
+			if (placement.getExtra() == null) {
+				if (i < programRace.getIntoFinal())
+					placement.setQualifiedFor(RaceType.finalA);
+				else if (i < programRace.getIntoSemiFinal())
+					placement.setQualifiedFor(RaceType.semiFinal);
+			}
 		}
 		programRace.setPlacements(placements);
 
@@ -929,7 +953,6 @@ public class ProgramServiceImpl {
 			if (!qualifiedIt.hasNext())
 				continue;
 			Placement placement = qualifiedIt.next();
-			// TODO die sollten besser in er Query aussortiert werden
 			if (placement.getExtra() != null)
 				continue;
 

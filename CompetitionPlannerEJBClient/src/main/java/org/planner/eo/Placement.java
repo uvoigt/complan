@@ -10,6 +10,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
 import javax.persistence.OneToOne;
 
+import org.planner.eo.ProgramRace.RaceType;
 import org.planner.eo.ProgramRaceTeam.Id;
 import org.planner.model.ResultExtra;
 
@@ -27,6 +28,8 @@ public class Placement implements Serializable {
 	private Long time;
 
 	private ResultExtra extra;
+
+	private RaceType qualifiedFor;
 
 	@OneToOne
 	@JoinColumns({ @JoinColumn(name = "programrace_id"), @JoinColumn(name = "team_id") })
@@ -56,6 +59,14 @@ public class Placement implements Serializable {
 
 	public ResultExtra getExtra() {
 		return extra;
+	}
+
+	public RaceType getQualifiedFor() {
+		return qualifiedFor;
+	}
+
+	public void setQualifiedFor(RaceType qualifiedFor) {
+		this.qualifiedFor = qualifiedFor;
 	}
 
 	public ProgramRaceTeam getTeam() {

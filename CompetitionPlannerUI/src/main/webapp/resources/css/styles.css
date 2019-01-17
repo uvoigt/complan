@@ -353,9 +353,31 @@ input[readonly=readonly] {
 	float: left;
 }
 
-.teamTable tbody, .teamTable tr, .teamTable td {
+.teamTable tbody, .teamTable td {
 	border-width: 0px !important;
 	border-style: none !important;
+}
+
+.qNone {
+	border-width: 0px !important;
+	border-style: none !important;
+	background-image: none;
+}
+
+.qForSemiFinal {
+	border-bottom-style: dashed !important;
+	border-bottom-width: 1px !important;
+}
+
+.qForFinalA {
+	border-bottom-style: dotted !important;
+	border-bottom-width: 1px !important;
+}
+
+.deficit {
+	font-size: small;
+	opacity: .5;
+	filter: Alpha(Opacity=50);
 }
 
 .positionCol {
@@ -423,6 +445,10 @@ input[readonly=readonly] {
 	/* reflow styles */
 	.toggler > .ui-column-title {
 		visibility: hidden;
+	}
+	.toggler {
+		width: 100% !important;
+		display: flex !important;
 	}
 	.teamTable tbody, .teamTable tr {
 		border-bottom-width: 1px !important;
