@@ -17,6 +17,8 @@
 		<ui:define name="editArea">
 			<ui:param name="canSave" value="#{authBean.inRole('update_clubs')}"/>
 
+			<h:inputHidden value="#{club.version}"/>
+
 			<ui:include src="clubArea.xhtml"/>
 
 		</ui:define>

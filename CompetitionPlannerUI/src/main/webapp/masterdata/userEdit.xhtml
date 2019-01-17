@@ -18,6 +18,8 @@
 		<ui:define name="editArea">
 			<h:outputScript>$("[id$=clubSelection_panel]:gt(0)").remove()</h:outputScript>
 
+			<h:inputHidden value="#{user.version}"/>
+
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 8em"><h:outputText value="#{bundle.userId}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
