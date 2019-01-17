@@ -375,7 +375,7 @@ input[readonly=readonly] {
 }
 
 .deficit {
-	font-size: small;
+	font-size: smaller;
 	opacity: .5;
 	filter: Alpha(Opacity=50);
 }
