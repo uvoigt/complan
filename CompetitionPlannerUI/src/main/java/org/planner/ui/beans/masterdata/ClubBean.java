@@ -39,7 +39,7 @@ public class ClubBean extends AbstractEditBean {
 
 	@Override
 	public void setItem(Object item) {
-		club = (Club) item;
+		club = service.getObject(Club.class, ((Club) item).getId(), 2);
 	}
 
 	public boolean canDelete(@SuppressWarnings("unused") Map<String, String> item) {

@@ -51,7 +51,6 @@ import org.planner.eo.CanDelete;
 import org.planner.eo.Properties;
 import org.planner.eo.Properties_;
 import org.planner.eo.User;
-import org.planner.eo.User_;
 import org.planner.model.LocalizedEnum;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
@@ -212,15 +211,11 @@ public class PlannerDao {
 	@Transactional(TxType.SUPPORTS)
 	public User getUserByUserId(String userId) {
 		// das sind Nutzer, die manuell angelegt wurden
-		if (StringUtils.isEmpty(userId)) {
+		if (StringUtils.isEmpty(userId))
 			return null;
-		}
-		CriteriaBuilder builder = em.getCriteriaBuilder();
-		CriteriaQuery<User> query = builder.createQuery(User.class);
-		Root<User> root = query.from(User.class);
-		query.where(builder.equal(root.get(User_.userId), userId));
+
 		try {
-			return em.createQuery(query).getSingleResult();
+			return (User) em.createNamedQuery("userById").setParameter("userId", userId).getSingleResult();
 		} catch (NoResultException e) {
 			return null;
 		}
@@ -284,7 +279,7 @@ public class PlannerDao {
 			joined = new HashSet<>();
 			From<?, ?> from = dataRoot;
 
-			List<Selection<?>> selection = new ArrayList<Selection<?>>();
+			List<Selection<?>> selection = new ArrayList<>();
 			for (Property property : kriterien.getProperties()) {
 				String propertyName = property.getName();
 				if (hasDottedNotation(propertyName)) {
@@ -320,7 +315,7 @@ public class PlannerDao {
 		query.setMaxResults(kriterien.getZeilenAnzahl());
 		query.setFirstResult(kriterien.getZeilenOffset());
 
-		Suchergebnis<T> ergebnis = new Suchergebnis<T>(query.getResultList(), totalSize);
+		Suchergebnis<T> ergebnis = new Suchergebnis<>(query.getResultList(), totalSize);
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Paged query: gesamt:" + ergebnis.getGesamtgroesse());
 		}
@@ -487,7 +482,7 @@ public class PlannerDao {
 
 				Expression<?> feld = from.get(property);
 				if (orders == null) {
-					orders = new ArrayList<Order>();
+					orders = new ArrayList<>();
 				}
 				if (columnReplacement != null) {
 					Expression<?> replacement = columnReplacement.get(feld);

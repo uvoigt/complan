@@ -15,6 +15,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Temporal;
@@ -30,6 +31,7 @@ import org.planner.util.Visible;
 @Entity
 @Access(AccessType.FIELD)
 @NLSBundle("users")
+@NamedQuery(name = "userById", query = "from User u join fetch u.roles join fetch u.club c join fetch c.address a join fetch a.city join fetch a.country where userId=:userId")
 public class User extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;

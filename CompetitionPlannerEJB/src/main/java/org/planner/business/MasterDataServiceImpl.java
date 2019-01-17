@@ -21,7 +21,6 @@ import org.planner.eo.Club_;
 import org.planner.eo.Role;
 import org.planner.eo.Role_;
 import org.planner.eo.User;
-import org.planner.eo.User_;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.model.Suchkriterien.Filter;
@@ -49,22 +48,8 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		return user != null ? user.getName() : userId;
 	}
 
-	public User getUserByUserId(String userId, boolean fetch) {
-		Suchkriterien krit = new Suchkriterien();
-		krit.addFilter(User_.userId.getName(), userId);
-		krit.setIgnoreCase(false);
-		krit.setExact(true);
-		Suchergebnis<User> entities = dao.search(User.class, krit, null);
-		User user = null;
-		if (entities.getGesamtgroesse() > 0) {
-			user = entities.getListe().get(0);
-			if (fetch) {
-				user.getRoles().size();
-				if (user.getClub() != null)
-					user.getClub().getId();
-			}
-		}
-		return user;
+	public User getUserByUserId(final String userId) {
+		return dao.getUserByUserId(userId);
 	}
 
 	public User saveUser(User user) {
@@ -73,7 +58,7 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		User existing = user.getId() != null ? common.getById(User.class, user.getId(), 0) : null;
 		User loggedInUser = common.checkWriteAccess(existing != null ? existing : user, Operation.save);
 		if (user.getId() == null) {
-			User eo = getUserByUserId(user.getUserId(), false);
+			User eo = getUserByUserId(user.getUserId());
 			if (eo != null)
 				throw new FachlicheException(messages.getResourceBundle(), "user.exists", user.getUserId());
 		}
