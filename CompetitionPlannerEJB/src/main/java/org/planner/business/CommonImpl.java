@@ -36,6 +36,7 @@ import org.planner.eo.AbstractEnum_;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
+import org.planner.eo.HasId;
 import org.planner.eo.Program;
 import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramRace;
@@ -117,9 +118,9 @@ public class CommonImpl {
 
 			Suchergebnis<Object[]> data = dao.search(entityType, Object[].class, criteria, queryModifier);
 			List<Object[]> list = data.getListe();
-			List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>(list.size());
+			List<HashMap<String, Object>> result = new ArrayList<>(list.size());
 			for (Object entry : data) {
-				HashMap<String, Object> resultRow = new HashMap<String, Object>();
+				HashMap<String, Object> resultRow = new HashMap<>();
 				if (entry instanceof Object[]) {
 					Object[] row = (Object[]) entry;
 					// eine Zeile muss genauso lang sein wie die
@@ -136,7 +137,7 @@ public class CommonImpl {
 					result.add(resultRow);
 				}
 			}
-			return (Suchergebnis<T>) new Suchergebnis<HashMap<String, Object>>(result, data.getGesamtgroesse());
+			return (Suchergebnis<T>) new Suchergebnis<>(result, data.getGesamtgroesse());
 		} else {
 			return dao.search(entityType, criteria, queryModifier);
 		}
@@ -174,9 +175,9 @@ public class CommonImpl {
 							fetch(key, depth - 1);
 						}
 					}
-				} else if (value instanceof AbstractEntity) {
+				} else if (value instanceof HasId) {
 					// kein Fetch bei Property-Access
-					AbstractEntity member = (AbstractEntity) value;
+					HasId member = (HasId) value;
 					member.getId();
 					if (depth > 0)
 						fetch(member, depth - 1);
@@ -452,7 +453,7 @@ public class CommonImpl {
 	public Map<String, Properties> leseBenutzerEinstellungen(String angemeldeterBenutzter) {
 		List<Properties> userProps = dao.leseBenutzerEinstellungen(angemeldeterBenutzter);
 		List<Properties> defaultProps = dao.leseBenutzerEinstellungen(null);
-		Map<String, Properties> result = new HashMap<String, Properties>(
+		Map<String, Properties> result = new HashMap<>(
 				Math.max(userProps.size(), defaultProps.size()));
 		for (Properties p : defaultProps) {
 			result.put(p.getName(), p);

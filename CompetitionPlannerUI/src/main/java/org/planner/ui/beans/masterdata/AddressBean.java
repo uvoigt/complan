@@ -56,7 +56,7 @@ public class AddressBean implements Serializable {
 		String submittedStreet = (String) uiStreet.getSubmittedValue();
 		Country countryValue = (Country) uiCountry.getValue();
 		City cityValue = (City) uiCity.getValue();
-		String postCodeValue = (String) uiPostCode.getValue();
+		String postCodeValue = (String) uiPostCode.getSubmittedValue();
 		String streetValue = (String) uiStreet.getSubmittedValue();
 		boolean required = StringUtils.isNotEmpty(submittedCountry) || countryValue != null
 				|| StringUtils.isNotEmpty(submittedCity) || cityValue != null

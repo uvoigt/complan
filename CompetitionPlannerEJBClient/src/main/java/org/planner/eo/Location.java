@@ -2,8 +2,10 @@ package org.planner.eo;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 
 @Entity
 @Access(AccessType.FIELD)
@@ -11,7 +13,7 @@ public class Location extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;
 
-	@ManyToOne
+	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
 	private Address address = new Address();
 
 	@ManyToOne

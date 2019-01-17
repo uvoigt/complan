@@ -40,6 +40,7 @@ import org.planner.ui.util.JsfUtil;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.primefaces.component.calendar.Calendar;
+import org.primefaces.component.selectoneradio.SelectOneRadio;
 import org.primefaces.event.SelectEvent;
 
 @Named
@@ -64,8 +65,10 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	private List<ColumnModel> columns;
 
+	// binding
 	private Calendar startDate;
 	private Calendar endDate;
+	private SelectOneRadio radio;
 
 	@Override
 	@PostConstruct
@@ -78,7 +81,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
 		if (id != null && !isCancelPressed()) {
-			announcement = service.getObject(Announcement.class, id, 1);
+			announcement = service.getObject(Announcement.class, id, 2);
 			JsfUtil.setViewVariable("id", id);
 		} else {
 			announcement = new Announcement();
@@ -92,7 +95,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	@Override
 	public void setItem(Object item) {
-		announcement = (Announcement) item;
+		announcement = service.getObject(Announcement.class, ((Announcement) item).getId(), 3);
 		populateLocation();
 		if (announcement.getText() == null) {
 			announcement.setText(getTemplate());
@@ -133,6 +136,14 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		this.endDate = endDate;
 		if (announcement.getStartDate() != null)
 			endDate.setMindate(announcement.getStartDate());
+	}
+
+	public SelectOneRadio getRadio() {
+		return radio;
+	}
+
+	public void setRadio(SelectOneRadio radio) {
+		this.radio = radio;
 	}
 
 	public Announcement getAnnouncement() {

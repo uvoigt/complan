@@ -14,7 +14,7 @@
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<p:autoComplete value="#{address.country}" converter="#{countryConverter}"
 					completeMethod="#{addressBean.getCountries}" var="country" itemValue="#{country.name}" itemLabel="#{country.name}"
-					required="#{addressBean.required}" requiredMessage="#{addressBundle.format('fieldValidation', addressBundle.country)}"
+					required="#{required or addressBean.required}" requiredMessage="#{addressBundle.format('fieldValidation', addressBundle.country)}"
 					readonly="#{not canSave}" binding="#{addressBean.uiCountry}"/>
 			</div>
 		</div>
@@ -23,7 +23,7 @@
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<p:autoComplete value="#{address.city}" converter="#{cityConverter}"
 					completeMethod="#{addressBean.getCities}" var="city" itemValue="#{city.name}" itemLabel="#{city.name}"
-					required="#{addressBean.required}" requiredMessage="#{addressBundle.format('fieldValidation', addressBundle.city)}"
+					required="#{required or addressBean.required}" requiredMessage="#{addressBundle.format('fieldValidation', addressBundle.city)}"
 					readonly="#{not canSave}" binding="#{addressBean.uiCity}"/>
 			</div>
 		</div>
@@ -31,7 +31,7 @@
 			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{addressBundle.postCode}"/></div>
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<p:inputText value="#{address.postCode}" autocomplete="off" maxlength="10" size="10"
-					required="#{addressBean.required}" requiredMessage="#{addressBundle.format('fieldValidation', addressBundle.postCode)}"
+					required="#{required or addressBean.required}" requiredMessage="#{addressBundle.format('fieldValidation', addressBundle.postCode)}"
 					readonly="#{not canSave}" binding="#{addressBean.uiPostCode}"/>
 			</div>
 		</div>
@@ -39,7 +39,7 @@
 			<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{addressBundle.street}"/></div>
 			<div class="ui-g-12 ui-md-6 ui-lg-8">
 				<p:inputText value="#{address.street}" autocomplete="off" maxlength="255"
-					required="#{addressBean.required}" requiredMessage="#{addressBundle.format('fieldValidation', addressBundle.street)}"
+					required="#{required or addressBean.required}" requiredMessage="#{addressBundle.format('fieldValidation', addressBundle.street)}"
 					readonly="#{not canSave}" binding="#{addressBean.uiStreet}"
 					style="width: 98%"/>
 			</div>

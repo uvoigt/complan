@@ -151,15 +151,7 @@ public class AnnouncementServiceImpl {
 
 		common.checkWriteAccess(existing != null ? existing : announcement, Operation.save);
 
-		if (existing != null) {
-			existing.setName(announcement.getName());
-			existing.setStartDate(announcement.getStartDate());
-			existing.setEndDate(announcement.getEndDate());
-			existing.setCategory(announcement.getCategory());
-			existing.setText(announcement.getText());
-			// TODO existing.getLocation().;
-			announcement = existing;
-		} else {
+		if (existing == null) {
 			announcement.setStatus(AnnouncementStatus.created);
 			announcement.setClub(common.getCallingUser().getClub());
 		}
@@ -178,8 +170,7 @@ public class AnnouncementServiceImpl {
 		Location location = announcement.getLocation();
 		if (location.getClub() != null)
 			location.setAddress(null);
-		if (location.getId() == null)
-			common.save(location);
+		common.save(location);
 		// Location openingLocation = announcement.getOpeningLocation();
 		// if (openingLocation.getClub() != null)
 		// openingLocation.setAddress(null);

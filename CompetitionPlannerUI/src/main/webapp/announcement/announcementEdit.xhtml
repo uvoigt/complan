@@ -20,6 +20,8 @@
 
 			<ui:param name="canSave" value="#{announcement.status != 'announced'}"/>
 
+			<h:inputHidden value="#{announcement.version}"/>
+
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.name}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
@@ -63,12 +65,13 @@
 						<p:selectOneRadio value="#{announcementBean.location}" required="true"
 								requiredMessage="#{bundle.format('fieldValidation', bundle.location)}"
 								onclick="if (this.value == 'address') {PF('locationEdit').show();} else {PF('locationEdit').hide()}"
-								style="float: left">
+								style="float: left" binding="#{announcementBean.radio}">
 							<f:selectItem itemValue="club" itemLabel="#{bundle.club}"/>
 							<f:selectItem itemValue="address" itemLabel="#{bundle.address}"/>
 						</p:selectOneRadio>
 						<p:inplace widgetVar="locationEdit">
 							<ui:param name="address" value="#{announcement.location.address}"/>
+							<ui:param name="required" value="#{announcementBean.radio.value == 'address'}"/>
 							<ui:include src="/masterdata/addressArea.xhtml"/>
 						</p:inplace>
 					</h:panelGroup>

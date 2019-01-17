@@ -6,6 +6,7 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
@@ -15,7 +16,7 @@ import org.planner.util.Visible;
 
 @Entity
 @Access(AccessType.FIELD)
-public class Address implements Serializable {
+public class Address implements HasId, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
@@ -25,10 +26,10 @@ public class Address implements Serializable {
 	@Version
 	private int version;
 
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	private Country country;
 
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Visible
 	private City city;
 
@@ -43,6 +44,11 @@ public class Address implements Serializable {
 	private String addition;
 
 	private String homepage;
+
+	@Override
+	public Long getId() {
+		return id;
+	}
 
 	public Country getCountry() {
 		return country;

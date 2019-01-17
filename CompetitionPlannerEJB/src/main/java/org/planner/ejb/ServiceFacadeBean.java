@@ -146,7 +146,7 @@ public class ServiceFacadeBean implements ServiceFacade {
 
 	@Override
 	public User getLoggedInUser() {
-		return masterData.getUserByUserId(caller.getLoginName(), true);
+		return masterData.getUserByUserId(caller.getLoginName());
 	}
 
 	@Override

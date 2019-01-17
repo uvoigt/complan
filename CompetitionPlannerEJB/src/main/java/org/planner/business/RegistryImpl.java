@@ -187,7 +187,7 @@ public class RegistryImpl {
 	}
 
 	public String sendRegister(String email, String resetUrl) {
-		User user = masterData.getUserByUserId(email, false);
+		User user = masterData.getUserByUserId(email);
 		if (user != null) {
 			// Ein Benutzer, der sich bereits angemeldet hatte, kann sich nicht
 			// noch einmal registrieren
@@ -235,7 +235,7 @@ public class RegistryImpl {
 	}
 
 	public String sendPasswortReset(String userId, String resetUrl) {
-		User user = masterData.getUserByUserId(userId, false);
+		User user = masterData.getUserByUserId(userId);
 		return user != null ? internalSendPasswordReset(user, resetUrl) : messages.getMessage("user.unknown");
 	}
 
