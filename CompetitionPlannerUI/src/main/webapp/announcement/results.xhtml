@@ -12,6 +12,8 @@
 		<ui:param name="typ" value="org.planner.eo.Result"/>
 		<ui:param name="bearbeitenLink" value="/announcement/resultEdit.xhtml"/>
 		<ui:param name="editBean" value="#{resultBean}"/>
+		<ui:param name="renderDownloadSupport" value="true"/>
+		<ui:param name="uploadBean" value="#{resultBean.uploadBean}"/>
 
 		<ui:param name="noButtons" value="true"/>
 		<ui:define name="newButton"/>
@@ -23,6 +25,13 @@
 					process="@form"
 					update="mainContent"
 					styleClass="editButton"/>
+		</ui:define>
+		<ui:define name="addRowButtons">
+			<p:commandButton icon="ui-icon-print" title="#{bundle.createPdf}"
+					action="#{resultBean.uploadBean.create(null, item)}"
+					process="@this"
+					partialSubmit="true"
+					oncomplete="if (args &amp;&amp; !args.validationFailed) { PrimeFaces.addSubmitParam('main',{'token':args.token}); PF('pdfButton').jq.click(); }"/>
 		</ui:define>
 	</ui:composition>
 </html>

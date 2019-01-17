@@ -1,30 +1,44 @@
 package org.planner.ui.beans.announcement;
 
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
+import javax.faces.context.FacesContext;
 import javax.faces.event.ComponentSystemEvent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.apache.commons.lang.StringUtils;
+import org.planner.eo.Announcement;
+import org.planner.eo.Placement;
 import org.planner.eo.Program;
 import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.Result;
 import org.planner.ui.beans.AbstractEditBean;
+import org.planner.ui.beans.UploadBean;
+import org.planner.ui.beans.UploadBean.DownloadHandler;
+import org.planner.ui.util.BerichtGenerator;
 import org.planner.ui.util.JsfUtil;
+import org.primefaces.PrimeFaces;
 
 @Named
 @RequestScoped
-public class ResultBean extends AbstractEditBean {
+public class ResultBean extends AbstractEditBean implements DownloadHandler {
 
 	private static final long serialVersionUID = 1L;
 
 	@Inject
 	private RenderBean renderBean;
+
+	@Inject
+	private BerichtGenerator generator;
+
+	private UploadBean uploadBean;
 
 	private Program program;
 
@@ -34,6 +48,8 @@ public class ResultBean extends AbstractEditBean {
 	@PostConstruct
 	public void init() {
 		super.init();
+
+		uploadBean = new UploadBean(this, null, null);
 
 		Long id = getIdFromRequestParameters();
 		if (id == null)
@@ -84,6 +100,10 @@ public class ResultBean extends AbstractEditBean {
 		JsfUtil.setViewVariable("filter", filter);
 	}
 
+	public UploadBean getUploadBean() {
+		return uploadBean;
+	}
+
 	/*
 	 * Diese Variante des Filterns (lazy=true und anstelle filterBy="#{renderBean.getRaceFilter(race)}"
 	 * filterFunction="#{renderBean.filterRaces}" diese Lösung dient dem Vermeiden von setValue(filteredValue).
@@ -99,10 +119,52 @@ public class ResultBean extends AbstractEditBean {
 				if (noResults || filtered)
 					it.remove();
 			}
+			PrimeFaces.current().executeScript("updateCount('.raceCount', '"
+					+ JsfUtil.getScopedBundle().get("raceCount") + "', " + program.getRaces().size() + ")");
 		}
+	}
+
+	public String getRowStyleClass(ProgramRace race, Placement placement, int nextIndex) {
+		if (placement.getQualifiedFor() != null) {
+			Placement next = nextIndex < race.getPlacements().size() ? race.getPlacements().get(nextIndex) : null;
+			if (next != null && next.getQualifiedFor() != placement.getQualifiedFor())
+				return "qNone qFor" + StringUtils.capitalize(placement.getQualifiedFor().toString());
+		}
+		return "qNone";
+	}
+
+	public boolean isSeparatorRendered(ProgramRace race, Placement placement, int nextIndex) {
+		if (placement.getQualifiedFor() != null) {
+			Placement next = nextIndex < race.getPlacements().size() ? race.getPlacements().get(nextIndex) : null;
+			if (next == null || next.getQualifiedFor() != placement.getQualifiedFor())
+				return true;
+		}
+		return false;
+	}
+
+	public Long computeDeficit(ProgramRace race, Placement placement) {
+		if (placement.getTime() != null) {
+			Placement first = race.getPlacements().get(0);
+			return placement.getTime() - first.getTime();
+		}
+		return null;
 	}
 
 	private void loadResults(Long programId) {
 		program = service.getProgram(programId, true, true);
+	}
+
+	@Override
+	public String getDownloadFileName(String typ, Object selection) {
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selection, "id");
+		loadResults(id);
+		Announcement announcement = program.getAnnouncement();
+		return JsfUtil.getScopedBundle().format("pdfName", announcement.getName(), announcement.getStartDate());
+	}
+
+	@Override
+	public void handleDownload(OutputStream out, String typ, Object selection) throws Exception {
+		generator.generateResult(program, out);
 	}
 }
