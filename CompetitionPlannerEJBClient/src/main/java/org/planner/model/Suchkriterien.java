@@ -139,7 +139,7 @@ public class Suchkriterien implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private int zeilenOffset;
-	private int zeilenAnzahl;
+	private int zeilenAnzahl = Integer.MAX_VALUE;
 	private Map<String, Filter> filter;
 	private boolean ignoreCase = true;
 	private boolean exact;
@@ -198,7 +198,7 @@ public class Suchkriterien implements Serializable {
 
 	public void addSortierung(String sortierFeld, boolean asc) {
 		if (sortierung == null)
-			sortierung = new ArrayList<SortField>();
+			sortierung = new ArrayList<>();
 		sortierung.add(new SortField(sortierFeld, asc));
 	}
 
