@@ -22,13 +22,13 @@
 			</ui:remove>
 				<p:fieldset toggleable="true" collapsed="true" toggleSpeed="0"
 						legend="#{bundle.options}" widgetVar="optionsSet"
-						rendered="#{authBean.inRole('update_programs') and program.announcement.club.name == authBean.loggedInUser.club.name}">
+						rendered="#{authBean.inRole('update_programs') and program.announcement.club.name == authBean.loggedInUser.club.name
+								and programBean.program.status == 'created'}">
 					<pe:javascript event="toggle" execute="programEdit.initExpr()"/>
 					<h:panelGroup layout="block" styleClass="ui-g">
 						<h:panelGroup layout="block" style="width: 100%">
 							<p:inputTextarea id="expr" value="#{programOptionsBean.program.options.expr}" style="width: 100%" rows="10" widgetVar="expr"
-								completeMethod="#{programOptionsBean.suggestExpr}" minQueryLength="100" onkeyup="programEdit.evalExpr()"
-								disabled="#{programBean.program.status != 'created'}"/>
+								completeMethod="#{programOptionsBean.suggestExpr}" minQueryLength="100" onkeyup="programEdit.evalExpr()"/>
 							<p:inputText widgetVar="exprStatus" readonly="true" style="width: 100%; color: red"/>
 						</h:panelGroup>
 
@@ -40,20 +40,16 @@
 								<p:dataList var="dayTime" rowIndexVar="rowIndex" value="#{programBean.program.options.dayTimes}" styleClass="expanded" itemType="circle">
 									<h:outputText value="#{bundle.day} #{rowIndex + 1}" styleClass="program-dayTimes"/>
 									<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].start}" pattern="HH:mm" timeOnly="true"
-											size="8" styleClass="program-dayTimes"
-											disabled="#{programBean.program.status != 'created'}"/>
+											size="8" styleClass="program-dayTimes"/>
 									<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].end}" pattern="HH:mm" timeOnly="true"
-											size="8" styleClass="program-dayTimes"
-											disabled="#{programBean.program.status != 'created'}"/>
+											size="8" styleClass="program-dayTimes"/>
 									<p:dataList var="break" rowIndexVar="breakIndex" value="#{programBean.program.options.dayTimes[rowIndex].breaks}"
 											styleClass="expanded program-dayTimes datalist-blank" type="none">
 										<h:outputText value="#{bundle.breakBegin}" styleClass="program-dayTimes"/>
 										<p:calendar value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].time}" pattern="HH:mm"
-												timeOnly="true" size="8" styleClass="program-dayTimes"
-												disabled="#{programBean.program.status != 'created'}"/>
+												timeOnly="true" size="8" styleClass="program-dayTimes"/>
 										<p:spinner value="#{programBean.program.options.dayTimes[rowIndex].breaks[breakIndex].duration}" min="0"
-												size="1" style="margin-right: 1px"
-												disabled="#{programBean.program.status != 'created'}"/>
+												size="1" style="margin-right: 1px"/>
 										<h:outputText value="#{bundle.breakDuration}"/>
 									</p:dataList>
 								</p:dataList>
@@ -63,8 +59,7 @@
 						<h:panelGroup layout="block" styleClass="ui-g">
 							<h:panelGroup layout="block" style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.timeLag}"/></h:panelGroup>
 							<h:panelGroup layout="block" style="">
-								<p:spinner value="#{programBean.program.options.timeLag}" min="0" size="1"
-										disabled="#{programBean.program.status != 'created'}"/>
+								<p:spinner value="#{programBean.program.options.timeLag}" min="0" size="1"/>
 							</h:panelGroup>
 						</h:panelGroup>
 
@@ -73,8 +68,7 @@
 								<h:outputText value="#{bundle.childProtection}"/>
 							</h:panelGroup>
 							<h:panelGroup layout="block" style="width: 15em; margin-right: 1em">
-								<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}"
-										disabled="#{programBean.program.status != 'created'}">
+								<p:selectBooleanCheckbox value="#{programBean.program.options.childProtection}">
 									<p:ajax update="childProtection" partialSubmit="true"/>
 								</p:selectBooleanCheckbox>
 							</h:panelGroup>
@@ -82,16 +76,14 @@
 								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.racesPerDay}"/></div>
 								<h:panelGroup layout="block" style="">
 									<p:spinner value="#{programBean.program.options.racesPerDay}" min="0" size="1" 
-											readonly="#{not programBean.program.options.childProtection}"
-											disabled="#{programBean.program.status != 'created'}"/>
+											readonly="#{not programBean.program.options.childProtection}"/>
 								</h:panelGroup>
 							</div>
 							<div class="ui-g">
 								<div style="width: 15em; margin-right: 1em"><h:outputText value="#{bundle.protectionPeriod}"/></div>
 								<h:panelGroup layout="block" style="">
 									<p:spinner value="#{programBean.program.options.protectionPeriod}" min="0" size="1"
-											readonly="#{not programBean.program.options.childProtection}"
-											disabled="#{programBean.program.status != 'created'}"/>
+											readonly="#{not programBean.program.options.childProtection}"/>
 									</h:panelGroup>
 							</div>
 						</h:panelGroup>
@@ -110,7 +102,7 @@
 										programBean.program.status == 'created'}"
 								styleClass="gap"/>
 						<h:panelGroup styleClass="gap">
-							<p:selectBooleanCheckbox value="#{programBean.showTeams}" itemLabel="#{bundle.showTeams}">
+							<p:selectBooleanCheckbox id="showTeams" value="#{programBean.showTeams}" itemLabel="#{bundle.showTeams}">
 								<p:ajax partialSubmit="true" update="programTable"/>
 							</p:selectBooleanCheckbox>
 						</h:panelGroup>
