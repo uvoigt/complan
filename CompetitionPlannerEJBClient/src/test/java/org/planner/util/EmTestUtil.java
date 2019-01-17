@@ -17,7 +17,7 @@ public class EmTestUtil {
 		Map<String, String> properties = new HashMap<>();
 		properties.put("hibernate.connection.username", "sa");
 		properties.put("hibernate.connection.password", "sa");
-		properties.put("hibernate.connection.url", "jdbc:h2:unittestdb");
+		properties.put("hibernate.connection.url", "jdbc:h2:./unittestdb");
 		try {
 			emf = Persistence.createEntityManagerFactory("PLANNER_PU", properties);
 		} catch (Exception e) {
