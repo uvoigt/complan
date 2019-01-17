@@ -21,18 +21,24 @@
 			selection="#{programBean.selectedRaces}"
 			filterEvent="enter"
 			editable="true" editMode="cell" cellEditMode="lazy" editInitEvent="dblclick" saveOnCellBlur="false"
-			styleClass="#{isEditable ? '' : 'readonly'}">
+			styleClass="#{isEditable ? '' : 'readonly'}"
+			transient="true">
 
 		<pe:javascript event="cellEditInit" execute="programEdit.cellEditInit(ext)"/>
 		<p:ajax event="cellEdit" listener="#{programBean.onResultUpdate}" partialSubmitFilter="[data-rk] .ui-cell-editing :input" partialSubmit="true" update="messagesPopup"/>
 		<pe:javascript event="cellEditCancel" execute="ext.oncomplete()"/>
 		<f:event type="preRenderComponent" listener="#{programBean.onPrerenderTable}"/>
+		<p:ajax event="filter" process="@form:showTeams"/>
 
 		<p:column filterValue="#{programBean.filter}" filterBy="#{true}" styleClass="watermark">
+			<f:facet name="header">
+				<h:outputLabel styleClass="raceCount" value="#{bundle.format('raceCount', programBean.program.races.size())}"/>
+			</f:facet>
 			<p:watermark value="#{bundle.filterHint}" for="@(.watermark)"/>
 			<p:cellEditor disabled="#{not isEditable}">
 				<f:facet name="output">
-					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable program">
+					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true"
+							styleClass="teamTable program" rowStyleClass="qNone">
 						<f:facet name="header">
 							<h:panelGroup styleClass="#{race.raceType}">
 								<h:panelGroup layout="block" styleClass="raceTitle">
