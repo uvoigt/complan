@@ -46,9 +46,9 @@ public class ImageCreator {
 		String text = sb.toString();
 		FontMetrics fm = gc.getFontMetrics();
 		int stringWidth = fm.stringWidth(text);
-		int stringHeight = fm.getAscent();
+		int stringHeight = fm.getHeight();
 		gc.setPaint(Color.yellow);
-		gc.drawString(text, (width - stringWidth) / 2, height / 2 + stringHeight / 2 - fm.getDescent() + 1);
+		gc.drawString(text, (width - stringWidth) / 2, stringHeight);
 
 		BufferedImage dest = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		ChromeFilter filter = new ChromeFilter();
