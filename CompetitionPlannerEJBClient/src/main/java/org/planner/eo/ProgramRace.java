@@ -46,7 +46,8 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	@GeneratedValue
 	private Long id;
 
-	@OneToOne(optional = false)
+	@OneToOne
+	@JoinColumn(nullable = false)
 	private Race race;
 
 	// ist ein DateTime, um den Tag zu identifizieren
