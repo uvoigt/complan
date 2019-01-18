@@ -18,9 +18,11 @@ public class ContextInterceptor {
 		Map<String, Object> data = context.getContextData();
 		@SuppressWarnings("unchecked")
 		Map<Object, Object> map = (Map<Object, Object>) data.get("org.jboss.ejb.client.invocation.attachments");
-		Locale locale = (Locale) map.values().iterator().next();
 		ClientContext clientContext = new ClientContext();
-		clientContext.setLocale(locale);
+		for (Object content : map.values()) {
+			if (content instanceof Locale)
+				clientContext.setLocale((Locale) content);
+		}
 		ClientContext.set(clientContext);
 		try {
 			return context.proceed();

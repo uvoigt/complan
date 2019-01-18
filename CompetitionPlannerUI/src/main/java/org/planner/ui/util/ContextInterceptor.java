@@ -2,7 +2,6 @@ package org.planner.ui.util;
 
 import java.util.Locale;
 
-import javax.annotation.PostConstruct;
 import javax.faces.context.FacesContext;
 
 import org.jboss.ejb.client.AttachmentKey;
@@ -11,21 +10,25 @@ import org.jboss.ejb.client.EJBClientInterceptor;
 import org.jboss.ejb.client.EJBClientInvocationContext;
 import org.planner.util.ClientContext;
 
-//@Singleton
-//@Startup
+/*
+ https://github.com/xcoulon/wildfly-quickstart/tree/master/ejb-security-interceptors
+*/
 public class ContextInterceptor implements EJBClientInterceptor {
 
-	@PostConstruct
+	@SuppressWarnings("deprecation")
 	public void register() {
 		EJBClientContext.requireCurrent().registerInterceptor(0, this);
 	}
 
 	@Override
 	public void handleInvocation(EJBClientInvocationContext context) throws Exception {
-		Locale locale = FacesContext.getCurrentInstance().getApplication().getDefaultLocale();
-		ClientContext clientContext = new ClientContext();
-		clientContext.setLocale(locale);
-		context.putAttachment(new AttachmentKey<>(), locale);
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		if (ctx != null) {
+			Locale locale = ctx.getApplication().getDefaultLocale();
+			ClientContext clientContext = new ClientContext();
+			clientContext.setLocale(locale);
+			context.putAttachment(new AttachmentKey<>(), locale);
+		}
 		context.sendRequest();
 	}
 
