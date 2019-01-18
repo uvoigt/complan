@@ -164,6 +164,12 @@
 			<version>5.0.3.Final</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.google.javascript</groupId>
+			<artifactId>closure-compiler</artifactId>
+			<version>v20180402</version>
+			<scope>provided</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>
@@ -224,6 +230,7 @@
 					<excludes>
 						<exclude>Parser/**</exclude>
 					</excludes>
+					<encoding>UTF-8</encoding>
 				</configuration>
 				<executions>
 					<execution>
@@ -239,7 +246,7 @@
 				<version>1.8</version>
 				<executions>
 					<execution>
-						<id>renameCompressed</id>
+						<id>compressBetter</id>
 						<phase>prepare-package</phase>
 						<goals>
 							<goal>run</goal>
@@ -250,15 +257,25 @@
 								<property name="jsSource" location="${warSourceDir}/resources/js"/>
 								<property name="cssSource" location="${warSourceDir}/resources/css"/>
 
-								<!-- Umbenennen der min-Dateien -->
-								<move todir="${jsSource}">
-									<fileset dir="${jsSource}"/>
+								<!-- Nochmaliges Komprimieren des Javascripts -->
+								<apply executable="java" verbose="true" dest="${jsSource}">
+									<arg value="-jar"/>
+									<arg file="${maven.dependency.com.google.javascript.closure-compiler.jar.path}"/>
+									<arg value="--js_output_file"/>
+									<targetfile/>
+									<arg value="--rewrite_polyfills=false"/>
+									<srcfile/>
+									<fileset dir="${jsSource}" includes="*-min.js"/> 
 									<mapper type="glob" from="*-min.js" to="*.js"/>
-								</move>
+								</apply>
+
+								<!-- Umbenennen der min-Dateien -->
 								<move todir="${cssSource}">
 									<fileset dir="${cssSource}"/>
 									<mapper type="glob" from="*-min.css" to="*.css"/>
 								</move>
+								<!-- Löschen der übrigen min-Dateien -->
+								<delete dir="${jsSource}" includes="*-min.js"/>
 							</target>
 						</configuration>
 					</execution>
