@@ -299,7 +299,11 @@ public class PlannerDao {
 					dataQuery.groupBy(groupBy);
 					// columnReplacement = .builder..
 				} else {
-					selection.add(propPath);
+					// MySql liefert sonst Bits als Strings, was bei Bit 0 " " liefert und zu Boolean.TRUE führt
+					if (Boolean.class.equals(propPath.getJavaType()))
+						selection.add(builder.function("to_boolean", Boolean.class, propPath));
+					else
+						selection.add(propPath);
 				}
 				from = dataRoot;
 			}
