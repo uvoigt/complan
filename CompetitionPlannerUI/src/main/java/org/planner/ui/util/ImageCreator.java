@@ -36,7 +36,7 @@ public class ImageCreator {
 		gc.setPaint(new RadialGradientPaint(center, radius, focus, fractions, colors, CycleMethod.NO_CYCLE));
 		gc.fillRect(0, 0, width, height);
 
-		Font font = new Font("Calibri", Font.BOLD, width / 2);
+		Font font = new Font("SansSerif", Font.BOLD, width / 2);
 		gc.setFont(font);
 		StringBuilder sb = new StringBuilder(2);
 		if (firstName != null && firstName.length() > 0)
@@ -46,9 +46,9 @@ public class ImageCreator {
 		String text = sb.toString();
 		FontMetrics fm = gc.getFontMetrics();
 		int stringWidth = fm.stringWidth(text);
-		int stringHeight = fm.getHeight();
+		int stringHeight = fm.getAscent();
 		gc.setPaint(Color.yellow);
-		gc.drawString(text, (width - stringWidth) / 2, stringHeight);
+		gc.drawString(text, (width - stringWidth) / 2, height / 2 + stringHeight / 2 - fm.getDescent() + 1);
 
 		BufferedImage dest = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		ChromeFilter filter = new ChromeFilter();
