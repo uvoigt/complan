@@ -31,7 +31,7 @@ import org.planner.util.Visible;
 @Entity
 @Access(AccessType.FIELD)
 @NLSBundle("users")
-@NamedQuery(name = "userById", query = "from User u join fetch u.roles join fetch u.club c join fetch c.address a join fetch a.city join fetch a.country where userId=:userId")
+@NamedQuery(name = "userById", query = "from User u left join fetch u.roles left join fetch u.club c left join fetch c.address a join fetch a.city join fetch a.country where userId=:userId")
 public class User extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;
