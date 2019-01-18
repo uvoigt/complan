@@ -42,6 +42,8 @@ public class RegistryServlet extends HttpServlet {
 	@Inject
 	private ServiceFacade service;
 
+	private ImageCreator imageCreator = new ImageCreator();
+
 	private Map<String, Status> requests = new HashMap<>();
 
 	@Override
@@ -183,7 +185,7 @@ public class RegistryServlet extends HttpServlet {
 		String firstName = user.getFirstName();
 		String lastName = user.getLastName();
 		response.setContentType("image/png");
-		byte[] image = new ImageCreator().createCCAbbreviation(firstName, lastName);
+		byte[] image = imageCreator.createCCAbbreviation(firstName, lastName);
 		response.getOutputStream().write(image);
 	}
 }
