@@ -145,8 +145,16 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 				if (!renderBean.filterRaces(renderBean.getRaceFilter(race), filter, Locale.getDefault()))
 					it.remove();
 			}
-			PrimeFaces.current().executeScript("updateCount('.raceCount', '"
-					+ JsfUtil.getScopedBundle().get("raceCount") + "', " + program.getRaces().size() + ")");
+			StringBuilder script = new StringBuilder();
+			script.append("updateCount('.raceCount', '");
+			script.append(JsfUtil.getScopedBundle().get("raceCount"));
+			script.append("', ");
+			script.append(program.getRaces().size());
+			script.append(")");
+			if (getProgram().getStatus() == ProgramStatus.created) {
+				script.append(";programEdit.enableSwap()");
+			}
+			PrimeFaces.current().executeScript(script.toString());
 		}
 	}
 

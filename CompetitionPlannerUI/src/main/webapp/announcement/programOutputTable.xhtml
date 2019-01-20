@@ -17,7 +17,7 @@
 			emptyMessage="#{empty programBean.filter ? bundle.noProgram : bundle.noMatch}"
 			widgetVar="programTable"
 			rowIndexVar="rowIndex"
-			selectionMode="multiple" rowKey="#{race.id}"
+			selectionMode="#{programBean.program.status == 'created' ? 'multiple' : null}" rowKey="#{race.id}"
 			selection="#{programBean.selectedRaces}"
 			filterEvent="enter"
 			editable="true" editMode="cell" cellEditMode="lazy" editInitEvent="dblclick" saveOnCellBlur="false"
@@ -121,8 +121,6 @@
 					style="font-style: italic" rendered="#{race.raceType == 'heat' or race.raceType == 'semiFinal'}">
 				<h:outputText value="#{renderBean.renderFollowUpHint(race)}"/>
 			</h:outputLink>
-
-			<h:outputScript rendered="#{rowIndex == 0} and programBean.program.status == 'created'}">programEdit.enableSwap();</h:outputScript>
 
 		</p:column>
 
