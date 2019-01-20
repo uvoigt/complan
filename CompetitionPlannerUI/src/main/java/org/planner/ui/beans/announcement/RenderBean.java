@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.commons.lang.StringUtils;
+import org.planner.eo.Placement;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRace.RaceType;
 import org.planner.eo.Race;
@@ -105,6 +106,23 @@ public class RenderBean {
 		sb.append(race.getRace().getNumber());
 		if (race.getNumber() != null)
 			sb.append('-').append(race.getNumber());
+	}
+
+	public boolean isSeparatorRendered(ProgramRace race, Placement placement, int nextIndex) {
+		if (placement.getQualifiedFor() != null) {
+			Placement next = nextIndex < race.getPlacements().size() ? race.getPlacements().get(nextIndex) : null;
+			if (next == null || next.getQualifiedFor() != placement.getQualifiedFor())
+				return true;
+		}
+		return false;
+	}
+
+	public Long computeDeficit(ProgramRace race, Placement placement) {
+		if (placement.getTime() != null) {
+			Placement first = race.getPlacements().get(0);
+			return placement.getTime() - first.getTime();
+		}
+		return null;
 	}
 
 	public String getRaceFilter(ProgramRace race) {

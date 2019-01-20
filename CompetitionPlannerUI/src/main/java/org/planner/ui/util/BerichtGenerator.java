@@ -13,10 +13,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Stack;
 
@@ -32,9 +32,9 @@ import org.planner.eo.Club;
 import org.planner.eo.Placement;
 import org.planner.eo.Program;
 import org.planner.eo.ProgramRace;
+import org.planner.eo.ProgramRace.RaceType;
 import org.planner.eo.ProgramRaceTeam;
 import org.planner.eo.Race;
-import org.planner.eo.Team;
 import org.planner.eo.TeamMember;
 import org.planner.eo.User;
 import org.planner.ui.beans.Messages;
@@ -66,6 +66,7 @@ import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.Section;
 import com.itextpdf.text.TabStop.Alignment;
 import com.itextpdf.text.api.Indentable;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfDiv;
 import com.itextpdf.text.pdf.PdfObject;
@@ -74,6 +75,7 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPCellEvent;
 import com.itextpdf.text.pdf.PdfPRow;
 import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfPTableEvent;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
@@ -120,21 +122,62 @@ public class BerichtGenerator {
 		}
 	}
 
-	private class StyledCell implements PdfPCellEvent {
+	private class QualificationIndicator implements PdfPCellEvent, PdfPTableEvent {
 		private float unitsOn;
 		private float phase;
+		private String caption;
+		private float captionRow;
+		private BaseFont captionFont;
 
-		StyledCell(float unitsOn, float phase) {
-			this.unitsOn = unitsOn;
-			this.phase = phase;
+		QualificationIndicator(RaceType forRace, BaseFont captionFont) {
+			switch (forRace) {
+			default:
+				break;
+			case semiFinal:
+				unitsOn = 3;
+				phase = 3;
+				caption = messages.get("results.semiFinal");
+				break;
+			case finalA:
+				unitsOn = 1;
+				phase = 1;
+				caption = messages.get("results.finalA");
+				break;
+			}
+			this.captionFont = captionFont;
 		}
 
 		@Override
 		public void cellLayout(PdfPCell cell, Rectangle position, PdfContentByte[] canvases) {
 			PdfContentByte canvas = canvases[PdfPTable.LINECANVAS];
+			canvas.saveState();
 			canvas.setLineDash(unitsOn, phase);
-			canvas.rectangle(position.getLeft(), position.getBottom(), position.getWidth(), position.getHeight());
+			canvas.moveTo(position.getLeft(), position.getBottom());
+			canvas.lineTo(position.getLeft() + position.getWidth(), position.getBottom());
 			canvas.stroke();
+			canvas.restoreState();
+			captionRow = position.getBottom();
+		}
+
+		@Override
+		public void tableLayout(PdfPTable table, float[][] widths, float[] heights, int headerRows, int rowStart,
+				PdfContentByte[] canvases) {
+			PdfContentByte canvas = canvases[PdfPTable.TEXTCANVAS];
+			canvas.saveState();
+			canvas.beginText();
+			int fontSize = 5;
+			canvas.setFontAndSize(captionFont, fontSize);
+			float width = captionFont.getWidthPoint(caption, fontSize);
+			// da die Zeilen nach dem Hinzufügen durch colspans geändert werden,
+			// kann getLastCompletedRow nicht verwendet werden
+			PdfPRow row = table.getRow(2);
+			float lastx = widths[0][widths[0].length - 1];
+			float lastWidth = row.getCells()[row.getCells().length - 1].getWidth();
+			float x = (lastx + lastWidth - width) / 2;
+			canvas.moveText(x, captionRow + fontSize / 2);
+			canvas.showText(caption);
+			canvas.endText();
+			canvas.restoreState();
 		}
 	}
 
@@ -400,7 +443,7 @@ public class BerichtGenerator {
 
 					// im Falle einer Neuanlage der Ausschreibung existiren noch keine Rennen!
 					if (announcement.getRaces() != null) {
-						java.util.List<Race> races = new ArrayList<>(announcement.getRaces());
+						ArrayList<Race> races = new ArrayList<>(announcement.getRaces());
 						Collections.sort(races, new Comparator<Race>() {
 							@Override
 							public int compare(Race r1, Race r2) {
@@ -833,24 +876,21 @@ public class BerichtGenerator {
 
 	private abstract class RaceTableCreator {
 		protected final String messageKey;
-		protected final int titleSpanLeft;
-		protected final int titleSpanRight;
-		protected PdfPTable table = createTable();
-		protected int currentCol;
-		protected java.util.List<PdfPCell> currentRow;
+		protected final int[] titleSpans;
+		protected PdfPTable table;
 
-		protected RaceTableCreator(String messageKey, int titleSpanLeft, int titleSpanRight) {
+		protected RaceTableCreator(String messageKey, int... titleSpans) {
 			this.messageKey = messageKey;
-			this.titleSpanLeft = titleSpanLeft;
-			this.titleSpanRight = titleSpanRight;
-			currentRow = new ArrayList<>();
+			this.titleSpans = titleSpans;
 		}
 
 		public void reset() {
 			table = createTable();
-			currentCol = 0;
-			currentRow.clear();
 		}
+
+		protected abstract PdfPTable createTable();
+
+		protected abstract void addRow(ProgramRace programRace, Race race, Font italic);
 
 		protected PdfPTable createTable(float[] widths) {
 			PdfPTable table = new PdfPTable(widths);
@@ -859,56 +899,65 @@ public class BerichtGenerator {
 			table.setTotalWidth((PageSize.A4.getWidth() - document.leftMargin() - document.rightMargin())
 					* table.getWidthPercentage() / 100);
 			table.getDefaultCell().disableBorderSide(Rectangle.BOX);
-			table.getDefaultCell().setPadding(5);
+			table.getDefaultCell().setPadding(3);
 			return table;
 		}
 
 		void addHeader(Font raceFont, DateFormat dfDay, DateFormat dfTime, ProgramRace programRace, Race race) {
 			PdfPCell cell = new PdfPCell(new Phrase(renderer.renderRaceTitle(programRace), raceFont));
-			cell.setColspan(titleSpanLeft);
+			cell.setColspan(titleSpans[0]);
 			cell.disableBorderSide(Rectangle.BOX);
 			cell.setMinimumHeight(20);
 			cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
 			table.addCell(cell);
 
 			cell = new PdfPCell(new Phrase(renderer.renderRaceNumber(programRace), defaultFont));
+			cell.setColspan(titleSpans[1]);
 			cell.disableBorderSide(Rectangle.BOX);
 			cell.setMinimumHeight(20);
 			cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
 			table.addCell(cell);
 
 			cell = new PdfPCell(new Phrase(race.getDistance() + " m", defaultFont));
-			cell.setColspan(titleSpanRight);
+			cell.setColspan(titleSpans[2]);
 			cell.disableBorderSide(Rectangle.BOX);
 			cell.setMinimumHeight(20);
+			cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
 			cell.setVerticalAlignment(Element.ALIGN_BOTTOM);
 			table.addCell(cell);
 
 			cell = new PdfPCell(new Phrase(race.getBoatClass().getText() + " " + race.getAgeType().getText() + " "
 					+ race.getGender().getText(), defaultFont));
-			cell.setColspan(titleSpanLeft);
+			cell.setColspan(titleSpans[0]);
 			cell.setBorder(Rectangle.BOTTOM);
 			table.addCell(cell);
 
 			String raceMode = renderer.renderRaceMode(programRace);
 			cell = new PdfPCell(new Phrase(raceMode, defaultFont));
+			cell.setColspan(titleSpans[1]);
+			cell.setNoWrap(true);
 			cell.setBorder(Rectangle.BOTTOM);
 			table.addCell(cell);
 
 			cell = new PdfPCell(new Phrase(
 					dfDay.format(programRace.getStartTime()) + " " + dfTime.format(programRace.getStartTime()),
 					defaultFont));
-			cell.setColspan(titleSpanRight);
+			cell.setColspan(titleSpans[2]);
 			cell.setBorder(Rectangle.BOTTOM);
+			cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
 			table.addCell(cell);
 		}
 
 		protected void addTeams(ProgramRaceTeam team, Race race, Font italic) {
 			PdfPTable teamTable = new PdfPTable(2);
+			teamTable.getDefaultCell().disableBorderSide(Rectangle.BOX);
+			teamTable.getDefaultCell().setPadding(0);
 			java.util.List<TeamMember> members = team.getMembers();
 			int normalTeamSize = race.getBoatClass().getMaximalTeamSize();
 			int m = Math.min(normalTeamSize, members.size());
-			int col = 1;
+			if (m == 1)
+				teamTable.getDefaultCell().setColspan(2);
+			int col = 0;
 			for (int j = 0; j < m; j++) {
 				TeamMember member = members.get(j);
 				User user = member.getUser();
@@ -924,66 +973,41 @@ public class BerichtGenerator {
 						userName += " (" + user.getClub().getShortNameOrName() + ")";
 					teamTable.addCell(new Phrase(userName, defaultFont));
 				}
+				col++;
 			}
 			if (members.size() > normalTeamSize) {
 				for (int j = normalTeamSize; j < members.size(); j++) {
 					TeamMember member = members.get(j);
 					User user = member.getUser();
 
-					teamTable.addCell(new Phrase("Ersatz: " + user.getFirstName() + " " + user.getLastName(), italic));
+					teamTable.addCell(new Phrase(messages.format("programs.replacement", user.getName()), italic));
+					col++;
 				}
 			}
-			// if (col > 0 && col < (placement != null ? 4 : 3)) {
-			// col = addMemberCell(members.size(), col, table, new Phrase("", defaultFont), team, placement);
-			// }
+			if ((col % 2) != 0)
+				teamTable.addCell("");
+
+			table.getDefaultCell().setColspan(2);
+			table.addCell(teamTable);
+			table.getDefaultCell().setColspan(1);
+
+			table.addCell(new Phrase(team.getClub().getShortNameOrName(), defaultFont));
 		}
 
-		protected abstract void addRow(ProgramRace programRace, Race race, Font italic);
-
-		// int addCell(int offset, Phrase phrase) {
-		// if (currentCol == 0) {
-		// table.addCell(new Phrase("", defaultFont));
-		// col++;
-		// }
-		// table.addCell(phrase);
-		// col++;
-		// if (placement != null && col == 4 || placement == null && col == 3) {
-		// if (offset < 2) {
-		// table.addCell(new Phrase(team.getClub().getShortNameOrName(), defaultFont));
-		// if (placement != null) {
-		// String s = placement.getTime() != null
-		// ? placementConverter.getAsString(null, null, placement.getTime()) : "";
-		// PdfPCell cell = new PdfPCell(new Phrase(s, defaultFont));
-		// if (placement.getQualifiedFor() != null) {
-		// cell.setCellEvent(new StyledCell(3f, 3f));
-		// }
-		// table.addCell(cell);
-		// }
-		// } else {
-		// table.addCell(new Phrase("", defaultFont));
-		// }
-		// col = 0;
-		// }
-		// return col;
-		// }
-
-		protected void addCell(String text) {
-			PdfPCell cell = table.addCell(new PdfPCell(new Phrase(text, defaultFont)));
-			currentRow.add(cell);
+		protected void addFollowUpHint(ProgramRace programRace, Font italic, int colspan) {
+			String hint = renderer.renderFollowUpHint(programRace);
+			if (StringUtils.isNotEmpty(hint)) {
+				PdfPCell cell = new PdfPCell(new Phrase(hint, italic));
+				cell.setColspan(colspan);
+				cell.disableBorderSide(Rectangle.BOX);
+				table.addCell(cell);
+			}
 		}
-
-		protected abstract PdfPTable createTable();
-
-		protected abstract Iterator<?> rowIterator(ProgramRace programRace);
-
-		public abstract ProgramRaceTeam getRaceTeam(Object current);
-
-		protected abstract void addCell(int teamMemberOffset);
 	}
 
 	private class ProgramCellCreator extends RaceTableCreator {
 		ProgramCellCreator() {
-			super("program", 2, 1);
+			super("program", 2, 1, 1);
 		}
 
 		@Override
@@ -992,42 +1016,28 @@ public class BerichtGenerator {
 		}
 
 		@Override
-		protected Iterator<?> rowIterator(ProgramRace programRace) {
-			return programRace.getParticipants().iterator();
-		}
-
-		@Override
-		public ProgramRaceTeam getRaceTeam(Object current) {
-			return (ProgramRaceTeam) current;
-		}
-
-		@Override
 		protected void addRow(ProgramRace programRace, Race race, Font italic) {
-			for (ProgramRaceTeam raceTeam : programRace.getParticipants()) {
-				Team team = raceTeam.getTeam();
-
-				addCell(Integer.toString(raceTeam.getLane()));
-
+			Collection<ProgramRaceTeam> participants = programRace.getParticipants();
+			if (participants == null)
+				return;
+			for (ProgramRaceTeam raceTeam : participants) {
+				table.addCell(new Phrase(Integer.toString(raceTeam.getLane()), defaultFont));
 				addTeams(raceTeam, race, italic);
 			}
-			String hint = renderer.renderFollowUpHint(programRace);
-			if (StringUtils.isNotEmpty(hint)) {
-				PdfPCell cell = new PdfPCell(new Phrase(hint, italic));
-				// TODO cell.setColspan(forResult ? 6 : 4);
-				cell.disableBorderSide(Rectangle.BOX);
-				table.addCell(cell);
-			}
-		}
-
-		@Override
-		protected void addCell(int teamMemberOffset) {
-
+			addFollowUpHint(programRace, italic, 4);
 		}
 	}
 
 	private class ResultCellCreator extends RaceTableCreator {
+		private BaseFont captionFont;
+		private Font deficitFont;
+
 		ResultCellCreator() {
-			super("result", 3, 2);
+			super("result", 3, 1, 2);
+			captionFont = defaultFont.getCalculatedBaseFont(false);
+			deficitFont = new Font(defaultFont);
+			deficitFont.setSize(defaultFont.getSize() / 1.2f);
+			deficitFont.setColor(BaseColor.GRAY);
 		}
 
 		@Override
@@ -1036,70 +1046,46 @@ public class BerichtGenerator {
 		}
 
 		@Override
-		protected Iterator<?> rowIterator(ProgramRace programRace) {
-			return programRace.getPlacements().iterator();
-		}
-
-		@Override
-		public ProgramRaceTeam getRaceTeam(Object current) {
-			return ((Placement) current).getTeam();
-		}
-
-		@Override
 		protected void addRow(ProgramRace programRace, Race race, Font italic) {
-			for (Placement placement : programRace.getPlacements()) {
+			java.util.List<Placement> placements = programRace.getPlacements();
+			if (placements == null)
+				return;
+			for (int i = 0; i < placements.size(); i++) {
+				Placement placement = placements.get(i);
 				ProgramRaceTeam raceTeam = placement.getTeam();
-				Team team = raceTeam.getTeam();
 
-				addCell(Integer.toString(placement.getPosition()));
-				addCell(Integer.toString(raceTeam.getLane()));
+				if (renderer.isSeparatorRendered(programRace, placement, i + 1)) {
+					QualificationIndicator indicator = new QualificationIndicator(placement.getQualifiedFor(),
+							captionFont);
+					table.getDefaultCell().setCellEvent(indicator);
+					table.setTableEvent(indicator);
+				} else {
+					table.getDefaultCell().setCellEvent(null);
+				}
 
-				java.util.List<TeamMember> members = team.getMembers();
-				int normalTeamSize = race.getBoatClass().getMaximalTeamSize();
-				int m = Math.min(normalTeamSize, members.size());
-				int col = placement != null ? 2 : 1;
-				for (int j = 0; j < m; j++) {
-					TeamMember member = members.get(j);
-					User user = member.getUser();
-					// TODO
-					if (member.getRemark() != null) {
-						// col = addMemberCell(j, col, table, new Phrase(member.getRemark(), italic), team, placement);
-					} else {
-						String userName = user.getFirstName() + " " + user.getLastName();
-						String ageGroup = renderer.renderAgeGroup(user);
-						if (ageGroup != null)
-							userName += " " + ageGroup;
-						if (!team.getClub().getId().equals(user.getClub().getId()))
-							userName += " (" + user.getClub().getShortNameOrName() + ")";
-						// col = addMemberCell(j, col, table, new Phrase(userName, defaultFont), team, placement);
-					}
-				}
-				if (members.size() > normalTeamSize) {
-					for (int j = normalTeamSize; j < members.size(); j++) {
-						TeamMember member = members.get(j);
-						User user = member.getUser();
+				table.addCell(new Phrase(Integer.toString(placement.getPosition()), defaultFont));
+				table.addCell(new Phrase(Integer.toString(raceTeam.getLane()), defaultFont));
 
-						// col = addMemberCell(j, col, table,
-						// new Phrase("Ersatz: " + user.getFirstName() + " " + user.getLastName(), italic), team,
-						// placement);
-					}
+				addTeams(raceTeam, race, italic);
+
+				Phrase phrase;
+				if (placement.getTime() != null) {
+					phrase = new Phrase(placementConverter.getAsString(null, null, placement.getTime()), defaultFont);
+					phrase.add(Chunk.NEWLINE);
+					Long deficit = renderer.computeDeficit(programRace, placement);
+					if (deficit > 0)
+						phrase.add(new Phrase("+" + placementConverter.getAsString(null, null, deficit), deficitFont));
+					else
+						phrase.add(new Chunk("\r", deficitFont));
+				} else {
+					phrase = new Phrase("", defaultFont);
 				}
-				if (col > 0 && col < (placement != null ? 4 : 3)) {
-					// col = addMemberCell(members.size(), col, table, new Phrase("", defaultFont), team, placement);
-				}
+				table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_RIGHT);
+				table.addCell(phrase);
+				table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_LEFT);
 			}
-			String hint = renderer.renderFollowUpHint(programRace);
-			if (StringUtils.isNotEmpty(hint)) {
-				PdfPCell cell = new PdfPCell(new Phrase(hint, italic));
-				// cell.setColspan(forResult ? 6 : 4);
-				cell.disableBorderSide(Rectangle.BOX);
-				table.addCell(cell);
-			}
-		}
-
-		@Override
-		protected void addCell(int teamMemberOffset) {
-
+			table.getDefaultCell().setCellEvent(null);
+			addFollowUpHint(programRace, italic, 6);
 		}
 	}
 
@@ -1190,6 +1176,7 @@ public class BerichtGenerator {
 			throws Exception {
 
 		ByteArrayOutputStream bos = setUpDocument(new Document(PageSize.A4, 36, 36, 60, 36));
+		creator.reset();
 
 		PdfPCell title = createProgramTitle(creator.messageKey, program.getAnnouncement().getName(),
 				program.getAnnouncement().getStartDate());
@@ -1205,14 +1192,12 @@ public class BerichtGenerator {
 		Font italic = new Font(defaultFont);
 		italic.setStyle(defaultFont.getStyle() | Font.ITALIC);
 
-		java.util.List<ProgramRace> races = new ArrayList<>(program.getRaces());
-
 		DateFormat dfDay = new SimpleDateFormat("EEEE");
 		DateFormat dfTime = new SimpleDateFormat("HH:mm");
 
 		Calendar currentStartTime = null;
 
-		for (ProgramRace programRace : races) {
+		for (ProgramRace programRace : program.getRaces()) {
 
 			if (currentStartTime != null) {
 				int previousDay = currentStartTime.get(Calendar.DAY_OF_YEAR);

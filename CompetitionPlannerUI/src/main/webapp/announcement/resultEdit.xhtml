@@ -82,12 +82,12 @@
 							<p:column styleClass="timeCol" headerText="#{bundle.time}">
 								<h:outputText value="#{placement.time}" converter="#{placementConverter}"/>
 								<h:panelGroup layout="block" style="font-size: x-small; position: absolute; left: 50%"
-										rendered="#{resultBean.isSeparatorRendered(race, placement, placementIndex + 1)}">
+										rendered="#{renderBean.isSeparatorRendered(race, placement, placementIndex + 1)}">
 									<h:outputText value="#{placement.qualifiedFor != null ? bundle.get(placement.qualifiedFor.name()) : null}"/>
 								</h:panelGroup>
 								<h:panelGroup layout="block" styleClass="deficit">
 									<h:outputText value="+" rendered="#{placement.time != null and placementIndex gt 0}"/>
-									<h:outputText value="#{resultBean.computeDeficit(race, placement)}" converter="#{placementConverter}"/>
+									<h:outputText value="#{renderBean.computeDeficit(race, placement)}" converter="#{placementConverter}"/>
 								</h:panelGroup>
 							</p:column>
 						</p:dataTable>

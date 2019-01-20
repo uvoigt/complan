@@ -133,23 +133,6 @@ public class ResultBean extends AbstractEditBean implements DownloadHandler {
 		return "qNone";
 	}
 
-	public boolean isSeparatorRendered(ProgramRace race, Placement placement, int nextIndex) {
-		if (placement.getQualifiedFor() != null) {
-			Placement next = nextIndex < race.getPlacements().size() ? race.getPlacements().get(nextIndex) : null;
-			if (next == null || next.getQualifiedFor() != placement.getQualifiedFor())
-				return true;
-		}
-		return false;
-	}
-
-	public Long computeDeficit(ProgramRace race, Placement placement) {
-		if (placement.getTime() != null) {
-			Placement first = race.getPlacements().get(0);
-			return placement.getTime() - first.getTime();
-		}
-		return null;
-	}
-
 	private void loadResults(Long programId) {
 		program = service.getProgram(programId, true, true);
 	}
