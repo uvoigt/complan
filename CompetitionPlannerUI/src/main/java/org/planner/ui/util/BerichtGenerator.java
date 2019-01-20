@@ -170,14 +170,23 @@ public class BerichtGenerator {
 			float width = captionFont.getWidthPoint(caption, fontSize);
 			// da die Zeilen nach dem Hinzufügen durch colspans geändert werden,
 			// kann getLastCompletedRow nicht verwendet werden
-			PdfPRow row = table.getRow(2);
+			float lastWidth = computeLastColumnWidth(table.getRows());
 			float lastx = widths[0][widths[0].length - 1];
-			float lastWidth = row.getCells()[row.getCells().length - 1].getWidth();
 			float x = (lastx + lastWidth - width) / 2;
 			canvas.moveText(x, captionRow + fontSize / 2);
 			canvas.showText(caption);
 			canvas.endText();
 			canvas.restoreState();
+		}
+
+		private float computeLastColumnWidth(ArrayList<PdfPRow> rows) {
+			for (PdfPRow row : rows) {
+				PdfPCell[] cells = row.getCells();
+				PdfPCell cell = cells[cells.length - 1];
+				if (cell != null)
+					return cell.getWidth();
+			}
+			return 0;
 		}
 	}
 
