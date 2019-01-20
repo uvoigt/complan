@@ -17,11 +17,7 @@ import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.ListJoin;
-import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
@@ -39,13 +35,7 @@ import org.planner.eo.Category;
 import org.planner.eo.Club_;
 import org.planner.eo.Location;
 import org.planner.eo.Participant;
-import org.planner.eo.Participant_;
 import org.planner.eo.Placement;
-import org.planner.eo.Placement_;
-import org.planner.eo.ProgramRace;
-import org.planner.eo.ProgramRaceTeam;
-import org.planner.eo.ProgramRaceTeam_;
-import org.planner.eo.ProgramRace_;
 import org.planner.eo.Race;
 import org.planner.eo.Race_;
 import org.planner.eo.RegEntry;
@@ -54,10 +44,6 @@ import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Registration_;
 import org.planner.eo.Role_;
-import org.planner.eo.Team;
-import org.planner.eo.TeamMember;
-import org.planner.eo.TeamMember_;
-import org.planner.eo.Team_;
 import org.planner.eo.User;
 import org.planner.eo.User_;
 import org.planner.model.AgeType;
@@ -547,20 +533,8 @@ public class AnnouncementServiceImpl {
 		return dao.executeOperation(new IOperation<List<RegEntry>>() {
 			@Override
 			public List<RegEntry> execute(EntityManager em) {
-				CriteriaBuilder builder = em.getCriteriaBuilder();
-				CriteriaQuery<RegEntry> query = builder.createQuery(RegEntry.class);
-				Root<RegEntry> entry = query.from(RegEntry.class);
-				Join<RegEntry, Registration> registration = entry.join(RegEntry_.registration);
-				Join<Registration, Announcement> announcement = registration.join(Registration_.announcement);
-				ListJoin<RegEntry, Participant> participants = entry.join(RegEntry_.participants);
-				Path<User> user = participants.get(Participant_.user);
-				Predicate inFuture = builder.greaterThanOrEqualTo(announcement.get(Announcement_.startDate),
-						new Date());
-				Predicate youAreRegistered = builder.equal(user.get(User_.userId), caller.getLoginName());
-				query.where(builder.and(inFuture, youAreRegistered));
-				query.orderBy(builder.asc(announcement.get(Announcement_.startDate)));
-				query.select(entry);
-				return em.createQuery(query).getResultList();
+				return em.createNamedQuery("upcomingRegistrations", RegEntry.class).setParameter("today", new Date())
+						.setParameter("userId", caller.getLoginName()).getResultList();
 			}
 		});
 	}
@@ -571,25 +545,11 @@ public class AnnouncementServiceImpl {
 		return dao.executeOperation(new IOperation<List<Placement>>() {
 			@Override
 			public List<Placement> execute(EntityManager em) {
-				CriteriaBuilder builder = em.getCriteriaBuilder();
-				CriteriaQuery<Tuple> query = builder.createTupleQuery();
-				Root<Placement> placement = query.from(Placement.class);
-				Join<Placement, ProgramRaceTeam> raceTeam = placement.join(Placement_.team);
-				Join<ProgramRaceTeam, ProgramRace> programRace = raceTeam.join(ProgramRaceTeam_.programRace);
-				Join<ProgramRace, Race> race = programRace.join(ProgramRace_.race);
-				@SuppressWarnings("unchecked")
-				Join<Race, Announcement> announcement = (Join<Race, Announcement>) race.fetch(Race_.announcement);
-				Join<ProgramRaceTeam, Team> team = raceTeam.join(ProgramRaceTeam_.team);
-				ListJoin<Team, TeamMember> members = team.join(Team_.members);
-				Join<TeamMember, User> user = members.join(TeamMember_.user);
 				Calendar date = Calendar.getInstance();
 				date.add(Calendar.MONTH, -months);
-				Predicate latest = builder.greaterThan(announcement.get(Announcement_.startDate), date.getTime());
-				Predicate youAreMember = builder.equal(user.get(User_.userId), caller.getLoginName());
-				query.select(builder.tuple(placement, programRace, race));
-				query.where(builder.and(latest, youAreMember));
-				query.orderBy(builder.asc(announcement.get(Announcement_.startDate)));
-				List<Tuple> tuples = em.createQuery(query).getResultList();
+				List<Tuple> tuples = em.createNamedQuery("latestResults", Tuple.class)
+						.setParameter("date", date.getTime()).setParameter("userId", caller.getLoginName())
+						.getResultList();
 				List<Placement> result = new ArrayList<>();
 				for (Tuple tuple : tuples) {
 					result.add((Placement) tuple.get(0));

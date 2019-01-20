@@ -8,11 +8,14 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 
 @Entity
 @Access(AccessType.FIELD)
+@NamedQuery(name = "upcomingRegistrations", query = "select re from RegEntry re join re.registration r join r.announcement a " //
+		+ "join re.participants p where a.startDate >= :today and p.user.userId = :userId order by a.startDate")
 public class RegEntry extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;
