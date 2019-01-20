@@ -331,12 +331,19 @@ input[readonly=readonly] {
 	width: 100%;
 	padding: 0 !important;
 }
+
 .teamTable .ui-datatable-tablewrapper {
 	clear: both;
 }
+
+.teamTable.program.resultEdit {
+	cursor: copy;
+}
+
 .teamTable.program thead {
 	display: none;
 }
+
 .teamTable.program .ui-column-title {
 	display: none !important;
 }

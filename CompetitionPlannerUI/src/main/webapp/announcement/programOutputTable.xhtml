@@ -38,7 +38,7 @@
 			<p:cellEditor disabled="#{not isEditable}">
 				<f:facet name="output">
 					<p:dataTable var="team" value="#{race.participants}" emptyMessage="" style="width: 100%" reflow="true"
-							styleClass="teamTable program" rowStyleClass="qNone">
+							styleClass="teamTable program #{isEditable ? 'resultEdit' : ''}" rowStyleClass="qNone">
 						<f:facet name="header">
 							<h:panelGroup styleClass="#{race.raceType}">
 								<h:panelGroup layout="block" styleClass="raceTitle">
