@@ -115,6 +115,15 @@ function rowDoubleClicked(table, rowId) {
 		}
 	}
 }
+function setupFilters() {
+	$(".ui-column-filter").wrap('<div class="clearFilter" title="{msg:delete}"/>').after($("<span/>").click(function(evt) {
+		var event = $.Event("keyup");
+		event.keyCode = event.which = 13;
+		$(this).prev("input").val("").trigger(event);
+		evt.preventDefault();
+		evt.stopPropagation();
+	}));
+}
 function attachSubmitHandler() {
 	if (!main.handlerAttached) {
 		$(main).submit(function(e) {
@@ -391,14 +400,14 @@ function initLoginDialog() {
 				var split = xhr.pfSettings.data.split("&");
 				var viewState = split[split.length - 1];
 				viewState = viewState.split("=")[1];
-				console.warn("request view state length: " + viewState.length);
+				console.debug("request view state length: " + viewState.length);
 			}
 			if (xhr.responseXML) {
 				var children = xhr.responseXML.firstChild.firstChild.children;
 				for (var i = 0; i < children.length; i++) {
 					var child = children[i];
 					if (child.attributes && child.attributes.id && child.attributes.id.nodeValue.indexOf("javax.faces.ViewState") != -1)
-						console.warn("response view state length: " + child.textContent.length);
+						console.debug("response view state length: " + child.textContent.length);
 				}
 			}
 		},

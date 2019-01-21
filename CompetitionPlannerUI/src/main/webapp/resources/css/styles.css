@@ -157,8 +157,22 @@
 	width: 94% !important;
 }
 
-.ui-datatable .ui-column-filter {
-	width: 90% !important;
+div.clearFilter {
+	position: relative;
+}
+
+div.clearFilter input {
+	padding-right: 20px;
+}
+
+div.clearFilter span {
+	position: absolute;
+	top: 8px;
+	right: 6px;
+	width: 16px;
+	height: 16px;
+	background: url("#{resource['images/clear.png']}");
+	cursor: pointer;
 }
 
 .ui-autocomplete-panel {

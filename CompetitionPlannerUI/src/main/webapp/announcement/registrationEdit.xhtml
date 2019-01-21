@@ -17,7 +17,7 @@
 
 		<ui:define name="content">
 
-			<h:form id="main">
+			<h:form id="main" transient="true">
 
 				<h:panelGroup layout="block" rendered="#{registration.status == 'submitted'}">
 					<p:commandButton id="_btnCancel" value="#{messages.backToOverview}"
@@ -169,7 +169,7 @@
 					<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons()" disabled="#{registration.status == 'submitted'}"/>
 					<p:ajax event="filter" oncomplete="PF('registrationTable').unselectAllRows(); if (#{registration.status != 'submitted'}) registrationEdit.enableButtons()"/>
 
-					<p:column id="raceNumber" headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry, bundle)}" filterMatchMode="contains" filterStyle="width: 80%">
+					<p:column id="raceNumber" headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry, bundle)}" filterMatchMode="contains">
 						<h:outputText value="#{registrationBean.getRaceString(entry, bundle)}"/>
 					</p:column>
 					<p:column headerText="#{bundle.registeredTeams}" filterBy="#{registrationBean.getRegisteredParticipantsString(entry)}" filterMatchMode="contains">
@@ -210,6 +210,7 @@
 			</p:dialog>
 
 			<h:outputScript rendered="#{registration.status != 'submitted'}">registrationEdit.enableButtons()</h:outputScript>
+			<h:outputScript>setupFilters()</h:outputScript>
 
 		</ui:define>
 	</ui:composition>
