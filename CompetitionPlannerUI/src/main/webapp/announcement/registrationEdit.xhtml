@@ -19,7 +19,7 @@
 
 			<h:form id="main" transient="true">
 
-				<h:panelGroup layout="block" rendered="#{registration.status == 'submitted'}">
+				<h:panelGroup layout="block" rendered="#{registration == null or registration.status == 'submitted'}">
 					<p:commandButton id="_btnCancel" value="#{messages.backToOverview}"
 							action="#{startseiteBean.setMainContent('/announcement/registrations.xhtml')}"
 							process="@this" partialSubmit="true" update="mainContent"/>
@@ -148,7 +148,7 @@
 
 				<p:dataTable id="registrationTable" widgetVar="registrationTable"
 						var="entry" rowKey="#{entry.id}"
-						value="#{registrationBean.registration.entries}"
+						value="#{registration.entries}"
 						binding="#{registrationBean.registrationTable}"
 						emptyMessage="#{empty registrationBean.registrationTable.filters ? bundle.noRegistrations : bundle.noRegistrationMatch}"
 						sortMode="single"
@@ -160,7 +160,7 @@
 
 					<f:facet name="header">
 						<h:panelGroup layout="block" styleClass="">
-							<h:outputText value="#{bundle.format('registrationsCount', registrationBean.registration.entries.size())}"/>
+							<h:outputText value="#{bundle.format('registrationsCount', registration.entries.size())}"/>
 							<p:effect event="load" type="bounce" rendered="#{registrationBean.showEffect}"/>
 						</h:panelGroup>
 					</f:facet>
@@ -183,7 +183,7 @@
 								action="#{registrationBean.deleteFromRegistration(entry)}"
 								process="registrationTable"
 								update="registrationTable"/>
-						<h:outputScript rendered="#{rowIndex == 0}">registrationEdit.updateRegistrationsCount(#{registrationBean.registration.entries.size()});</h:outputScript>
+						<h:outputScript rendered="#{rowIndex == 0}">registrationEdit.updateRegistrationsCount(#{registration.entries.size()});</h:outputScript>
 					</p:column>
 				</p:dataTable>
 			</h:form>
@@ -210,7 +210,6 @@
 			</p:dialog>
 
 			<h:outputScript rendered="#{registration.status != 'submitted'}">registrationEdit.enableButtons()</h:outputScript>
-			<h:outputScript>setupFilters()</h:outputScript>
 
 		</ui:define>
 	</ui:composition>

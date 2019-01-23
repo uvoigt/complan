@@ -12,6 +12,7 @@ import java.util.jar.Manifest;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
+import javax.faces.event.ComponentSystemEvent;
 import javax.faces.event.PhaseId;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -128,6 +129,10 @@ public class StartseiteBean implements Serializable {
 		JsfUtil.setViewVariable("filters", null);
 		JsfUtil.setViewVariable("sortState", null);
 		JsfUtil.setViewVariable("selectedItem", null);
+	}
+
+	public void onPrerenderMain(@SuppressWarnings("unused") ComponentSystemEvent event) {
+		PrimeFaces.current().executeScript("setupFilters()");
 	}
 
 	public int[] getAllMonths() {

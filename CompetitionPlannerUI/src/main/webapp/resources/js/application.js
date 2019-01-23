@@ -116,7 +116,7 @@ function rowDoubleClicked(table, rowId) {
 	}
 }
 function setupFilters() {
-	$(".ui-column-filter").wrap('<div class="clearFilter" title="{msg:delete}"/>').after($("<span/>").click(function(evt) {
+	$(".ui-column-filter").wrap('<div class="clearFilter"/>').after($('<span title="{msg:delete}"/>').click(function(evt) {
 		var event = $.Event("keyup");
 		event.keyCode = event.which = 13;
 		$(this).prev("input").val("").trigger(event);

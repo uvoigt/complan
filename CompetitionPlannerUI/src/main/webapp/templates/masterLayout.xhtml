@@ -57,6 +57,10 @@
 
 					<ui:include src="#{startseiteBean.mainContent}" />
 
+					<h:panelGroup>
+						<f:event type="preRenderComponent" listener="#{startseiteBean.onPrerenderMain}"/>
+					</h:panelGroup>
+
 				</h:panelGroup>
 
 			</h:panelGroup>
