@@ -110,14 +110,12 @@ public class ExceptionHandlerFactory extends javax.faces.context.ExceptionHandle
 		level = (size > 0) ? (level - 1) : level;
 	}
 
-	private final javax.faces.context.ExceptionHandlerFactory parent;
-
-	public ExceptionHandlerFactory(final javax.faces.context.ExceptionHandlerFactory parent) {
-		this.parent = parent;
+	public ExceptionHandlerFactory(final javax.faces.context.ExceptionHandlerFactory wrapped) {
+		super(wrapped);
 	}
 
 	@Override
 	public ExceptionHandler getExceptionHandler() {
-		return new ExceptionHandler(parent.getExceptionHandler());
+		return new ExceptionHandler(getWrapped().getExceptionHandler());
 	}
 }
