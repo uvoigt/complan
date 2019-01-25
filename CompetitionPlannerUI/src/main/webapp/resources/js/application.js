@@ -122,6 +122,10 @@ function setupFilters() {
 		$(this).prev("input").val("").trigger(event);
 		evt.preventDefault();
 		evt.stopPropagation();
+	}).mousedown(function() {
+		$(this).addClass("active");
+	}).mouseup(function() {
+		$(this).removeClass("active");
 	}));
 }
 function attachSubmitHandler() {
@@ -443,7 +447,7 @@ function updateConfirmDlg(title, msg) {
 function initErrorDialog() {
 	PF("errorDetails").legend.click(function() {
 		if (copyToClipboard(PF("errorDetails").jq.children().get(1)))
-			$(".copiedMessage").show().fadeOut(3000);
+			$(".copiedMessage").show().fadeOut(1000);
 	});
 }
 function copyToClipboard(element) {

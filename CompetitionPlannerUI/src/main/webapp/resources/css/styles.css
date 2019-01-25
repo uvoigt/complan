@@ -167,12 +167,23 @@ div.clearFilter input {
 
 div.clearFilter span {
 	position: absolute;
-	top: 8px;
-	right: 6px;
+	top: .5em;
+	right: .4em;
 	width: 16px;
 	height: 16px;
-	background: url("#{resource['images/clear.png']}");
 	cursor: pointer;
+}
+
+div.clearFilter span:not(:hover) {
+	background: url("#{resource['images/clear.png']}");
+}
+
+div.clearFilter span:hover {
+	background: url("#{resource['images/clear_hover.png']}");
+}
+
+div.clearFilter span.active {
+	background: url("#{resource['images/clear_active.png']}");
 }
 
 .ui-autocomplete-panel {

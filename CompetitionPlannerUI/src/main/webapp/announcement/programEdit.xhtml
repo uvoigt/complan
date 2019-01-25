@@ -103,7 +103,7 @@
 								styleClass="gap"/>
 						<h:panelGroup styleClass="gap">
 							<p:selectBooleanCheckbox id="showTeams" value="#{programBean.showTeams}" itemLabel="#{bundle.showTeams}">
-								<p:ajax partialSubmit="true" update="programTable"/>
+								<p:ajax partialSubmit="true" update="programTable filterSetup"/>
 							</p:selectBooleanCheckbox>
 						</h:panelGroup>
 						<p:commandButton widgetVar="swapRaces" value="#{bundle.swapRaces}" action="#{programBean.swapRaces()}"

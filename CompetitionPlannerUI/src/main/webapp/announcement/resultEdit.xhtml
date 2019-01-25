@@ -19,7 +19,7 @@
 					<h:panelGroup styleClass="ui-g-12">
 						<h:panelGroup styleClass="gap">
 							<p:selectBooleanCheckbox id="showEmpty" value="#{resultBean.showEmpty}" itemLabel="#{bundle.showEmpty}">
-								<p:ajax partialSubmit="true" update="programTable"/>
+								<p:ajax partialSubmit="true" update="programTable filterSetup"/>
 							</p:selectBooleanCheckbox>
 						</h:panelGroup>
 						<p:commandButton id="btnCancel" value="#{messages.backToOverview}"
