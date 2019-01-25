@@ -229,6 +229,7 @@
 				<configuration>
 					<excludes>
 						<exclude>Parser/**</exclude>
+						<exclude>resources/js/**</exclude>
 					</excludes>
 					<encoding>UTF-8</encoding>
 				</configuration>
@@ -257,6 +258,12 @@
 								<property name="jsSource" location="${warSourceDir}/resources/js"/>
 								<property name="cssSource" location="${warSourceDir}/resources/css"/>
 
+								<!-- Umbenennen der JS-Dateien -->
+								<move todir="${jsSource}">
+									<fileset dir="${jsSource}"/>
+									<mapper type="glob" from="*.js" to="*.jss"/>
+								</move>
+
 								<!-- Nochmaliges Komprimieren des Javascripts -->
 								<apply executable="java" verbose="true" dest="${jsSource}">
 									<arg value="-jar"/>
@@ -265,8 +272,8 @@
 									<targetfile/>
 									<arg value="--rewrite_polyfills=false"/>
 									<srcfile/>
-									<fileset dir="${jsSource}" includes="*-min.js"/> 
-									<mapper type="glob" from="*-min.js" to="*.js"/>
+									<fileset dir="${jsSource}" includes="*.jss"/> 
+									<mapper type="glob" from="*.jss" to="*.js"/>
 								</apply>
 
 								<!-- Umbenennen der min-Dateien -->
@@ -274,8 +281,8 @@
 									<fileset dir="${cssSource}"/>
 									<mapper type="glob" from="*-min.css" to="*.css"/>
 								</move>
-								<!-- Löschen der übrigen min-Dateien -->
-								<delete dir="${jsSource}" includes="*-min.js"/>
+								<!-- Löschen der umbenannten JS-Dateien -->
+								<delete dir="${jsSource}" includes="*.jss"/>
 							</target>
 						</configuration>
 					</execution>
