@@ -54,6 +54,8 @@ public class RegistryImpl {
 
 	private static final Logger LOG = LoggerFactory.getLogger(RegistryImpl.class);
 
+	private static final int EMAIL_TOKEN_LIFETIME = 12 * 60;
+
 	static String encodePw(String password) {
 		try {
 			MessageDigest sha = MessageDigest.getInstance("SHA-512");
@@ -89,7 +91,7 @@ public class RegistryImpl {
 		// lösche alle Tokens
 		user.getTokens().clear();
 		if (LOG.isInfoEnabled())
-			LOG.info("Neues Passwort für " + user + " gesetzt.");
+			LOG.info("Neues Passwort für " + user.getUserId() + " gesetzt.");
 		// der Caller ist "anonymous", deshalb hier der Benutzer
 		plannerDao.save(user, user.getUserId());
 
@@ -126,7 +128,8 @@ public class RegistryImpl {
 
 		if (System.currentTimeMillis() > storedToken.getTokenExpires()) {
 			if (LOG.isInfoEnabled())
-				LOG.info("Die Gültigkeit des Login- oder E-Mail-Tokens für " + user + " ist abgelaufen.");
+				LOG.info("Die Gültigkeit des Login- oder E-Mail-Tokens [" + storedToken + "] für " + user.getUserId()
+						+ " ist abgelaufen.");
 			user.getTokens().remove(storedToken);
 			plannerDao.saveToken(user);
 			return null;
@@ -223,7 +226,7 @@ public class RegistryImpl {
 			plannerDao.save(user, email);
 		}
 
-		Token emailToken = createAndStoreToken(user, TokenType.email, 120);
+		Token emailToken = createAndStoreToken(user, TokenType.email, EMAIL_TOKEN_LIFETIME);
 		String encodedToken = createEncodedToken(user, emailToken);
 
 		String subject = messages.getMessage("email.register.subject");
@@ -256,7 +259,7 @@ public class RegistryImpl {
 				return getFormattedMessage("email.passwordreset.alreadysent", CommonMessages.niceTimeString(
 						(int) ((emailToken.getTokenExpires() - System.currentTimeMillis()) / 1000 / 60)));
 		}
-		emailToken = createAndStoreToken(user, TokenType.email, 12 * 60); // email token Lebensdauer 12 Stunden
+		emailToken = createAndStoreToken(user, TokenType.email, EMAIL_TOKEN_LIFETIME);
 		String encodedToken = createEncodedToken(user, emailToken);
 
 		String emailText = getFormattedMessage("email.passwordreset.html", user.getFirstName(), user.getLastName(),
