@@ -17,7 +17,7 @@ import org.planner.ui.beans.Messages;
 import org.primefaces.component.calendar.Calendar;
 
 @Named
-public class DateConverter implements Converter {
+public class DateConverter implements Converter<Object> {
 
 	@Inject
 	private Messages bundle;

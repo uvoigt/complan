@@ -7,7 +7,7 @@ import javax.faces.convert.Converter;
 import org.planner.eo.AbstractEnum;
 import org.planner.remote.ServiceFacade;
 
-public abstract class EnumConverter implements Converter {
+public abstract class EnumConverter implements Converter<Object> {
 
 	private Class<? extends AbstractEnum> entityType;
 

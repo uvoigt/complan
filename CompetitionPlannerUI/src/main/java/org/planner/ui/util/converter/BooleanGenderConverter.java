@@ -8,10 +8,10 @@ import javax.inject.Named;
 import org.planner.model.Gender;
 
 @Named
-public class BooleanGenderConverter implements Converter {
+public class BooleanGenderConverter implements Converter<Gender> {
 
 	@Override
-	public Object getAsObject(FacesContext context, UIComponent component, String value) {
+	public Gender getAsObject(FacesContext context, UIComponent component, String value) {
 		if ("false".equals(value))
 			return Gender.m;
 		if ("true".equals(value))
@@ -20,7 +20,7 @@ public class BooleanGenderConverter implements Converter {
 	}
 
 	@Override
-	public String getAsString(FacesContext context, UIComponent component, Object value) {
+	public String getAsString(FacesContext context, UIComponent component, Gender value) {
 		if (value == Gender.m)
 			return "false";
 		if (value == Gender.f)

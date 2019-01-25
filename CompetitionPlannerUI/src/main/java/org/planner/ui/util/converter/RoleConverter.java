@@ -13,10 +13,11 @@ import javax.inject.Named;
 
 import org.planner.eo.Role;
 import org.planner.remote.ServiceFacade;
+import org.planner.ui.util.JsfUtil;
 
 @Named
 @RequestScoped
-public class RoleConverter implements Converter {
+public class RoleConverter implements Converter<Object> {
 
 	@Inject
 	private ServiceFacade service;
@@ -25,9 +26,11 @@ public class RoleConverter implements Converter {
 
 	@PostConstruct
 	public void init() {
-		roles = new HashMap<>();
-		for (Role role : service.getAllRoles()) {
-			roles.put(role.getId(), role);
+		if (!JsfUtil.isFromSource("btnCancel")) {
+			roles = new HashMap<>();
+			for (Role role : service.getAllRoles()) {
+				roles.put(role.getId(), role);
+			}
 		}
 	}
 

@@ -12,7 +12,7 @@ import org.planner.eo.Team;
 import org.planner.model.ResultExtra;
 
 @Named
-public class PlacementConverter implements Converter {
+public class PlacementConverter implements Converter<Object> {
 
 	@Override
 	public Object getAsObject(FacesContext context, UIComponent component, String value) {
