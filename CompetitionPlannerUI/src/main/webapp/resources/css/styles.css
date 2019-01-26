@@ -82,6 +82,10 @@
 	width: 100%;
 }
 
+#exceptionDialog {
+	max-width: 100%;
+}
+
 .noscript {
 	background-color: white;
 	color: red;
