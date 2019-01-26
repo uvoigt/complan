@@ -224,7 +224,7 @@ var registrationEdit = {
 		var gender = row.children().eq(4).text();
 		
 		racesTable.jq.find("[name$=ageType\\:filter]").val(ageType);
-		racesTable.jq.find("[name$=gender\\:filter]").val(gender);
+		racesTable.jq.find("[name$=gender\\:filter]").val(gender.charAt(0));
 		racesTable.filter();
 	},
 	toggleColumn: function(table, index) {
