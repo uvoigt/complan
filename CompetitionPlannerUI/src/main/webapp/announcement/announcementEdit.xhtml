@@ -18,15 +18,17 @@
 
 		<ui:define name="editArea">
 
-			<ui:param name="canSave" value="#{announcement.status != 'announced'}"/>
+			<ui:param name="canSave" value="#{announcement.status != 'announced' or announcementBean.copy}"/>
 
 			<h:inputHidden value="#{announcement.version}"/>
+			<h:inputHidden value="#{announcementBean.copy}"/>
 
 			<div class="ui-g">
 				<div class="ui-g-12 ui-md-6 ui-lg-3" style="width: 12em"><h:outputText value="#{bundle.name}"/></div>
 				<div class="ui-g-12 ui-md-6 ui-lg-8">
 					<p:inputText value="#{announcement.name}" autocomplete="off" maxlength="255" required="true"
-						requiredMessage="#{bundle.format('fieldValidation', bundle.name)}" style="width: 95%"/>
+						requiredMessage="#{bundle.format('fieldValidation', bundle.name)}" style="width: 95%"
+						readonly="#{not canSave}"/>
 				</div>
 			</div>
 			<div class="ui-g">
@@ -35,7 +37,7 @@
 					<p:autoComplete value="#{announcement.category}" converter="#{categoryConverter}"
 						completeMethod="#{announcementBean.getCategories}" var="category" itemValue="#{category.name}" itemLabel="#{category.name}"
 						maxlength="255" required="true" requiredMessage="#{bundle.format('fieldValidation', bundle.category)}"
-						style="width: 100%" inputStyle="width: 95%"/>
+						style="width: 100%" inputStyle="width: 95%" readonly="#{not canSave}"/>
 				</div>
 			</div>
 			<div class="ui-g">
@@ -46,14 +48,14 @@
 						<p:calendar widgetVar="startDate" binding="#{announcementBean.startDate}"
 								value="#{announcement.startDate}" pages="3" required="true"
 								requiredMessage="#{bundle.format('fieldValidation', bundle.startDate)}"
-								size="7" style="margin: 0 1em 0 1em">
+								size="7" style="margin: 0 1em 0 1em" readonly="#{not canSave}">
 							<p:ajax event="dateSelect" listener="#{announcementBean.startDateChanged}" update="endDate" partialSubmit="true"/>
 						</p:calendar>
 						<h:outputText value="#{bundle.endDate}"/>
 						<p:calendar id="endDate" binding="#{announcementBean.endDate}"
 							value="#{announcement.endDate}" pages="3" required="true"
 							requiredMessage="#{bundle.format('fieldValidation', bundle.endDate)}"
-							size="7" style="margin-left: 1em"
+							size="7" style="margin-left: 1em" readonly="#{not canSave}"
 							validator="#{announcementBean.validateDate()}" validatorMessage="#{bundle.invalidDate}"/>
 					</div>
 				</div>
