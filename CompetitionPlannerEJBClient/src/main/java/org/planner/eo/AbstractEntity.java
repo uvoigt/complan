@@ -1,12 +1,9 @@
 package org.planner.eo;
 
-import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
 
@@ -14,13 +11,9 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 @MappedSuperclass
 @Cacheable
-public abstract class AbstractEntity implements HasId, Serializable {
+public abstract class AbstractEntity extends HasId {
 
 	private static final long serialVersionUID = 1L;
-
-	@Id
-	@GeneratedValue
-	protected Long id;
 
 	@Version
 	private int version;
@@ -36,15 +29,6 @@ public abstract class AbstractEntity implements HasId, Serializable {
 
 	@Column
 	private Date updateTime;
-
-	@Override
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
 
 	public int getVersion() {
 		return version;

@@ -14,7 +14,7 @@ import javax.persistence.Lob;
 import javax.persistence.Transient;
 
 @Embeddable
-public class ProgramOptions extends HasHeatMode implements Serializable {
+public class ProgramOptions implements Serializable {
 	public static class DayTimes implements Serializable {
 		private static final long serialVersionUID = 1L;
 

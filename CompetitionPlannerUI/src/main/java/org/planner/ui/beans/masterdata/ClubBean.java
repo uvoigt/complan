@@ -7,7 +7,10 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 
 import org.planner.eo.Address;
+import org.planner.eo.Address_;
 import org.planner.eo.Club;
+import org.planner.eo.Club_;
+import org.planner.model.FetchInfo;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.util.JsfUtil;
 
@@ -28,7 +31,7 @@ public class ClubBean extends AbstractEditBean {
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
 		if (id != null && !isCancelPressed()) {
-			club = service.getObject(Club.class, id, 1);
+			club = service.getObject(Club.class, id, getFetchInfo());
 			JsfUtil.setViewVariable("id", club.getId());
 		} else {
 			club = new Club();
@@ -39,7 +42,13 @@ public class ClubBean extends AbstractEditBean {
 
 	@Override
 	public void setItem(Object item) {
-		club = service.getObject(Club.class, ((Club) item).getId(), 2);
+		this.club = (Club) item;
+	}
+
+	@Override
+	public FetchInfo[] getFetchInfo() {
+		return new FetchInfo[] { new FetchInfo(Club_.address, true).add(new FetchInfo(Address_.country, true),
+				new FetchInfo(Address_.city, true)) };
 	}
 
 	public boolean canDelete(@SuppressWarnings("unused") Map<String, String> item) {

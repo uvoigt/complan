@@ -34,8 +34,6 @@ public interface ServiceFacade extends IResultProvider {
 
 	Map<String, Properties> speichernBenutzerEinstellungen(List<Properties> properties);
 
-	<T extends AbstractEntity> T getObjectForCopy(Class<T> type, long id);
-
 	void delete(Class<? extends Serializable> entityType, Long id);
 
 	void deleteRaces(Long announcementId, List<Long> raceIds);
@@ -74,7 +72,7 @@ public interface ServiceFacade extends IResultProvider {
 
 	Role saveRole(Role role);
 
-	Announcement saveAnnouncement(Announcement announcement);
+	Announcement saveAnnouncement(Announcement announcement, boolean copy);
 
 	void dataImport(List<AbstractEntity> entities);
 

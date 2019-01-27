@@ -26,7 +26,7 @@
 						rendered="#{authBean.inRole('update_announcements') and item['club.name'] == authBean.loggedInUser.club.name}"/>
 				<p:menuitem icon="ui-icon-flag"
 						value="#{item.status != 'announced' ? bundle.races : bundle.racesDisplay}"
-						action="#{searchBean.bearbeiten('/announcement/racesEdit.xhtml', item.id, racesEditBean)}"
+						action="#{searchBean.bearbeiten('/announcement/racesEdit.xhtml', typ, item, racesEditBean)}"
 						process="@form"
 						update="mainContent"/>
 				<p:menuitem icon="ui-icon-mail-closed" value="#{bundle.setStatus}"

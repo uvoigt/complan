@@ -1,14 +1,10 @@
 package org.planner.eo;
 
-import java.io.Serializable;
-
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Version;
 
@@ -16,12 +12,9 @@ import org.planner.util.Visible;
 
 @Entity
 @Access(AccessType.FIELD)
-public class Address implements HasId, Serializable {
-	private static final long serialVersionUID = 1L;
+public class Address extends HasId {
 
-	@Id
-	@GeneratedValue
-	private Long id;
+	private static final long serialVersionUID = 1L;
 
 	@Version
 	private int version;
@@ -44,11 +37,6 @@ public class Address implements HasId, Serializable {
 	private String addition;
 
 	private String homepage;
-
-	@Override
-	public Long getId() {
-		return id;
-	}
 
 	public Country getCountry() {
 		return country;

@@ -4,19 +4,24 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
+import javax.persistence.Version;
 
 @Entity
 @Access(AccessType.FIELD)
-public class Location extends AbstractEntity {
+public class Location extends HasId {
 
 	private static final long serialVersionUID = 1L;
 
-	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+	@Version
+	private int version;
+
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private Address address = new Address();
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Club club;
 
 	public Address getAddress() {

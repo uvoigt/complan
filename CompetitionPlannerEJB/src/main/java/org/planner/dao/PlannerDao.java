@@ -22,6 +22,8 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Fetch;
+import javax.persistence.criteria.FetchParent;
 import javax.persistence.criteria.From;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
@@ -31,6 +33,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Selection;
+import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.Bindable;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -48,9 +51,12 @@ import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.AbstractEnum;
 import org.planner.eo.CanDelete;
+import org.planner.eo.HasId;
+import org.planner.eo.HasId_;
 import org.planner.eo.Properties;
 import org.planner.eo.Properties_;
 import org.planner.eo.User;
+import org.planner.model.FetchInfo;
 import org.planner.model.LocalizedEnum;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
@@ -90,6 +96,31 @@ public class PlannerDao {
 	@Transactional(TxType.SUPPORTS)
 	public <T extends Serializable> T getById(Class<T> type, Object id) {
 		return em.find(type, id);
+	}
+
+	@Transactional(TxType.SUPPORTS)
+	public <T extends HasId> T getById(Class<T> type, Object id, FetchInfo... fetchInfo) {
+		CriteriaBuilder builder = em.getCriteriaBuilder();
+		CriteriaQuery<T> query = builder.createQuery(type);
+		Root<T> root = query.from(type);
+		addFetches(root, fetchInfo);
+		query.where(builder.equal(root.get(HasId_.id), builder.parameter(Long.class, "id")));
+		T result = em.createQuery(query).setParameter("id", id).getSingleResult();
+		return result;
+	}
+
+	private void addFetches(FetchParent<?, ?> root, FetchInfo... fetchInfo) {
+		if (fetchInfo == null)
+			return;
+		for (FetchInfo info : fetchInfo) {
+			if (!info.isFetch())
+				continue;
+			Attribute<?, ?> attribute = info.getAttribute();
+			Fetch<Object, Object> fetch = root.fetch(attribute.getName(), JoinType.LEFT);
+			for (FetchInfo child : info.getChildren()) {
+				addFetches(fetch, child);
+			}
+		}
 	}
 
 	@Transactional(TxType.SUPPORTS)
@@ -166,6 +197,10 @@ public class PlannerDao {
 		if (entity.getId() == null) {
 			entity.setCreateUser(loggedInUser);
 			entity.setCreateTime(new Date());
+			// für Kopien
+			entity.setVersion(0);
+			entity.setUpdateUser(null);
+			entity.setUpdateTime(null);
 			em.persist(entity);
 		} else {
 			entity.setUpdateUser(loggedInUser);

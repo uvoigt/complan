@@ -19,6 +19,7 @@ import org.planner.eo.AbstractEnum;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
 import org.planner.eo.Club;
+import org.planner.eo.HasId;
 import org.planner.eo.Placement;
 import org.planner.eo.Program;
 import org.planner.eo.Program.ProgramStatus;
@@ -31,6 +32,7 @@ import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Role;
 import org.planner.eo.User;
 import org.planner.model.Change;
+import org.planner.model.FetchInfo;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.remote.ServiceFacade;
@@ -66,13 +68,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public <T extends Serializable> T getObject(Class<T> type, long id, int fetchDepth) {
-		return common.getById(type, id, fetchDepth);
-	}
-
-	@Override
-	public <T extends AbstractEntity> T getObjectForCopy(Class<T> type, long id) {
-		return common.getByIdForCopy(type, id);
+	public <T extends HasId> T getObject(Class<T> type, long id, FetchInfo... fetchInfo) {
+		return common.getById(type, id, fetchInfo);
 	}
 
 	@Override
@@ -146,7 +143,7 @@ public class ServiceFacadeBean implements ServiceFacade {
 
 	@Override
 	public User getLoggedInUser() {
-		return masterData.getUserByUserId(caller.getLoginName());
+		return common.getCallingUser();
 	}
 
 	@Override
@@ -187,8 +184,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public Announcement saveAnnouncement(Announcement announcement) {
-		return this.announcement.saveAnnouncement(announcement);
+	public Announcement saveAnnouncement(Announcement announcement, boolean copy) {
+		return this.announcement.saveAnnouncement(announcement, copy);
 	}
 
 	@Override

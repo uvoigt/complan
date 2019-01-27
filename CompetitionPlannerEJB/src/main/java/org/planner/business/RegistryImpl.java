@@ -72,10 +72,7 @@ public class RegistryImpl {
 	private Messages messages;
 
 	@Inject
-	private PlannerDao plannerDao;
-
-	@Inject
-	private MasterDataServiceImpl masterData;
+	private PlannerDao dao;
 
 	@Inject
 	private CommonImpl common;
@@ -93,7 +90,7 @@ public class RegistryImpl {
 		if (LOG.isInfoEnabled())
 			LOG.info("Neues Passwort für " + user.getUserId() + " gesetzt.");
 		// der Caller ist "anonymous", deshalb hier der Benutzer
-		plannerDao.save(user, user.getUserId());
+		dao.save(user, user.getUserId());
 
 		String emailText = getFormattedMessage("email.passwordchanged.html", user.getFirstName(), user.getLastName());
 
@@ -107,7 +104,7 @@ public class RegistryImpl {
 		byte[] hashFromToken = new byte[64]; // digest length sha-512
 		String userId = extractHashFromToken(token, hashFromToken);
 
-		User user = plannerDao.getUserByUserId(userId);
+		User user = dao.getUserByUserId(userId);
 		if (user == null)
 			return null;
 		Token storedToken = null;
@@ -131,7 +128,7 @@ public class RegistryImpl {
 				LOG.info("Die Gültigkeit des Login- oder E-Mail-Tokens [" + storedToken + "] für " + user.getUserId()
 						+ " ist abgelaufen.");
 			user.getTokens().remove(storedToken);
-			plannerDao.saveToken(user);
+			dao.saveToken(user);
 			return null;
 		}
 		return user;
@@ -170,7 +167,7 @@ public class RegistryImpl {
 	public void forgetMe(String currentToken) {
 		User user = common.getCallingUser();
 		removeToken(user, currentToken);
-		plannerDao.saveToken(user);
+		dao.saveToken(user);
 	}
 
 	private void removeToken(User user, String encodedToken) {
@@ -190,7 +187,7 @@ public class RegistryImpl {
 	}
 
 	public String sendRegister(String email, String resetUrl) {
-		User user = masterData.getUserByUserId(email);
+		User user = dao.getUserByUserId(email);
 		if (user != null) {
 			// Ein Benutzer, der sich bereits angemeldet hatte, kann sich nicht
 			// noch einmal registrieren
@@ -213,7 +210,7 @@ public class RegistryImpl {
 			krit.addFilter(Role_.role.getName(), "Sportwart");
 			krit.setExact(true);
 			krit.setIgnoreCase(false);
-			List<Role> liste = plannerDao.search(Role.class, krit, null).getListe();
+			List<Role> liste = dao.search(Role.class, krit, null).getListe();
 			// falls die Rolle nicht existiert, kann der Benutzer nichts machen
 			if (liste.size() > 0) {
 				Role role = liste.get(0);
@@ -223,7 +220,7 @@ public class RegistryImpl {
 			// Der Club muss nach der Erstanmeldung im Profil gesetzt werden
 			// für den Sportwart gilt, dass er sich
 			// auch seinen Verein anlegen muss
-			plannerDao.save(user, email);
+			dao.save(user, email);
 		}
 
 		Token emailToken = createAndStoreToken(user, TokenType.email, EMAIL_TOKEN_LIFETIME);
@@ -238,14 +235,14 @@ public class RegistryImpl {
 	}
 
 	public String sendPasswortReset(String userId, String resetUrl) {
-		User user = masterData.getUserByUserId(userId);
+		User user = dao.getUserByUserId(userId);
 		return user != null ? internalSendPasswordReset(user, resetUrl) : messages.getMessage("user.unknown");
 	}
 
 	public String sendPasswortReset(Long id, String resetUrl) {
 		if (id == null)
 			return null;
-		User user = plannerDao.getById(User.class, id);
+		User user = dao.getById(User.class, id);
 		if (user == null)
 			return null;
 		return internalSendPasswordReset(user, resetUrl);
@@ -278,7 +275,7 @@ public class RegistryImpl {
 		cal.add(Calendar.MINUTE, expiryMinutes);
 		token.setTokenExpires(cal.getTime().getTime());
 		user.getTokens().add(token);
-		plannerDao.saveToken(user);
+		dao.saveToken(user);
 		if (LOG.isDebugEnabled())
 			LOG.debug("Saved authentication token: " + token);
 		return token;

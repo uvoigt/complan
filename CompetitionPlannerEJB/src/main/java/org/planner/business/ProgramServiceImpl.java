@@ -36,6 +36,7 @@ import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.Announcement;
+import org.planner.eo.Announcement_;
 import org.planner.eo.Club;
 import org.planner.eo.Participant;
 import org.planner.eo.Placement;
@@ -45,7 +46,6 @@ import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramOptions.Break;
 import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
-import org.planner.eo.ProgramRace.RaceType;
 import org.planner.eo.ProgramRaceTeam;
 import org.planner.eo.ProgramRaceTeam_;
 import org.planner.eo.ProgramRace_;
@@ -62,7 +62,9 @@ import org.planner.eo.User;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
 import org.planner.model.Change;
+import org.planner.model.FetchInfo;
 import org.planner.model.Gender;
+import org.planner.model.RaceType;
 import org.planner.model.ResultExtra;
 import org.planner.model.Suchkriterien;
 import org.planner.util.ExpressionParser;
@@ -302,7 +304,7 @@ public class ProgramServiceImpl {
 				addEntryToProgram(registration.getClub(), entry, races);
 			}
 		}
-		Announcement announcement = common.getById(Announcement.class, program.getAnnouncement().getId(), 0);
+		Announcement announcement = dao.getById(Announcement.class, program.getAnnouncement().getId());
 		if (LOG.isDebugEnabled())
 			LOG.debug("Wir haben insgesamt Meldungen fuer " + races.size() + " von " + announcement.getRaces().size()
 					+ " ausgeschriebenen Rennen");
@@ -379,9 +381,9 @@ public class ProgramServiceImpl {
 			aFinal.setStartTime(context.nextTime());
 		}
 
-//		System.out.println(context.times);
-//		RaceMatrix matrix = new RaceMatrix(context.times, allHeats, semiFinals, instantFinals, finals);
-//		checkWithMatrix(matrix);
+		// System.out.println(context.times);
+		// RaceMatrix matrix = new RaceMatrix(context.times, allHeats, semiFinals, instantFinals, finals);
+		// checkWithMatrix(matrix);
 
 		program.getRaces().addAll(allHeats);
 		program.getRaces().addAll(semiFinals);
@@ -435,10 +437,14 @@ public class ProgramServiceImpl {
 
 			if (LOG.isDebugEnabled())
 				LOG.debug("Rennen " + race.getNumber() + " hat " + calc.numRaces + " Vorlaeufe, Modus ist "
-						+ (calc.directlyIntoFinal > 0 ? (calc.directlyIntoFinal > 1 ? "1 bis " : "")
-								+ calc.directlyIntoFinal + " in den Endlauf " : " ")
-						+ (calc.intoSemiFinal > 0 ? (calc.directlyIntoFinal > 0 ? (calc.directlyIntoFinal + 1) : "1")
-								+ " bis " + calc.intoSemiFinal + " in den Zwischenlauf" : ""));
+						+ (calc.directlyIntoFinal > 0
+								? (calc.directlyIntoFinal > 1 ? "1 bis " : "") + calc.directlyIntoFinal
+										+ " in den Endlauf "
+								: " ")
+						+ (calc.intoSemiFinal > 0
+								? (calc.directlyIntoFinal > 0 ? (calc.directlyIntoFinal + 1) : "1") + " bis "
+										+ calc.intoSemiFinal + " in den Zwischenlauf"
+								: ""));
 
 			int addToSingleRace = 0;
 			if (calc.remainder > 0) {
@@ -495,8 +501,8 @@ public class ProgramServiceImpl {
 
 	public void swapRaces(ProgramRace r1, ProgramRace r2) {
 		// lade die unvollständigen Races
-		final ProgramRace race1 = common.getById(ProgramRace.class, r1.getId(), 0);
-		final ProgramRace race2 = common.getById(ProgramRace.class, r2.getId(), 0);
+		final ProgramRace race1 = dao.getById(ProgramRace.class, r1.getId());
+		final ProgramRace race2 = dao.getById(ProgramRace.class, r2.getId());
 		common.checkWriteAccess(race1, Operation.save);
 		common.checkWriteAccess(race2, Operation.save);
 
@@ -525,25 +531,26 @@ public class ProgramServiceImpl {
 
 	private Program doGetProgram(EntityManager em, Long id, boolean withResults, boolean orderByResults) {
 		// so werden die Options mitgeladen
-		Program program = em.find(Program.class, id);
+		Program program = dao.getById(Program.class, id,
+				new FetchInfo(Program_.announcement, true).add(new FetchInfo(Announcement_.club, true)));
 		if (program == null)
 			throw new FachlicheException(messages.getResourceBundle(), "program.notfound");
 		em.detach(program);
 
 		// in JPQL gibt es eine MultipleBagException
-		StringBuilder sql = new StringBuilder("select " //
-				+ "r.id RaceId, r.number RaceNumber, r.gender, r.distance, r.boatClass, r.ageType, " //
-				+ "pr.id ProgramRaceId, pr.number, pr.startTime, pr.raceType, pr.heatMode, " //
-				+ "t.id TeamId, pt.lane, " //
-				+ "tc.id TeamClubId, tc.shortName TCShort, tc.name TCName, " //
-				+ "tm.id MemberId, tm.pos, tm.remark, " //
-				+ "tu.firstName, tu.lastName, tu.birthDate, " //
-				+ "uc.id UserClubId, uc.shortName UCShort, uc.name UCName");
-		if (withResults) {
-			sql.append(", pl.position, pl.time, pl.extra, pl.qualifiedFor");
-		}
+		StringBuilder sql = new StringBuilder(1100);
+		sql.append("select " //
+				+ "r.id RaceId, r.number RaceNumber, r.gender, r.distance, r.boatClass, r.ageType, " // 0
+				+ "pr.id ProgramRaceId, pr.number, pr.startTime, pr.raceType, pr.heatMode, " // 6
+				+ "t.id TeamId, " // 11
+				+ "tc.id TeamClubId, tc.shortName TCShort, tc.name TCName, " // 12
+				+ "pt.lane, " // 15
+				+ "tm.id MemberId, tm.pos, tm.remark, " // 16
+				+ "tu.firstName, tu.lastName, tu.birthDate, " // 19
+				+ "uc.id UserClubId, uc.shortName UCShort, uc.name UCName"); // 22
+		if (withResults)
+			sql.append(", pl.position, pl.time, pl.extra, pl.qualifiedFor"); // 25
 		sql.append(" from Program p " //
-				+ "inner join Announcement a on p.announcement_id=a.id "
 				+ "inner join ProgramRace pr on pr.program_id=p.id " //
 				+ "left join Race r on pr.race_id=r.id " //
 				+ "left join ProgramRace_Team pt on pt.programrace_id=pr.id " //
@@ -552,9 +559,8 @@ public class ProgramServiceImpl {
 				+ "left join TeamMember tm on tm.team_id=t.id " //
 				+ "left join User tu on tm.user_id=tu.id " //
 				+ "left join Club uc on tu.club_id=uc.id ");
-		if (withResults) {
+		if (withResults)
 			sql.append("left join Placement pl on pt.programrace_id=pl.programrace_id and pt.team_id=pl.team_id ");
-		}
 		sql.append("where p.id = :id ");
 		sql.append("order by pr.startTime, ");
 		sql.append(orderByResults && withResults ? "pl.position, pt.lane" : "pt.lane");
@@ -568,7 +574,7 @@ public class ProgramServiceImpl {
 		// dient dem effizienteren Serialisieren
 		Map<BigInteger, TeamMember> members = new HashMap<>();
 		Map<BigInteger, Club> clubs = new HashMap<>();
-		ArrayList<ProgramRace> races = new ArrayList<ProgramRace>();
+		ArrayList<ProgramRace> races = new ArrayList<>();
 		program.setRaces(races);
 		Race race = null;
 		ProgramRaceTeam raceTeam = null;
@@ -579,10 +585,10 @@ public class ProgramServiceImpl {
 				race = new Race();
 				race.setId(raceId.longValue());
 				race.setNumber((Integer) row[1]);
-				race.setGender(byOrdinal(Gender.class, (Integer) row[2]));
+				race.setGender(Gender.class.getEnumConstants()[(int) row[2]]);
 				race.setDistance(((Number) row[3]).intValue());
-				race.setBoatClass(byOrdinal(BoatClass.class, (Integer) row[4]));
-				race.setAgeType(byOrdinal(AgeType.class, (Integer) row[5]));
+				race.setBoatClass(BoatClass.class.getEnumConstants()[(int) row[4]]);
+				race.setAgeType(AgeType.class.getEnumConstants()[(int) row[5]]);
 			}
 			BigInteger programRaceId = (BigInteger) row[6];
 			if (programRace == null || programRaceId.longValue() != programRace.getId()) {
@@ -590,7 +596,7 @@ public class ProgramServiceImpl {
 				programRace.setId(programRaceId.longValue());
 				programRace.setNumber((Integer) row[7]);
 				programRace.setStartTime((Date) row[8]);
-				programRace.setRaceType(byOrdinal(RaceType.class, (Integer) row[9]));
+				programRace.setRaceType(RaceType.class.getEnumConstants()[(int) row[9]]);
 				programRace.setHeatMode((String) row[10]);
 
 				programRace.setRace(race);
@@ -616,9 +622,9 @@ public class ProgramServiceImpl {
 			if (teamId != null) {
 				if (raceTeam == null || teamId.longValue() != raceTeam.getTeamId()) {
 					Team team = new Team(teamId.longValue());
-					team.setClub(getClub(clubs, row, 13));
+					team.setClub(getClub(clubs, row, 12));
 					raceTeam = new ProgramRaceTeam(programRace, team);
-					raceTeam.setLane((int) row[12]);
+					raceTeam.setLane((int) row[15]);
 					programRace.addParticipant(raceTeam);
 
 					if (withResults && row[25] != null) {
@@ -693,14 +699,6 @@ public class ProgramServiceImpl {
 			clubs.put(clubId, club);
 		}
 		return club;
-	}
-
-	private <T extends Enum<T>> T byOrdinal(Class<T> type, int ordinal) {
-		for (T t : type.getEnumConstants()) {
-			if (t.ordinal() == ordinal)
-				return t;
-		}
-		throw new IllegalArgumentException();
 	}
 
 	public void deleteProgram(Long programId) {
@@ -791,7 +789,7 @@ public class ProgramServiceImpl {
 	}
 
 	public void setProgramStatus(Long programId, ProgramStatus status) {
-		Program program = common.getById(Program.class, programId, 0);
+		Program program = dao.getById(Program.class, programId);
 		common.checkWriteAccess(program, Operation.save);
 		if (!caller.isInRole("Tester") && status == ProgramStatus.created)
 			throw new FachlicheException(messages.getResourceBundle(), "accessSetStatus");
@@ -800,7 +798,7 @@ public class ProgramServiceImpl {
 	}
 
 	public List<ProgramRace> saveResult(Long programRaceId, List<Placement> placements) {
-		final ProgramRace programRace = common.getById(ProgramRace.class, programRaceId, 0);
+		final ProgramRace programRace = dao.getById(ProgramRace.class, programRaceId);
 		common.checkWriteAccess(programRace, Operation.save);
 
 		// ordnen
@@ -874,9 +872,8 @@ public class ProgramServiceImpl {
 		List<ProgramRace> followUpRaces = dao.executeOperation(new IOperation<List<ProgramRace>>() {
 			@Override
 			public List<ProgramRace> execute(EntityManager em) {
-				return em
-						.createQuery("from ProgramRace where race=:race and racetype>:raceType " //
-								+ "order by racetype desc, number", ProgramRace.class)
+				return em.createQuery("from ProgramRace where race=:race and racetype>:raceType " //
+						+ "order by racetype desc, number", ProgramRace.class)
 						.setParameter("race", programRace.getRace())
 						.setParameter("raceType", programRace.getRaceType().ordinal()).getResultList();
 			}

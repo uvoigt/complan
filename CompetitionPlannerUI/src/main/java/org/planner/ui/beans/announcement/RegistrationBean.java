@@ -14,19 +14,26 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.faces.context.PartialViewContext;
+import javax.faces.event.ComponentSystemEvent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.Announcement;
+import org.planner.eo.HasId;
 import org.planner.eo.Participant;
+import org.planner.eo.Participant_;
 import org.planner.eo.Race;
 import org.planner.eo.RegEntry;
+import org.planner.eo.RegEntry_;
 import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
+import org.planner.eo.Registration_;
 import org.planner.eo.User;
+import org.planner.eo.User_;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
+import org.planner.model.FetchInfo;
 import org.planner.model.IResultProvider;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
@@ -41,8 +48,13 @@ import org.planner.ui.util.JsfUtil;
 import org.primefaces.component.datatable.DataTable;
 import org.primefaces.component.datatable.feature.DataTableFeatureKey;
 import org.primefaces.component.datatable.feature.FilterFeature;
+import org.primefaces.component.datatable.feature.SortFeature;
 import org.primefaces.component.selectonemenu.SelectOneMenu;
+import org.primefaces.event.data.FilterEvent;
+import org.primefaces.event.data.SortEvent;
 import org.primefaces.model.FilterMeta;
+import org.primefaces.model.SortMeta;
+import org.primefaces.model.SortOrder;
 
 @Named
 @RequestScoped
@@ -101,31 +113,45 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 				// muss der Key voll qualifiziert sein
 				new String[] { JsfUtil.getScopedBundle().get("registrations.requestMsg") });
 		this.remarks = new ArrayList<>(Arrays.asList(remarks));
+
+		if (isCancelPressed())
+			resetViewState();
 	}
 
 	@Override
 	public void setItem(Object item) {
-		// wird nochmals geladen aufgrund der Detailtiefe
-		registrationId = ((Registration) item).getId();
-		announcementId = ((Registration) item).getAnnouncement().getId();
+		registration = (Registration) item;
+		registrationId = registration.getId();
+		announcementId = registration.getAnnouncement().getId();
 		JsfUtil.setViewVariable("id", registrationId);
 		JsfUtil.setViewVariable("aid", announcementId);
+
+		// Merken für Reload
+		setRequestParameter(2, registration.getAnnouncement().getId());
+
+		resetViewState();
 	}
 
-	public boolean canDelete(Map<String, String> item) {
+	private void resetViewState() {
+		JsfUtil.setViewVariable("rFilters", null);
+		JsfUtil.setViewVariable("rSortState", null);
+	}
+
+	@Override
+	public FetchInfo[] getFetchInfo() {
+		return new FetchInfo[] { new FetchInfo(Registration_.club, true),
+				new FetchInfo(Registration_.entries, false).add(new FetchInfo(RegEntry_.race, false),
+						new FetchInfo(RegEntry_.participants, false)
+								.add(new FetchInfo(Participant_.user, false).add(new FetchInfo(User_.club, false)))) };
+	}
+
+	public boolean canDelete(Map<String, Object> item) {
 		return item.get("club.name").equals(auth.getLoggedInUser().getClub().getName())
 				&& RegistrationStatus.created.equals(item.get("status"));
 	}
 
 	private void loadRegistration(Long id) {
-		// TODO auch hier... über einen search-view-parameter die detailtiefe festlegen
-		// 4 aufgrund der Anzeige des Vereins bei manchen Sportlern, ansonsten reicht 2
-		registration = service.getObject(Registration.class, id, 4);
-		// zentraler Ort, um diese zusätzliche Id "nachzuschieben"
-		setRequestParameter(2, registration.getAnnouncement().getId());
-		// für den View-Mode!
-		if (registrationTable != null && registration.getStatus() == RegistrationStatus.submitted)
-			registrationTable.setSelectionMode(null);
+		registration = service.getObject(Registration.class, id, getFetchInfo());
 	}
 
 	private void loadRegistrationAndUpdateModel() {
@@ -141,13 +167,47 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		feature.filter(FacesContext.getCurrentInstance(), registrationTable, filterMetadata, null);
 	}
 
+	public void onFilterRegistrationTable(FilterEvent event) {
+		JsfUtil.setViewVariable("rFilters", event.getFilters());
+	}
+
+	public void onSortRegistrationTable(SortEvent event) {
+		// speichere nur asc/desc. die SortMeta würden im StateSaver ausgetauscht, wonach die sortBy-Expression
+		// der column nicht wiederhergestellt wird
+		JsfUtil.setViewVariable("rSortState", event.isAscending());
+	}
+
+	@SuppressWarnings("unchecked")
+	public void onPrerenderRegistrationTable(ComponentSystemEvent event) {
+		DataTable table = (DataTable) event.getComponent();
+		Map<String, Object> filters = (Map<String, Object>) JsfUtil.getViewVariable("rFilters");
+		table.setFilters(filters);
+		if (filters != null) {
+			FilterFeature feature = (FilterFeature) table.getFeature(DataTableFeatureKey.FILTER);
+			List<FilterMeta> filterMetadata = feature.populateFilterMetaData(event.getFacesContext(), table);
+			feature.filter(event.getFacesContext(), table, filterMetadata, null);
+			registration.getEntries().clear();
+			registration.getEntries().addAll(table.getFilteredValue());
+		}
+		Boolean ascending = (Boolean) JsfUtil.getViewVariable("rSortState");
+		if (ascending != null) {
+			SortMeta meta = new SortMeta(table.getColumns().get(0), null,
+					ascending ? SortOrder.ASCENDING : SortOrder.DESCENDING, null);
+			table.setMultiSortMeta(Arrays.asList(meta));
+			SortFeature feature = (SortFeature) table.getFeature(DataTableFeatureKey.SORT);
+			feature.multiSort(event.getFacesContext(), table);
+		}
+	}
+
 	private boolean isTableTargeted(String tableId) {
+		if (isCancelPressed())
+			return false;
 		PartialViewContext ctx = FacesContext.getCurrentInstance().getPartialViewContext();
 		Collection<String> ids = ctx.getExecuteIds();
 		// mainContent -> Aufruf von den Ausschreibungen
 		// main -> Aktion oder Aufruf von den Registrierungen
 		// !partialRequest -> full page reload
-		return !isCancelPressed() && (ids.contains(tableId) || ids.contains("main")) || !ctx.isPartialRequest()
+		return ids.contains(tableId) || ids.contains("main") || !ctx.isPartialRequest()
 				|| ctx.getRenderIds().contains("mainContent");
 	}
 
@@ -186,12 +246,13 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		announcementId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), announcement,
 				AbstractEntity_.id.getName());
 		Registration r = new Registration();
-		r.setAnnouncement(service.getObject(Announcement.class, announcementId, 1));
+		r.setAnnouncement(service.getObject(Announcement.class, announcementId));
 		registrationId = service.createRegistration(r);
 		loadRegistration(registrationId);
 		JsfUtil.setViewVariable("id", registrationId);
 		JsfUtil.setViewVariable("aid", announcementId);
-		startseiteBean.setMainContent("/announcement/registrationEdit.xhtml", this.registration.getId());
+		resetViewState();
+		startseiteBean.setMainContent("/announcement/registrationEdit.xhtml", registrationId, announcementId);
 	}
 
 	public void addToRegistration() {
@@ -292,7 +353,7 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			columns.add(new ColumnModel(null, userColumns[2].getName(), true));
 			columns.add(new ColumnModel(null, userColumns[4].getName(), true));
 			columns.add(new ColumnModel(null, userColumns[5].getName(), true));
-			athletes = new RemoteDataModel<>(this, User.class, columns, null, "athletes");
+			athletes = new RemoteDataModel<>(this, User.class, columns, null, false, "athletes");
 			HashMap<String, Object> filters = new HashMap<>();
 			filters.put("club.name", auth.getLoggedInUser().getClub().getName());
 			athletes.setFilterPreset(filters);
@@ -374,6 +435,10 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	}
 
 	public DataTable getRegistrationTable() {
+		// für den View-Mode!
+		if (registrationTable != null && registration != null
+				&& registration.getStatus() == RegistrationStatus.submitted)
+			registrationTable.setSelectionMode(null);
 		return registrationTable;
 	}
 
@@ -427,7 +492,7 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	}
 
 	@Override
-	public <T extends Serializable> T getObject(Class<T> type, long id, int fetchDepth) {
-		return service.getObject(type, id, fetchDepth);
+	public <T extends HasId> T getObject(Class<T> type, long id, FetchInfo... fetchInfo) {
+		return service.getObject(type, id, fetchInfo);
 	}
 }

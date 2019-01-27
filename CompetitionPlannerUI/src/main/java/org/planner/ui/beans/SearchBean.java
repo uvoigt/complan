@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.HasId;
+import org.planner.model.FetchInfo;
 import org.planner.model.LocalizedEnum;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.ColumnHandler.Column;
@@ -110,7 +111,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 	private RemoteDataModel<Serializable> dataModel;
 
-	private Map<String, List<ColumnModel>> columns = new HashMap<String, List<ColumnModel>>();
+	private Map<String, List<ColumnModel>> columns = new HashMap<>();
 
 	private UploadBean uploadBean;
 
@@ -250,8 +251,8 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		return item;
 	}
 
-	public void setSelectedItem(HasId selectedItem) {
-		JsfUtil.setViewVariable("selectedItem", selectedItem != null ? selectedItem.getId() : null);
+	public void setSelectedItem(Long selectedItem) {
+		JsfUtil.setViewVariable("selectedItem", selectedItem);
 	}
 
 	public RemoteDataModel<? extends Serializable> getDataModel(String typ) throws Exception {
@@ -263,7 +264,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	private RemoteDataModel<Serializable> createDataModel(String typ, List<ColumnModel> columnList,
 			List<ColumnModel> mandatoryColumns) throws Exception {
 		Class<Serializable> entityType = loadTyp(typ, Serializable.class);
-		return new RemoteDataModel<Serializable>(service, entityType, columnList, mandatoryColumns);
+		return new RemoteDataModel<>(service, entityType, columnList, mandatoryColumns);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -283,24 +284,19 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	public void bearbeiten(String link, String typ, Object selectedItem, ITarget targetBean) throws Exception {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selectedItem, "id");
-		Serializable item = service.getObject(loadTyp(typ, Serializable.class), id, 1);
-		targetBean.setItem(item);
+		FetchInfo[] fetchInfo = targetBean.getFetchInfo();
+		targetBean.setItem(fetchInfo != null ? service.getObject(loadTyp(typ, HasId.class), id, fetchInfo) : id);
 		startseiteBean.setMainContent(link, id);
-	}
-
-	public void bearbeiten(String link, Long selectedItemId, ITarget targetBean) throws Exception {
-		startseiteBean.setMainContent(link, selectedItemId);
-		targetBean.setItem(selectedItemId);
 	}
 
 	public void kopieren(String link, String typ, Map<String, Object> selectedItem, ITarget targetBean)
 			throws Exception {
-		startseiteBean.setMainContent(link);
 		FacesContext ctx = FacesContext.getCurrentInstance();
-		Object id = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selectedItem, "id");
-		AbstractEntity item = service.getObjectForCopy(loadTyp(typ, AbstractEntity.class), (Long) id);
-		targetBean.setItem(item);
-		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, messages.get("copyHint")));
+		Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selectedItem, "id");
+		FetchInfo[] fetchInfo = targetBean.getFetchInfo();
+		HasId item = service.getObject(loadTyp(typ, HasId.class), id, fetchInfo);
+		targetBean.setItem(targetBean.prepareForCopy(item));
+		startseiteBean.setMainContent(link, id, "copy");
 	}
 
 	public void loeschen(String typ, Object id) throws Exception {

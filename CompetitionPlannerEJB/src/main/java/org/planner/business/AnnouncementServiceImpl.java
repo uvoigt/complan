@@ -1,6 +1,5 @@
 package org.planner.business;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -129,18 +128,19 @@ public class AnnouncementServiceImpl {
 	@Inject
 	private Messages messages;
 
-	public Announcement saveAnnouncement(Announcement announcement) {
+	public Announcement saveAnnouncement(Announcement announcement, boolean copy) {
 
 		Announcement existing = null;
 		if (announcement.getId() != null)
-			existing = common.getById(Announcement.class, announcement.getId(), 0);
+			existing = dao.getById(Announcement.class, announcement.getId());
 
 		common.checkWriteAccess(existing != null ? existing : announcement, Operation.save);
 
-		if (existing == null) {
+		if (existing == null || copy) {
 			announcement.setStatus(AnnouncementStatus.created);
 			announcement.setClub(common.getCallingUser().getClub());
 		}
+
 		Category category = announcement.getCategory();
 		common.handleEnum(category);
 		// Location announcer = announcement.getAnnouncer();
@@ -153,17 +153,32 @@ public class AnnouncementServiceImpl {
 		// juryLocation.setAddress(null);
 		// if (juryLocation.getId() == null)
 		// common.save(juryLocation);
+
+		// location ist cascade=ALL
 		Location location = announcement.getLocation();
 		if (location.getClub() != null)
 			location.setAddress(null);
-		common.save(location);
+
 		// Location openingLocation = announcement.getOpeningLocation();
 		// if (openingLocation.getClub() != null)
 		// openingLocation.setAddress(null);
 		// if (openingLocation.getId() == null)
 		// common.save(openingLocation);
 
-		return common.save(announcement);
+		if (copy) {
+			announcement.setId(null);
+			announcement.getLocation().setId(null);
+		}
+
+		announcement = common.save(announcement);
+		if (copy) {
+			String loginName = caller.getLoginName();
+			for (Race race : announcement.getRaces()) {
+				race.setId(null);
+				dao.save(race, loginName);
+			}
+		}
+		return announcement;
 	}
 
 	public List<Race> getRaces(Long announcementId) {
@@ -257,7 +272,7 @@ public class AnnouncementServiceImpl {
 
 		Registration existing = null;
 		if (registration.getId() != null)
-			existing = common.getById(Registration.class, registration.getId(), 0);
+			existing = dao.getById(Registration.class, registration.getId());
 		else {
 			// gibt es bereits eine Meldung für diese Ausschreibung, dann nimm
 			// diese!
@@ -291,7 +306,7 @@ public class AnnouncementServiceImpl {
 	}
 
 	public void setAnnouncementStatus(Long announcementId, AnnouncementStatus status) {
-		Announcement announcement = common.getById(Announcement.class, announcementId, 0);
+		Announcement announcement = dao.getById(Announcement.class, announcementId);
 		common.checkWriteAccess(announcement, Operation.save);
 		if (!caller.isInRole("Tester") && status != AnnouncementStatus.announced)
 			throw new FachlicheException(messages.getResourceBundle(), "accessSetStatus");
@@ -299,7 +314,7 @@ public class AnnouncementServiceImpl {
 		common.save(announcement);
 	}
 
-	public Suchergebnis<? extends Serializable> getAthletes(final Suchkriterien criteria) {
+	public Suchergebnis<User> getAthletes(final Suchkriterien criteria) {
 		criteria.setProperties(Arrays.asList(new Property(User_.club.getName() + "." + Club_.name.getName()),
 				new Property(User_.club.getName() + "." + Club_.shortName.getName()),
 				new Property(User_.firstName.getName()), new Property(User_.lastName.getName()),
@@ -308,7 +323,7 @@ public class AnnouncementServiceImpl {
 	}
 
 	public void saveRegEntries(Long registrationId, List<RegEntry> entries) {
-		Registration registration = common.getById(Registration.class, registrationId, 0);
+		Registration registration = dao.getById(Registration.class, registrationId);
 		common.checkWriteAccess(registration, Operation.save);
 
 		// es gibt zwei Usecases:
@@ -318,7 +333,7 @@ public class AnnouncementServiceImpl {
 			// 1. es wird zu einem existierenden Entry hinzugefügt
 
 			List<Participant> newParticipants = firstEntry.getParticipants();
-			RegEntry existingEntry = common.getById(RegEntry.class, firstEntry.getId(), 0);
+			RegEntry existingEntry = dao.getById(RegEntry.class, firstEntry.getId());
 			List<Participant> existingParticipants = existingEntry.getParticipants();
 			int maxPos = determineMaxPos(existingParticipants);
 			boolean added = false;
@@ -372,7 +387,7 @@ public class AnnouncementServiceImpl {
 	}
 
 	public void deleteFromRegEntry(Long registrationId, RegEntry entry) {
-		Registration registration = common.getById(Registration.class, registrationId, 0);
+		Registration registration = dao.getById(Registration.class, registrationId);
 		common.checkWriteAccess(registration, Operation.delete);
 
 		List<Participant> participants = entry.getParticipants();
@@ -501,7 +516,7 @@ public class AnnouncementServiceImpl {
 	}
 
 	public void setRegistrationStatus(Long registrationId, RegistrationStatus status) {
-		Registration registration = common.getById(Registration.class, registrationId, 0);
+		Registration registration = dao.getById(Registration.class, registrationId);
 		common.checkWriteAccess(registration, Operation.save);
 
 		if (!caller.isInRole("Tester") && status != RegistrationStatus.submitted)

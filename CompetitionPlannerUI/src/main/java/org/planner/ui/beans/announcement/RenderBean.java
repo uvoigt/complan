@@ -12,10 +12,10 @@ import javax.inject.Named;
 import org.apache.commons.lang.StringUtils;
 import org.planner.eo.Placement;
 import org.planner.eo.ProgramRace;
-import org.planner.eo.ProgramRace.RaceType;
 import org.planner.eo.Race;
 import org.planner.eo.User;
 import org.planner.model.AgeType;
+import org.planner.model.RaceType;
 import org.planner.ui.beans.Messages;
 
 @Named

@@ -33,6 +33,7 @@ import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRaceTeam;
 import org.planner.eo.ProgramRaceTeam_;
+import org.planner.model.FetchInfo;
 import org.planner.model.ResultExtra;
 import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.AbstractEditBean;
@@ -160,11 +161,14 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 
 	@Override
 	public void setItem(Object item) {
-		program = (Program) item;
-		// das könnte auch als Argument in der search-xhtml mitgegeben werden
-		loadProgram(program.getId());
+		loadProgram((Long) item);
 		JsfUtil.setViewVariable("id", program.getId());
 		JsfUtil.setViewVariable("filter", null);
+	}
+
+	@Override
+	public FetchInfo[] getFetchInfo() {
+		return null;
 	}
 
 	public boolean canDelete(Map<String, String> item) {
@@ -207,7 +211,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long announcementId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), announcement,
 				AbstractEntity_.id.getName());
-		Announcement announcementEntity = service.getObject(Announcement.class, announcementId, 1);
+		Announcement announcementEntity = service.getObject(Announcement.class, announcementId);
 		Program p = new Program();
 		ProgramOptions options = new ProgramOptions();
 		int numberOfDays = (int) ((announcementEntity.getEndDate().getTime()
@@ -223,8 +227,6 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		options.setChildProtection(true);
 		options.setProtectionPeriod(60);
 		options.setRacesPerDay(5);
-		options.setIntoFinal(1);
-		options.setIntoSemiFinal(3);
 		options.setTimeLag(3);
 		p.setOptions(options);
 		p.setAnnouncement(announcementEntity);

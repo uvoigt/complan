@@ -22,14 +22,19 @@ import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.lang.StringUtils;
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.Address;
+import org.planner.eo.Address_;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
+import org.planner.eo.Announcement_;
 import org.planner.eo.Category;
 import org.planner.eo.Category_;
 import org.planner.eo.Club;
+import org.planner.eo.Club_;
 import org.planner.eo.Location;
+import org.planner.eo.Location_;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
+import org.planner.model.FetchInfo;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.Messages;
 import org.planner.ui.beans.SearchBean.ColumnModel;
@@ -70,6 +75,8 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 	private Calendar endDate;
 	private SelectOneRadio radio;
 
+	private boolean isCopy;
+
 	@Override
 	@PostConstruct
 	public void init() {
@@ -81,7 +88,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
 		if (id != null && !isCancelPressed()) {
-			announcement = service.getObject(Announcement.class, id, 2);
+			announcement = service.getObject(Announcement.class, id, getFetchInfo());
 			JsfUtil.setViewVariable("id", id);
 		} else {
 			announcement = new Announcement();
@@ -91,20 +98,41 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		// damit
 		if (announcement.getLocation().getClub() != null)
 			announcement.getLocation().setAddress(new Address());
+
+		if ("copy".equals(getFromRequestParameters(2)))
+			prepareForCopy(announcement);
+	}
+
+	@Override
+	public Object prepareForCopy(Object item) {
+		super.prepareForCopy(item);
+		Announcement announcement = (Announcement) item;
+		announcement.setName(messages.format("copySuffix", announcement.getName()));
+		isCopy = true;
+		return announcement;
 	}
 
 	@Override
 	public void setItem(Object item) {
-		if (((Announcement) item).getId() != null)
-			announcement = service.getObject(Announcement.class, ((Announcement) item).getId(), 3);
-		else
-			announcement = (Announcement) item;
+		announcement = (Announcement) item;
 		populateLocation();
 		if (announcement.getText() == null) {
 			announcement.setText(getTemplate());
 		} else {
 			JsfUtil.setViewVariable("id", announcement.getId());
 		}
+	}
+
+	@Override
+	public FetchInfo[] getFetchInfo() {
+		// races werden für das testweise PDF-Generieren beim Speichern benötigt
+		return new FetchInfo[] {
+				new FetchInfo(Announcement_.location, true).add(new FetchInfo(Location_.address, true)
+						.add(new FetchInfo(Address_.country, true), new FetchInfo(Address_.city, true))),
+				new FetchInfo(Announcement_.category, true),
+				new FetchInfo(Announcement_.club, true)
+						.add(new FetchInfo(Club_.address, true).add(new FetchInfo(Address_.city, true))),
+				new FetchInfo(Announcement_.races, false) };
 	}
 
 	private String getTemplate() {
@@ -177,6 +205,14 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		this.juryLocation = juryLocation;
 	}
 
+	public boolean isCopy() {
+		return isCopy;
+	}
+
+	public void setCopy(boolean isCopy) {
+		this.isCopy = isCopy;
+	}
+
 	@Override
 	protected void doSave() {
 		Club club = auth.getLoggedInUser().getClub();
@@ -198,7 +234,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 			throw new FachlicheException(messages.getBundle(), "announcements.textError", e);
 		}
 
-		service.saveAnnouncement(announcement);
+		service.saveAnnouncement(announcement, isCopy);
 	}
 
 	private void populateLocation() {
@@ -285,7 +321,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 			}
 		} else {
 			Long id = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), selection, "id");
-			announcement = service.getObject(Announcement.class, id, 1);
+			announcement = service.getObject(Announcement.class, id, getFetchInfo());
 		}
 		return JsfUtil.getScopedBundle().format("pdfName", announcement.getName(), announcement.getStartDate());
 	}

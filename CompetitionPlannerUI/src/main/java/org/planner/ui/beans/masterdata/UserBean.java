@@ -17,6 +17,8 @@ import javax.inject.Named;
 import org.planner.eo.Club;
 import org.planner.eo.Role;
 import org.planner.eo.User;
+import org.planner.eo.User_;
+import org.planner.model.FetchInfo;
 import org.planner.model.Gender;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.Messages;
@@ -47,7 +49,7 @@ public class UserBean extends AbstractEditBean {
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
 		if (id != null) {
-			user = service.getObject(User.class, id, 1);
+			user = service.getObject(User.class, id, getFetchInfo());
 			JsfUtil.setViewVariable("id", user.getId());
 		} else {
 			user = new User();
@@ -59,6 +61,11 @@ public class UserBean extends AbstractEditBean {
 	public void setItem(Object item) {
 		user = (User) item;
 		prepareSelectedRoles();
+	}
+
+	@Override
+	public FetchInfo[] getFetchInfo() {
+		return new FetchInfo[] { new FetchInfo(User_.roles, true), new FetchInfo(User_.club, true) };
 	}
 
 	public boolean canDelete(@SuppressWarnings("unused") Map<String, String> item) {

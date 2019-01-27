@@ -6,6 +6,7 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
@@ -14,8 +15,9 @@ import javax.persistence.OrderBy;
 
 @Entity
 @Access(AccessType.FIELD)
-@NamedQuery(name = "upcomingRegistrations", query = "select re from RegEntry re join re.registration r join r.announcement a " //
-		+ "join re.participants p where a.startDate >= :today and p.user.userId = :userId order by a.startDate")
+@NamedQuery(name = "upcomingRegistrations", query = "select re from RegEntry re join fetch re.registration r " //
+		+ "join fetch r.announcement a join fetch a.club join fetch re.race join fetch re.participants p " //
+		+ "where a.startDate >= :today and p.user.userId = :userId order by a.startDate")
 public class RegEntry extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;
@@ -23,7 +25,7 @@ public class RegEntry extends AbstractEntity {
 	@ManyToOne
 	private Registration registration;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Race race;
 
 	// beinhaltet ebenfalls die Ersatz-Besetzungen

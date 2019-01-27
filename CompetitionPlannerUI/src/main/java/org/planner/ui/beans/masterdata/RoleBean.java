@@ -12,6 +12,7 @@ import org.planner.eo.Role;
 import org.planner.eo.Role_;
 import org.planner.eo.User;
 import org.planner.eo.User_;
+import org.planner.model.FetchInfo;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.AbstractEditBean;
@@ -37,23 +38,22 @@ public class RoleBean extends AbstractEditBean {
 		if (id == null)
 			id = (Long) JsfUtil.getViewVariable("id");
 		if (id != null && !isCancelPressed()) {
-			role = service.getObject(Role.class, id, 1);
+			role = service.getObject(Role.class, id, getFetchInfo());
 			JsfUtil.setViewVariable("id", role.getId());
 		} else {
 			role = new Role();
 			role.setId(0L);
-		}
-
-		if (!isCancelPressed()) {
-			model = new DualListModel<>(service.getAllRoles(), null);
-			initModel();
 		}
 	}
 
 	@Override
 	public void setItem(Object item) {
 		this.role = (Role) item;
-		initModel();
+	}
+
+	@Override
+	public FetchInfo[] getFetchInfo() {
+		return new FetchInfo[] { new FetchInfo(Role_.roles, false) };
 	}
 
 	public boolean canDelete(@SuppressWarnings("unused") Map<String, String> item) {
@@ -85,6 +85,10 @@ public class RoleBean extends AbstractEditBean {
 	}
 
 	public DualListModel<Role> getModel() {
+		if (model == null && !isCancelPressed()) {
+			model = new DualListModel<>(service.getAllRoles(), null);
+			initModel();
+		}
 		return model;
 	}
 
@@ -93,6 +97,8 @@ public class RoleBean extends AbstractEditBean {
 	}
 
 	public List<User> getUsers() {
+		if (isCancelPressed())
+			return null;
 		Suchkriterien criteria = new Suchkriterien();
 		criteria.addFilter(User_.roles.getName() + "." + Role_.role.getName(), role.getRole());
 		criteria.setExact(true);

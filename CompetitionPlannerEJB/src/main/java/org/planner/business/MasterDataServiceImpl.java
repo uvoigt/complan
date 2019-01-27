@@ -1,18 +1,22 @@
 package org.planner.business;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.RollbackException;
 
 import org.planner.business.CommonImpl.Operation;
+import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
-import org.planner.dao.QueryModifier;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.Address;
@@ -23,7 +27,6 @@ import org.planner.eo.Role_;
 import org.planner.eo.User;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
-import org.planner.model.Suchkriterien.Filter;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
@@ -48,17 +51,13 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		return user != null ? user.getName() : userId;
 	}
 
-	public User getUserByUserId(final String userId) {
-		return dao.getUserByUserId(userId);
-	}
-
 	public User saveUser(User user) {
 		if (user == null)
 			throw new IllegalArgumentException();
-		User existing = user.getId() != null ? common.getById(User.class, user.getId(), 0) : null;
+		User existing = user.getId() != null ? dao.getById(User.class, user.getId()) : null;
 		User loggedInUser = common.checkWriteAccess(existing != null ? existing : user, Operation.save);
 		if (user.getId() == null) {
-			User eo = getUserByUserId(user.getUserId());
+			User eo = dao.getUserByUserId(user.getUserId());
 			if (eo != null)
 				throw new FachlicheException(messages.getResourceBundle(), "user.exists", user.getUserId());
 		}
@@ -125,29 +124,33 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 		return entities.getListe();
 	}
 
-	public List<Role> getRoles(boolean restrictToExternal) {
-		Suchkriterien krit = new Suchkriterien();
-		if (restrictToExternal)
-			krit.addFilter(new Filter(Role_.internal.getName(), false));
-		else
-			krit.addSortierung(Role_.internal.getName(), true);
-		krit.addSortierung(Role_.role.getName(), true);
-		// filtere Admin und Tester heraus, so dass niemand
-		// außer einem Admin einen Admin bzw. Tester anlegen kann.
-		// Beim checkWriteAccess wird das aber auch geprüft
-		QueryModifier modifier = null;
-		if (!caller.isInRole("Admin")) {
-			modifier = new QueryModifier() {
-				@Override
-				@SuppressWarnings({ "rawtypes", "unchecked" })
-				public Predicate createPredicate(Root root, CriteriaBuilder builder) {
-					return builder.and(builder.notEqual(root.get(Role_.role), "Admin"),
-							builder.notEqual(root.get(Role_.role), "Tester"));
+	public List<Role> getRoles(final boolean restrictToExternal) {
+		return dao.executeOperation(new IOperation<List<Role>>() {
+			@Override
+			public List<Role> execute(EntityManager em) {
+				CriteriaBuilder builder = em.getCriteriaBuilder();
+				CriteriaQuery<Role> query = builder.createQuery(Role.class);
+				Root<Role> root = query.from(Role.class);
+				List<Predicate> restrictions = new ArrayList<>();
+				List<Order> orderBy = new ArrayList<>();
+				// filtere Admin und Tester heraus, so dass niemand
+				// außer einem Admin einen Admin bzw. Tester anlegen kann.
+				// Beim checkWriteAccess wird das aber auch geprüft
+				if (!caller.isInRole("Admin")) {
+					restrictions.add(builder.and(builder.notEqual(root.get(Role_.role), "Admin"),
+							builder.notEqual(root.get(Role_.role), "Tester")));
 				}
-			};
-		}
-		Suchergebnis<Role> entities = dao.search(Role.class, krit, modifier);
-		return entities.getListe();
+				if (restrictToExternal)
+					restrictions.add(builder.equal(root.get(Role_.internal), false));
+				else
+					orderBy.add(builder.asc(root.get(Role_.internal)));
+				orderBy.add(builder.asc(root.get(Role_.role)));
+				if (!restrictions.isEmpty())
+					query.where(restrictions.toArray(new Predicate[restrictions.size()]));
+				query.orderBy(orderBy);
+				return em.createQuery(query).getResultList();
+			}
+		});
 	}
 
 	public List<Club> getClubs() {

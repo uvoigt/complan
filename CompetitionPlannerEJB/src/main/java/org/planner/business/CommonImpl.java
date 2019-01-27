@@ -3,7 +3,6 @@ package org.planner.business;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -13,11 +12,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.persistence.EntityManager;
+import javax.persistence.metamodel.Attribute;
 import javax.transaction.RollbackException;
 
 import org.planner.dao.Authorizer;
@@ -25,7 +23,6 @@ import org.planner.dao.Authorizer.AnnouncementAuthorizer;
 import org.planner.dao.Authorizer.ProgramAuthorizer;
 import org.planner.dao.Authorizer.RegistrationAuthorizer;
 import org.planner.dao.Authorizer.UserAuthorizer;
-import org.planner.dao.IOperation;
 import org.planner.dao.PlannerDao;
 import org.planner.dao.QueryModifier;
 import org.planner.ejb.CallerProvider;
@@ -48,6 +45,7 @@ import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Result;
 import org.planner.eo.Role;
 import org.planner.eo.User;
+import org.planner.model.FetchInfo;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.model.Suchkriterien.Property;
@@ -55,7 +53,6 @@ import org.planner.util.LogUtil;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
-import org.planner.util.ResetForCopy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,103 +140,47 @@ public class CommonImpl {
 		}
 	}
 
-	public <T extends Serializable> T getById(Class<T> typ, Object id, int fetchDepth) {
-		T entity = dao.getById(typ, id);
-		if (fetchDepth > 0 && entity != null)
-			fetch(entity, fetchDepth - 1);
+	public <T extends HasId> T getById(Class<T> type, Object id, FetchInfo... fetchInfo) {
+		T entity = dao.getById(type, id, fetchInfo);
+		fetch(entity, fetchInfo);
 		return entity;
 	}
 
-	private void fetch(Object entity, int depth) {
-		if (entity == null)
+	private void fetch(Object entity, FetchInfo... fetchInfo) {
+		if (fetchInfo == null)
 			return;
 		try {
-			for (PropertyDescriptor pd : Introspector.getBeanInfo(entity.getClass()).getPropertyDescriptors()) {
-				Method readMethod = pd.getReadMethod();
-				if (readMethod == null)
+			PropertyDescriptor[] descriptors = Introspector.getBeanInfo(entity.getClass()).getPropertyDescriptors();
+			for (FetchInfo info : fetchInfo) {
+				if (info.isFetch())
 					continue;
-				Object value = readMethod.invoke(entity);
-				if (value instanceof Collection) {
-					Collection<?> collection = (Collection<?>) value;
-					collection.size();
-					if (depth > 0) {
-						for (Object object : collection) {
-							fetch(object, depth - 1);
+				Attribute<?, ?> attribute = info.getAttribute();
+				for (PropertyDescriptor pd : descriptors) {
+					if (!pd.getName().equals(attribute.getName()))
+						continue;
+					Method readMethod = pd.getReadMethod();
+					Object value = readMethod.invoke(entity);
+					if (value instanceof Collection) {
+						((Collection<?>) value).size();
+						for (FetchInfo child : info.getChildren()) {
+							for (Object object : (Collection<?>) value) {
+								fetch(object, child);
+							}
+						}
+					} else if (value instanceof HasId) {
+						// kein Fetch bei Property-Access
+						HasId member = (HasId) value;
+						member.getId();
+						for (FetchInfo child : info.getChildren()) {
+							fetch(member, child);
 						}
 					}
-				} else if (value instanceof Map) {
-					Map<?, ?> map = (Map<?, ?>) value;
-					map.size();
-					if (depth > 0) {
-						for (Object key : map.keySet()) {
-							fetch(key, depth - 1);
-						}
-					}
-				} else if (value instanceof HasId) {
-					// kein Fetch bei Property-Access
-					HasId member = (HasId) value;
-					member.getId();
-					if (depth > 0)
-						fetch(member, depth - 1);
-				} else if (value instanceof AbstractEnum) {
-					AbstractEnum anEnum = (AbstractEnum) value;
-					anEnum.getName();
+					break;
 				}
 			}
 		} catch (Exception e) {
 			throw new TechnischeException("Fehler beim Fetchen der Properties", e);
 		}
-	}
-
-	public <T extends AbstractEntity> T getByIdForCopy(Class<T> typ, Long id) {
-		final T object = getById(typ, id, 1);
-		if (object != null) {
-			dao.executeOperation(new IOperation<Void>() {
-				private List<Field> getAllFields(Class<?> type, List<Field> result) {
-					if (type == null)
-						return result;
-					Field[] fields = type.getDeclaredFields();
-					result.addAll(Arrays.asList(fields));
-					return getAllFields(type.getSuperclass(), result);
-				}
-
-				@Override
-				public Void execute(EntityManager em) {
-					try {
-						for (Field field : getAllFields(object.getClass(), new ArrayList<Field>())) {
-							field.setAccessible(true);
-							Object propertyValue = field.get(object);
-							if (field.getAnnotation(ResetForCopy.class) != null) {
-								field.set(object, null);
-							} else if (propertyValue instanceof AbstractEntity) {
-								((AbstractEntity) propertyValue).setId(null);
-								em.detach(propertyValue);
-							} else if (propertyValue instanceof Collection) {
-								for (Object o : ((Collection<?>) propertyValue)) {
-									if (o instanceof AbstractEntity) {
-										((AbstractEntity) o).setId(null);
-										em.detach(o);
-									}
-								}
-							} else if (propertyValue instanceof Map) {
-								for (Entry<?, ?> e : ((Map<?, ?>) propertyValue).entrySet()) {
-									if (e.getValue() instanceof AbstractEntity) {
-										((AbstractEntity) e.getKey()).setId(null);
-										em.detach(e.getKey());
-									}
-								}
-							}
-						}
-					} catch (Exception e) {
-						throw new TechnischeException("Fehler beim Lesen der Properties", e);
-					}
-					object.setId(null);
-					em.detach(object);
-					return null;
-				}
-			});
-		}
-		return object;
 	}
 
 	public User getCallingUser() {
@@ -427,14 +368,14 @@ public class CommonImpl {
 	@SuppressWarnings("unused")
 	private void checkWriteAccess(ProgramRace race, Operation operation, User callingUser) {
 		if (race.getProgramId() == null)
-			race = getById(ProgramRace.class, race.getId(), 0);
-		Program program = getById(Program.class, race.getProgramId(), 0);
+			race = getById(ProgramRace.class, race.getId());
+		Program program = dao.getById(Program.class, race.getProgramId());
 		checkWriteAccess(program, operation, callingUser);
 	}
 
 	@SuppressWarnings("unused")
 	private void checkWriteAccess(Result result, Operation operation, User callingUser) {
-		Program program = getById(Program.class, result.getProgramId(), 0);
+		Program program = dao.getById(Program.class, result.getProgramId());
 		checkWriteAccess(program, operation, callingUser);
 	}
 
@@ -453,8 +394,7 @@ public class CommonImpl {
 	public Map<String, Properties> leseBenutzerEinstellungen(String angemeldeterBenutzter) {
 		List<Properties> userProps = dao.leseBenutzerEinstellungen(angemeldeterBenutzter);
 		List<Properties> defaultProps = dao.leseBenutzerEinstellungen(null);
-		Map<String, Properties> result = new HashMap<>(
-				Math.max(userProps.size(), defaultProps.size()));
+		Map<String, Properties> result = new HashMap<>(Math.max(userProps.size(), defaultProps.size()));
 		for (Properties p : defaultProps) {
 			result.put(p.getName(), p);
 		}

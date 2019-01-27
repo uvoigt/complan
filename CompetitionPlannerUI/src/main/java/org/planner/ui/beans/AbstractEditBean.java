@@ -2,9 +2,11 @@ package org.planner.ui.beans;
 
 import java.io.Serializable;
 
+import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 
+import org.planner.model.FetchInfo;
 import org.planner.model.Suchkriterien;
 import org.planner.remote.ServiceFacade;
 import org.planner.ui.beans.common.AuthBean;
@@ -32,6 +34,13 @@ public abstract class AbstractEditBean implements ITarget, Serializable {
 
 	protected void init() {
 		cancelPressed = JsfUtil.isFromSource("btnCancel");
+	}
+
+	@Override
+	public Object prepareForCopy(Object item) {
+		FacesContext.getCurrentInstance().addMessage(null,
+				new FacesMessage(null, JsfUtil.getScopedBundle().get("copyHint")));
+		return item;
 	}
 
 	public void save(String link) {
@@ -72,5 +81,10 @@ public abstract class AbstractEditBean implements ITarget, Serializable {
 
 	protected boolean isCancelPressed() {
 		return cancelPressed;
+	}
+
+	@Override
+	public FetchInfo[] getFetchInfo() {
+		return new FetchInfo[0];
 	}
 }

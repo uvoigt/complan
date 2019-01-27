@@ -1,6 +1,5 @@
 package org.planner.eo;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -12,39 +11,19 @@ import javax.persistence.Column;
 import javax.persistence.ConstraintMode;
 import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.Transient;
 
-import org.planner.model.LocalizedEnum;
-import org.planner.util.CommonMessages;
+import org.planner.model.RaceType;
 
 @Entity
 @Access(AccessType.FIELD)
-public class ProgramRace extends HasHeatMode implements Serializable {
-
-	public enum RaceType implements LocalizedEnum {
-		heat, semiFinal, finalA, finalB;
-
-		@Override
-		public String getText() {
-			return CommonMessages.getEnumText(this);
-		}
-
-		public boolean isFinal() {
-			return this == finalA || this == finalB;
-		}
-	}
+public class ProgramRace extends HasId {
 
 	private static final long serialVersionUID = 1L;
-
-	@Id
-	@GeneratedValue
-	private Long id;
 
 	@OneToOne
 	@JoinColumn(nullable = false)
@@ -72,6 +51,19 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 	@OrderBy("position")
 	private List<Placement> placements;
 
+	// ;-separierter String
+	// <Platzierungen ins Finale>;<Platzierungen in Zwischenlauf>
+	// Bsp.: 1;2 bedeutet Platz 1 ins Finale, Platz 2 - 3 ins Semifinale
+	// Bsp.: 2;2 bedeutet Platz 1 - 2 ins Finale, Platz 3 - 4 ins Semifinale
+	// Bsp.: 3 bedeutet Platz 1 - 3 ins Finale, keine Semifinale
+	// Bsp.: ;3 bedeutet Platz 1 - 3 ins Semifinale, keiner direkt ins Finale
+	private String heatMode;
+
+	@Transient
+	private transient Integer intoFinal;
+	@Transient
+	private transient Integer intoSemiFinal;
+
 	public List<Placement> getPlacements() {
 		return placements;
 	}
@@ -82,14 +74,6 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 		else
 			this.placements.clear();
 		this.placements.addAll(placements);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
 	}
 
 	public Race getRace() {
@@ -144,5 +128,47 @@ public class ProgramRace extends HasHeatMode implements Serializable {
 
 	public void setFollowUpRace(ProgramRace followUpRace) {
 		this.followUpRace = followUpRace;
+	}
+
+	private void parseHeatMode() {
+		if (heatMode != null) {
+			String[] split = heatMode.split(";");
+			intoFinal = Integer.parseInt(split[0]);
+			intoSemiFinal = Integer.parseInt(split[1]);
+		} else {
+			intoFinal = 0;
+			intoSemiFinal = 0;
+		}
+	}
+
+	private void updateHeatMode() {
+		heatMode = intoFinal + ";" + intoSemiFinal;
+	}
+
+	// für das Setzen aus einer nativen Query
+	public void setHeatMode(String heatMode) {
+		this.heatMode = heatMode;
+	}
+
+	public int getIntoFinal() {
+		if (intoFinal == null)
+			parseHeatMode();
+		return intoFinal;
+	}
+
+	public void setIntoFinal(int intoFinal) {
+		this.intoFinal = intoFinal;
+		updateHeatMode();
+	}
+
+	public int getIntoSemiFinal() {
+		if (intoSemiFinal == null)
+			parseHeatMode();
+		return intoSemiFinal;
+	}
+
+	public void setIntoSemiFinal(int intoSemiFinal) {
+		this.intoSemiFinal = intoSemiFinal;
+		updateHeatMode();
 	}
 }

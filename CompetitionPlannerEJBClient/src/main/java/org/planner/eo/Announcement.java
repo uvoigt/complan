@@ -14,13 +14,13 @@ import javax.persistence.FetchType;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import org.planner.model.LocalizedEnum;
 import org.planner.util.CommonMessages;
 import org.planner.util.NLSBundle;
-import org.planner.util.ResetForCopy;
 import org.planner.util.Visible;
 
 @Entity
@@ -55,7 +55,7 @@ public class Announcement extends AbstractEntity {
 	@Visible(initial = false, order = 4)
 	private Date endDate;
 
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@OneToOne(optional = false, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private Location location = new Location();
 
 	// Kategorie des Wettkampfes
@@ -63,7 +63,7 @@ public class Announcement extends AbstractEntity {
 	private Category category;
 	// competition end
 
-	@ManyToOne(optional = false)
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@Visible(order = 2, mandatory = true)
 	private Club club;
 
@@ -122,7 +122,6 @@ public class Announcement extends AbstractEntity {
 
 	@Column(nullable = false)
 	@Visible(order = 6, mandatory = true, depth = 0, initial = false)
-	@ResetForCopy
 	private AnnouncementStatus status;
 
 	public String getName() {

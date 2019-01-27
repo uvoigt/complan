@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
+import org.planner.eo.HasId;
 import org.planner.model.IResultProvider;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
@@ -42,19 +43,21 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 
 	private HashMap<String, Object> filterPreset;
 
+	private boolean useIdRowKey;
 	private String variablePrefix;
 
 	public RemoteDataModel(IResultProvider provider, Class<T> type, List<ColumnModel> columns,
 			List<ColumnModel> mandatoryColumns) {
-		this(provider, type, columns, mandatoryColumns, "");
+		this(provider, type, columns, mandatoryColumns, true, "");
 	}
 
 	public RemoteDataModel(IResultProvider provider, Class<T> type, List<ColumnModel> columns,
-			List<ColumnModel> mandatoryColumns, String variablePrefix) {
+			List<ColumnModel> mandatoryColumns, boolean useIdRowKey, String variablePrefix) {
 		dataProvider = provider;
 		zeilentyp = type;
 		this.columns = columns;
 		this.mandatory = mandatoryColumns;
+		this.useIdRowKey = useIdRowKey;
 		this.variablePrefix = variablePrefix;
 	}
 
@@ -92,8 +95,10 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public T getRowData(String rowKey) {
-		return dataProvider.getObject(zeilentyp, Long.parseLong(rowKey), 0);
+		Long id = Long.valueOf(rowKey);
+		return (T) (useIdRowKey ? id : dataProvider.getObject((Class<HasId>) zeilentyp, id));
 	}
 
 	@Override
@@ -118,7 +123,7 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 
 		List<SortMeta> sortierung = null;
 		if (sortField != null) {
-			sortierung = new ArrayList<SortMeta>(1);
+			sortierung = new ArrayList<>(1);
 			Column column = new Column();
 			sortierung.add(new SortMeta(column, sortField, sortOrder, null));
 		}
@@ -149,8 +154,7 @@ public class RemoteDataModel<T extends Serializable> extends LazyDataModel<T> {
 			for (ColumnModel column : mandatory) {
 				if (properties == null)
 					properties = new ArrayList<>();
-				if (!properties.contains(column.getProperty()))
-					properties.add(new Property(column.getProperty(), column.getMultiRowGroup()));
+				properties.add(new Property(column.getProperty(), column.getMultiRowGroup()));
 			}
 		}
 

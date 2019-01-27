@@ -8,6 +8,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.OneToMany;
@@ -36,7 +37,7 @@ public class Program extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;
 
-	@OneToOne
+	@OneToOne(fetch = FetchType.LAZY)
 	@Visible(order = 2)
 	@Visibilities(@Visible(path = "club.name", order = 2, mandatory = true))
 	private Announcement announcement;

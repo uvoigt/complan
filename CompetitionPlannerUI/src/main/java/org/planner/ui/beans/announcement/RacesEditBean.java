@@ -18,6 +18,7 @@ import org.planner.eo.Announcement;
 import org.planner.eo.Race;
 import org.planner.model.AgeType;
 import org.planner.model.BoatClass;
+import org.planner.model.FetchInfo;
 import org.planner.model.Gender;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.util.JsfUtil;
@@ -51,6 +52,8 @@ public class RacesEditBean extends AbstractEditBean {
 	@PostConstruct
 	@SuppressWarnings("unchecked")
 	public void init() {
+		super.init();
+
 		announcementId = getIdFromRequestParameters();
 		if (announcementId == null)
 			announcementId = (Long) JsfUtil.getViewVariable("id");
@@ -69,8 +72,8 @@ public class RacesEditBean extends AbstractEditBean {
 	}
 
 	public Announcement getAnnouncement() {
-		if (announcement == null)
-			announcement = service.getObject(Announcement.class, announcementId, 1);
+		if (announcement == null && !isCancelPressed())
+			announcement = service.getObject(Announcement.class, announcementId);
 		return announcement;
 	}
 
@@ -108,16 +111,10 @@ public class RacesEditBean extends AbstractEditBean {
 	}
 
 	public AgeType[] getAgeTypes() {
-		// Suchkriterien krit = new Suchkriterien();
-		// krit.addSortierung(AgeType_.name.getName(), true);
-		// return service.search(AgeType.class, krit).getListe();
 		return AgeType.values();
 	}
 
 	public BoatClass[] getBoatClasses() {
-		// Suchkriterien krit = new Suchkriterien();
-		// krit.addSortierung(BoatClass_.name.getName(), true);
-		// return service.search(BoatClass.class, krit).getListe();
 		return BoatClass.values();
 	}
 
@@ -177,6 +174,11 @@ public class RacesEditBean extends AbstractEditBean {
 	}
 
 	@Override
+	public FetchInfo[] getFetchInfo() {
+		return null;
+	}
+
+	@Override
 	protected void doSave() {
 	}
 
@@ -197,7 +199,7 @@ public class RacesEditBean extends AbstractEditBean {
 
 	public void onCellEdit(CellEditEvent event) {
 		String key = event.getRowKey();
-		Race race = service.getObject(Race.class, Long.valueOf(key), 0);
+		Race race = service.getObject(Race.class, Long.valueOf(key));
 		String columnId = event.getColumn().getColumnKey();
 		if (columnId.endsWith(":time"))
 			race.setStartTime((Date) event.getNewValue());

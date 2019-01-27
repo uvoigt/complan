@@ -1,25 +1,18 @@
 package org.planner.eo;
 
-import java.io.Serializable;
-
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.FetchType;
 import javax.persistence.OneToOne;
 
 @Entity
 @Access(AccessType.FIELD)
-public class Participant implements Serializable {
+public class Participant extends HasId {
 
 	private static final long serialVersionUID = 1L;
 
-	@Id
-	@GeneratedValue
-	private Long id;
-
-	@OneToOne
+	@OneToOne(fetch = FetchType.LAZY)
 	private User user;
 
 	private int pos;

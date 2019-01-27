@@ -1,13 +1,13 @@
 package org.planner.eo;
 
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -32,11 +32,11 @@ public class Registration extends AbstractEntity {
 
 	private static final long serialVersionUID = 1L;
 
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Visible(initial = false, mandatory = true, order = 4)
 	private Club club;
 
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Visible(order = 1, mandatory = true) // mandatory, damit der Name der Ausschreibung angezeigt wird
 	private Announcement announcement;
 
@@ -66,10 +66,6 @@ public class Registration extends AbstractEntity {
 
 	public List<RegEntry> getEntries() {
 		return entries;
-	}
-
-	public void setEntries(Set<RegEntry> entries) {
-		// this.entries = entries;
 	}
 
 	public RegistrationStatus getStatus() {

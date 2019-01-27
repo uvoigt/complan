@@ -1,13 +1,11 @@
 package org.planner.eo;
 
-import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
-import javax.persistence.Id;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
@@ -20,12 +18,9 @@ import org.planner.util.Visible;
 @Subselect("select * from vresult")
 @Access(AccessType.FIELD)
 @NLSBundle("results")
-public class Result implements CanDelete, HasId, Serializable {
+public class Result extends HasId implements CanDelete {
 
 	private static final long serialVersionUID = 1L;
-
-	@Id
-	private Long id;
 
 	@Visible
 	private String aName;
@@ -53,14 +48,5 @@ public class Result implements CanDelete, HasId, Serializable {
 
 	public Long getProgramId() {
 		return id;
-	}
-
-	@Override
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
 	}
 }

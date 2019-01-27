@@ -38,7 +38,7 @@ public class ProgramOptionsBean {
 			if (id == null)
 				id = (Long) JsfUtil.getViewVariable("id");
 			if (id != null)
-				program = service.getObject(Program.class, id, 0);
+				program = service.getObject(Program.class, id);
 		}
 		return program;
 	}
