@@ -7,6 +7,7 @@
 	xmlns:p="http://primefaces.org/ui">
 
 	<ui:composition template="/templates/title.xhtml">
+		<ui:param name="transient" value="#{true}"/>
 		<ui:param name="roleSuffix" value="results"/>
 		<ui:param name="bundle" value="#{messages.bundle('results')}"/>
 		<ui:param name="bean" value="#{resultBean}"/>
@@ -81,7 +82,7 @@
 							</p:column>
 							<p:column styleClass="timeCol" headerText="#{bundle.time}">
 								<h:outputText value="#{placement.time}" converter="#{placementConverter}"/>
-								<h:panelGroup layout="block" style="font-size: x-small; position: absolute; left: 50%"
+								<h:panelGroup layout="block" styleClass="qualified"
 										rendered="#{renderBean.isSeparatorRendered(race, placement, placementIndex + 1)}">
 									<h:outputText value="#{placement.qualifiedFor != null ? bundle.get(placement.qualifiedFor.name()) : null}"/>
 								</h:panelGroup>

@@ -11,6 +11,7 @@
 		<c:choose>
 			<c:when test="#{authBean.inRole('read_'.concat(roleSuffix)) or authBean.inRoles(roles)}">
 				<ui:insert name="content"/>
+				<h:panelGroup>#{pageConfig.setTransient(transient)}</h:panelGroup>
 			</c:when>
 			<c:otherwise>
 				<h:outputText value="#{messages.illegalAccessPage}"/>

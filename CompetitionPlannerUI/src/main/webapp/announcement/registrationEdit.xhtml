@@ -17,7 +17,7 @@
 
 		<ui:define name="content">
 
-			<h:form id="main" transient="true">
+			<h:form id="main">
 
 				<h:panelGroup layout="block" rendered="#{registration == null or registration.status == 'submitted'}">
 					<p:commandButton id="_btnCancel" value="#{messages.backToOverview}"
@@ -156,10 +156,11 @@
 						selection="#{registrationBean.selectedEntry}"
 						rows="1000" rowIndexVar="rowIndex"
 						filterEvent="enter"
-						rowStyleClass="#{entry.race.boatClass.minimalTeamSize gt entry.participants.size() ? 'registrationIncomplete' : ''}">
+						rowStyleClass="#{entry.race.boatClass.minimalTeamSize gt entry.participants.size() ? 'registrationIncomplete' : ''}"
+						lazy="true" transient="true">
 
 					<f:facet name="header">
-						<h:panelGroup layout="block" styleClass="">
+						<h:panelGroup layout="block" id="nix">
 							<h:outputText value="#{bundle.format('registrationsCount', registration.entries.size())}"/>
 							<p:effect event="load" type="bounce" rendered="#{registrationBean.showEffect}"/>
 						</h:panelGroup>
@@ -167,7 +168,9 @@
 
 					<pe:javascript event="rowSelect" execute="registrationEdit.enableButtons()" disabled="#{registration.status == 'submitted'}"/>
 					<pe:javascript event="rowUnselect" execute="registrationEdit.enableButtons()" disabled="#{registration.status == 'submitted'}"/>
-					<p:ajax event="filter" oncomplete="PF('registrationTable').unselectAllRows(); if (#{registration.status != 'submitted'}) registrationEdit.enableButtons()"/>
+					<p:ajax event="filter" listener="#{registrationBean.onFilterRegistrationTable}" oncomplete="PF('registrationTable').unselectAllRows(); if (#{registration.status != 'submitted'}) registrationEdit.enableButtons()"/>
+					<p:ajax event="sort" listener="#{registrationBean.onSortRegistrationTable}"/>
+					<f:event type="preRenderComponent" listener="#{registrationBean.onPrerenderRegistrationTable}"/>
 
 					<p:column id="raceNumber" headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry, bundle)}" filterMatchMode="contains">
 						<h:outputText value="#{registrationBean.getRaceString(entry, bundle)}"/>
@@ -191,7 +194,8 @@
 				<h:outputText value="#{registrationBean.getRaceFilterPattern(bundle)}"/>
 			</h:panelGroup>
 
-			<p:dialog appendTo="body" widgetVar="remarkDlg" header="#{bundle.requestMsg}" closeOnEscape="true" styleClass="remarkDlg" modal="true">
+			<p:dialog appendTo="body" widgetVar="remarkDlg" header="#{bundle.requestMsg}" closeOnEscape="true" styleClass="remarkDlg" modal="true"
+					rendered="#{registration.status != 'submitted'}">
 				<h:form>
 					<h:panelGroup layout="block" styleClass="ui-dialog-content">
 						<p:selectOneMenu id="remark" value="#{registrationBean.remark}" editable="true" maxlength="50" style="width: 90%">

@@ -410,6 +410,14 @@ input[readonly=readonly] {
 	border-bottom-width: 1px !important;
 }
 
+.qualified {
+	font-size: x-small;
+	position: absolute;
+	left: 50%;
+	height: 1em;
+	margin-top: 1em;
+}
+
 .deficit {
 	font-size: smaller;
 	opacity: .5;

@@ -21,8 +21,7 @@
 			selection="#{programBean.selectedRaces}"
 			filterEvent="enter"
 			editable="true" editMode="cell" cellEditMode="lazy" editInitEvent="dblclick" saveOnCellBlur="false"
-			styleClass="#{isEditable ? '' : 'readonly'}"
-			transient="true">
+			styleClass="#{isEditable ? '' : 'readonly'}">
 
 		<pe:javascript event="cellEditInit" execute="programEdit.cellEditInit(ext)"/>
 		<p:ajax event="cellEdit" listener="#{programBean.onResultUpdate}" partialSubmitFilter="[data-rk] .ui-cell-editing :input" partialSubmit="true" update="messagesPopup"/>

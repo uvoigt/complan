@@ -8,13 +8,14 @@
 <head />
 <body>
 	<ui:composition template="/templates/title.xhtml">
+		<ui:param name="transient" value="#{true}"/>
 		<ui:param name="roles" value="User"/>
 		<ui:param name="bundle" value="#{messages.bundle('start')}"/>
 		<ui:define name="content">
 			<h:panelGroup layout="block" id="start" rendered="#{authBean.notInRole('Sportler', 'Mastersportler')}">
 				<h:outputText value="#{bundle.msg}"/>
 			</h:panelGroup>
-			<h:panelGroup layout="block" id="currentState" rendered="#{authBean.inRole('Sportler', 'Mastersportler')}">
+			<h:panelGroup layout="block" rendered="#{authBean.inRole('Sportler', 'Mastersportler')}">
 				<p:dataTable var="entry" value="#{startseiteBean.currentRegistrations}" emptyMessage="#{bundle.noRegistrations}"
 						styleClass="datalist-blank" style="margin: 1em 0 1em 0">
 					<p:columnGroup type="header">

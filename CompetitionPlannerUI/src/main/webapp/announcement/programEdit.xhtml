@@ -8,6 +8,7 @@
 	xmlns:pe="http://primefaces.org/ui/extensions">
 
 	<ui:composition template="/templates/title.xhtml">
+		<ui:param name="transient" value="#{true}"/>
 		<ui:param name="roleSuffix" value="programs"/>
 		<ui:param name="bundle" value="#{messages.bundle('programs')}"/>
 

@@ -9,12 +9,13 @@
 
 	<ui:composition template="/templates/title.xhtml">
 
+		<ui:param name="transient" value="#{true}"/>
 		<ui:param name="roleSuffix" value="announcements"/>
 		<ui:param name="bundle" value="#{messages.bundle('announcements')}"/>
 		<ui:param name="title" value="#{bundle.races}"/>
 		<ui:define name="content">
 
-			<h:form prependId="false" transient="true">
+			<h:form prependId="false">
 
 				<h:panelGroup rendered="#{racesEditBean.announcement.status != 'announced'}">
 
@@ -84,7 +85,7 @@
 
 				</h:panelGroup>
 
-				<p:panelGrid columns="3">
+				<p:panelGrid columns="#{racesEditBean.announcement.status != 'announced' ? 3: 1}">
 					<p:commandButton value="#{bundle.raceAdd}" action="#{racesEditBean.createRaces()}"
 							process="@form" update="@form"
 							rendered="#{racesEditBean.announcement.status != 'announced'}"/>

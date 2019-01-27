@@ -22,7 +22,7 @@
 <pl:stateSaver id="stateSaver"/>
 <h:body id="body">
 	<p:layout fullPage="true" widgetVar="layout">
-		<p:layoutUnit position="north">
+		<p:layoutUnit position="north" transient="true">
 			<h:form prependId="false">
 				<f:passThroughAttribute name="autocomplete" value="off"/>
 				<ui:include src="/sections/header.xhtml" />
@@ -31,7 +31,7 @@
 		<p:layoutUnit position="center">
 			<h:panelGroup id="contentGroup" layout="block">
 
-				<h:form prependId="false">
+				<h:form prependId="false" transient="true">
 					<p:growl id="messagesPopup" showDetail="true" showSummary="false"/>
 					<ui:include src="/sections/loginDialog.xhtml"/>
 					<ui:include src="/sections/confirmDialog.xhtml"/>
@@ -57,7 +57,7 @@
 
 					<ui:include src="#{startseiteBean.mainContent}" />
 
-					<h:panelGroup id="filterSetup">
+					<h:panelGroup id="filterSetup" transient="true">
 						<f:event type="preRenderComponent" listener="#{startseiteBean.onPrerenderMain}"/>
 					</h:panelGroup>
 
