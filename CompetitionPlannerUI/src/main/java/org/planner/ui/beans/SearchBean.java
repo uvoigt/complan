@@ -38,6 +38,7 @@ import org.planner.ui.util.JsfUtil;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.NLSBundle;
+import org.primefaces.PrimeFaces;
 import org.primefaces.component.api.UIColumn;
 import org.primefaces.component.datatable.DataTable;
 import org.primefaces.component.menubutton.MenuButton;
@@ -133,6 +134,8 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	@Inject
 	private BenutzerEinstellungen settings;
 
+	private int lastRow;
+
 	@PostConstruct
 	public void init() {
 		uploadBean = new UploadBean(this, this, null);
@@ -191,7 +194,7 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 	}
 
 	public int getLastRow() {
-		int min = Math.min(dataModel.getRowCount(), getNumberOfRows()) - 1;
+		int min = Math.min(dataModel.getRowCount(), lastRow) - 1;
 		return min;
 	}
 
@@ -351,11 +354,15 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 		List<SortMeta> sortState = (List<SortMeta>) JsfUtil.getViewVariable("sortState");
 		if (sortState != null)
 			table.setMultiSortMeta(sortState);
+		lastRow = getNumberOfRows();
+		if (first != null)
+			lastRow += first;
+		PrimeFaces.current().executeScript("checkEmpty('" + JsfUtil.getScopedBundle().get("count") + "')");
 	}
 
 	public void columnChooserListener(ToggleEvent event) throws Exception {
 		String typ = (String) JsfUtil.getContextVariable("typ");
-		columnHandler.persistToggleState(loadTyp(typ, AbstractEntity.class), (int) event.getData(),
+		columnHandler.persistToggleState(loadTyp(typ, HasId.class), (int) event.getData(),
 				event.getVisibility() == Visibility.VISIBLE);
 		dataModel = null;
 		columns.remove(typ);
