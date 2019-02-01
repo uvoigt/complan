@@ -19,7 +19,6 @@ import javax.inject.Named;
 import javax.persistence.Entity;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.planner.eo.AbstractEntity;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Logged;
 import org.planner.util.Visibilities;
@@ -238,7 +237,7 @@ public class ColumnHandler {
 		}
 	}
 
-	public void persistToggleState(Class<? extends AbstractEntity> type, Integer index, boolean visible) {
+	public void persistToggleState(Class<?> type, Integer index, boolean visible) {
 		String propertyName = "columns." + type.getName();
 		Integer[] state = benutzerEinstellungen.getTypedValue(propertyName, Integer[].class);
 		Set<Integer> stateSet;
