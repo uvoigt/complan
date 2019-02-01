@@ -12,6 +12,7 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
+import javax.faces.component.html.HtmlInputHidden;
 import javax.faces.context.FacesContext;
 import javax.faces.validator.ValidatorException;
 import javax.inject.Inject;
@@ -71,6 +72,7 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 	private List<ColumnModel> columns;
 
 	// binding
+	private HtmlInputHidden copyHidden;
 	private Calendar startDate;
 	private Calendar endDate;
 	private SelectOneRadio radio;
@@ -151,6 +153,14 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 		}
 	}
 
+	public HtmlInputHidden getCopyHidden() {
+		return copyHidden;
+	}
+
+	public void setCopyHidden(HtmlInputHidden copyHidden) {
+		this.copyHidden = copyHidden;
+	}
+
 	public Calendar getStartDate() {
 		return startDate;
 	}
@@ -211,6 +221,13 @@ public class AnnouncementBean extends AbstractEditBean implements DownloadHandle
 
 	public void setCopy(boolean isCopy) {
 		this.isCopy = isCopy;
+	}
+
+	public boolean canSave() {
+		Object value = copyHidden.getSubmittedValue();
+		if (value != null)
+			isCopy = Boolean.TRUE.toString().equals(value);
+		return isCopy || announcement.getStatus() != AnnouncementStatus.announced;
 	}
 
 	@Override
