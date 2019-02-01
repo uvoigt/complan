@@ -287,7 +287,8 @@ public class PlannerDao {
 			Suchkriterien kriterien, Class<T> returningType, QueryModifier queryModifier) {
 
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("Paged query: entityType:" + entityType + "\nreturnType:" + returningType + "\n" + kriterien);
+			LOG.debug((kriterien.isCountOnly() ? "Count" : "Paged") + " query: entityType:" + entityType
+					+ "\nreturnType:" + returningType + "\n" + kriterien);
 		}
 
 		CriteriaBuilder builder = em.getCriteriaBuilder();
@@ -305,6 +306,8 @@ public class PlannerDao {
 		// wir gehen mal davon aus, dass keine Treffer mit count >
 		// Integer.MAX_VALUE vorkommen werden :-/
 		int totalSize = cQuery.getSingleResult().intValue();
+		if (kriterien.isCountOnly())
+			return new Suchergebnis<>(null, totalSize);
 
 		CriteriaQuery<T> dataQuery = builder.createQuery(returningType);
 		Root<?> dataRoot = dataQuery.from(entityType);

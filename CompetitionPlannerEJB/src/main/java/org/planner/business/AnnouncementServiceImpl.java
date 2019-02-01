@@ -252,7 +252,7 @@ public class AnnouncementServiceImpl {
 	public void saveRace(Race race) {
 		common.checkWriteAccess(race, Operation.save);
 		// Prüfung auf eindeutige Renn-Nr.
-		Suchkriterien criteria = new Suchkriterien();
+		Suchkriterien criteria = new Suchkriterien(true);
 		criteria.addFilter(Race_.announcementId.getName(), race.getAnnouncementId());
 		criteria.addFilter(Race_.number.getName(), race.getNumber());
 		criteria.addFilter(new Filter(Comparison.ne, Race_.id.getName(), race.getId()));
@@ -452,7 +452,7 @@ public class AnnouncementServiceImpl {
 
 	private void checkIfAlreadyRegistered(RegEntry entry) {
 		for (Participant participant : entry.getParticipants()) {
-			Suchkriterien criteria = new Suchkriterien();
+			Suchkriterien criteria = new Suchkriterien(true);
 			criteria.addFilter(RegEntry_.race.getName(), entry.getRace().getId());
 			criteria.addFilter(RegEntry_.participants.getName() + ".user", participant.getUser().getId());
 			if (entry.getId() != null)

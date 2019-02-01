@@ -100,7 +100,7 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 	public Club saveClub(Club club) {
 		common.checkWriteAccess(club, Operation.save);
 		if (club.getId() == null) {
-			Suchkriterien krit = new Suchkriterien();
+			Suchkriterien krit = new Suchkriterien(true);
 			krit.setExact(true); // ignore case ist ok
 			krit.addFilter(Club_.name.getName(), club.getName());
 			if (dao.search(Club.class, krit, null).getGesamtgroesse() > 0)

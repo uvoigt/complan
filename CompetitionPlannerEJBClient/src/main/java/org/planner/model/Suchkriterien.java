@@ -145,6 +145,14 @@ public class Suchkriterien implements Serializable {
 	private boolean exact;
 	private List<SortField> sortierung;
 	private List<Property> properties;
+	private boolean countOnly;
+
+	public Suchkriterien() {
+	}
+
+	public Suchkriterien(boolean countOnly) {
+		this.countOnly = countOnly;
+	}
 
 	public int getZeilenOffset() {
 		return zeilenOffset;
@@ -208,6 +216,10 @@ public class Suchkriterien implements Serializable {
 
 	public void setProperties(List<Property> properties) {
 		this.properties = properties;
+	}
+
+	public boolean isCountOnly() {
+		return countOnly;
 	}
 
 	@Override
