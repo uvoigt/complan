@@ -76,16 +76,16 @@
 												rendered="#{member.user.club.id != placement.team.club.id and member.remark == null}"/>
 									</h:panelGroup>
 								</p:dataGrid>
+								<h:panelGroup layout="block" styleClass="qualified"
+										rendered="#{renderBean.isSeparatorRendered(race, placement, placementIndex + 1)}">
+									<h:outputText value="#{placement.qualifiedFor != null ? bundle.get(placement.qualifiedFor.name()) : null}"/>
+								</h:panelGroup>
 							</p:column>
 							<p:column styleClass="teamCol" headerText="#{bundle.club}">
 								<h:outputText value="#{placement.team.club.shortNameOrName}"/>
 							</p:column>
 							<p:column styleClass="timeCol" headerText="#{bundle.time}">
 								<h:outputText value="#{placement.time}" converter="#{placementConverter}"/>
-								<h:panelGroup layout="block" styleClass="qualified"
-										rendered="#{renderBean.isSeparatorRendered(race, placement, placementIndex + 1)}">
-									<h:outputText value="#{placement.qualifiedFor != null ? bundle.get(placement.qualifiedFor.name()) : null}"/>
-								</h:panelGroup>
 								<h:panelGroup layout="block" styleClass="deficit">
 									<h:outputText value="+" rendered="#{placement.time != null and placementIndex gt 0}"/>
 									<h:outputText value="#{renderBean.computeDeficit(race, placement)}" converter="#{placementConverter}"/>

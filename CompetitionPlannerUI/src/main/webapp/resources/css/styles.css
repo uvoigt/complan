@@ -138,12 +138,16 @@
 	}
 	.help {
 		width: 100%;
-	}	
+	}
 /* 	input {
 	haut nicht hin beim spinner!
 		width: 94%;
 	}
  */}
+
+.ui-datatable-empty-message > td.ui-helper-hidden { /* work-around für ausgeblendete erste Spalte */
+	display: table-cell;
+}
 
 .actionMenu {
 	width: 20em !important;	
@@ -170,24 +174,26 @@ div.clearFilter input {
 }
 
 div.clearFilter span {
+	background-position: center;
+	background-repeat: no-repeat;
 	position: absolute;
-	top: .5em;
+	top: 1px;
 	right: .4em;
 	width: 16px;
-	height: 16px;
+	height: 100%;
 	cursor: pointer;
 }
 
 div.clearFilter span:not(:hover) {
-	background: url("#{resource['images/clear.png']}");
+	background-image: url("#{resource['images/clear.png']}");
 }
 
 div.clearFilter span:hover {
-	background: url("#{resource['images/clear_hover.png']}");
+	background-image: url("#{resource['images/clear_hover.png']}");
 }
 
 div.clearFilter span.active {
-	background: url("#{resource['images/clear_active.png']}");
+	background-image: url("#{resource['images/clear_active.png']}");
 }
 
 .ui-autocomplete-panel {
@@ -413,9 +419,9 @@ input[readonly=readonly] {
 .qualified {
 	font-size: x-small;
 	position: absolute;
-	left: 50%;
-	height: 1em;
-	margin-top: 1em;
+	right: 0;
+	height: 100%;
+	top: calc(100% - 1em);
 }
 
 .deficit {
@@ -437,6 +443,7 @@ input[readonly=readonly] {
 }
 
 .memberCol {
+	position: relative;
 	width: 70%;
 }
 
@@ -497,5 +504,8 @@ input[readonly=readonly] {
 	.teamTable tbody, .teamTable tr {
 		border-bottom-width: 1px !important;
 		border-bottom-style: solid !important;
+	}
+	.qualified {
+		display: none;
 	}
 }
