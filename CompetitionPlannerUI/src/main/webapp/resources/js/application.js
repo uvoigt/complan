@@ -31,6 +31,7 @@ function sendLogin(formId) {
 	var uname = dlg.jq.find("input[type=text]");
 	var upass = dlg.jq.find("input[type=password]");
 	var req = createXMLHttpRequest();
+	dlg.jq.find("input,button").attr("disabled", true).attr("readonly", true).addClass("ui-state-disabled");
 	req.open("POST", "j_security_check");
 	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
 	req.onreadystatechange = function() {
@@ -52,7 +53,6 @@ function sendLogin(formId) {
 			}
 		}
 	}
-	dlg.jq.find("input,button").attr("disabled", true).attr("readonly", true).addClass("ui-state-disabled");
 	req.send("j_username=" + encodeURIComponent(uname.val()) + "&j_password=" + encodeURIComponent(upass.val()));
 }
 function sendRecovery() {
@@ -94,8 +94,11 @@ function checkEmpty(countLabel) {
 	if ($(".ui-datatable-empty-message").length > 0)
 		updateCount(".resultCount", countLabel, 0);
 }
-function updateCount(selector, countLabel, count) {
-	$(selector).text(countLabel.replace(/\{0\}/, count));
+function updateCount(selector, countLabel) {
+	var args = Array.apply(null, arguments).slice(2);
+	$(selector).text(countLabel.replace(/\{(\d+)\}/g, function() {
+		return args[arguments[1]];
+	}));
 }
 function updateColumnWidth(buttonCount) {
 	$("[id$=aktionenColumn]").css("width", "calc(2.5em * " + buttonCount + " + 10px)");
@@ -116,17 +119,22 @@ function rowDoubleClicked(table, rowId) {
 	}
 }
 function setupFilters() {
-	$(".ui-column-filter").wrap('<div class="clearFilter"/>').after($('<span title="{msg:delete}"/>').click(function(evt) {
-		var event = $.Event("keyup");
-		event.keyCode = event.which = 13;
-		$(this).prev("input").val("").trigger(event);
-		evt.preventDefault();
-		evt.stopPropagation();
-	}).mousedown(function() {
-		$(this).addClass("active");
-	}).mouseup(function() {
-		$(this).removeClass("active");
-	}));
+	$(".ui-column-filter").each(function() {
+		var input = $(this);
+		if (input.parent(".clearFilter").length == 0) {
+			input.wrap('<div class="clearFilter"/>').after($('<span title="{msg:delete}"/>').click(function(evt) {
+				var event = $.Event("keyup");
+				event.keyCode = event.which = 13;
+				$(this).prev("input").val("").trigger(event);
+				evt.preventDefault();
+				evt.stopPropagation();
+			}).mousedown(function() {
+				$(this).addClass("active");
+			}).mouseup(function() {
+				$(this).removeClass("active");
+			}));
+		}
+	});
 }
 function attachSubmitHandler() {
 	if (!main.handlerAttached) {
@@ -158,7 +166,8 @@ var registrationEdit = {
 		var racesTable = PF("racesTable");
 		var athletesTable = PF("athletesTable");
 		var registrationTable = PF("registrationTable");
-		var registrationSelected = registrationTable && registrationTable.getSelectedRowsCount() > 0;
+		// getSelectedRowsCount() wird nach einem Ajax response nicht aktualisiert
+		var registrationSelected = registrationTable && registrationTable.rows.filter(".ui-state-highlight").length > 0;
 		if (athletesTable && athletesTable.getSelectedRowsCount() > 0 &&
 				(racesTable && racesTable.getSelectedRowsCount() > 0 || registrationSelected))
 			PF("btnAddAthlete").enable();
@@ -224,18 +233,13 @@ var registrationEdit = {
 		var gender = row.children().eq(4).text();
 		
 		racesTable.jq.find("[name$=ageType\\:filter]").val(ageType);
-		racesTable.jq.find("[name$=gender\\:filter]").val(gender.charAt(0));
+		racesTable.jq.find("[name$=gender\\:filter]").val(gender);
 		racesTable.filter();
 	},
 	toggleColumn: function(table, index) {
 		var columnHeader = table.thead.children("tr").find("th:nth-child(" + index + ")");
 		columnHeader.toggleClass("ui-helper-hidden");
 		table.tbody.children("tr").find("td:nth-child(" + index + ")").toggleClass("ui-helper-hidden");
-	},
-	updateRegistrationsCount: function(count) {
-		if (count == undefined)
-			count = PF("registrationTable").tbody.children().length;
-		$("[id$=registrationsCountLabel]").text("{msg:registrations.athletesCount, xxx}".replace(/xxx/, count));
 	}
 };
 var programEdit = {

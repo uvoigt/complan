@@ -45,6 +45,7 @@ import org.planner.ui.beans.Messages;
 import org.planner.ui.beans.RemoteDataModel;
 import org.planner.ui.beans.SearchBean.ColumnModel;
 import org.planner.ui.util.JsfUtil;
+import org.primefaces.PrimeFaces;
 import org.primefaces.component.datatable.DataTable;
 import org.primefaces.component.datatable.feature.DataTableFeatureKey;
 import org.primefaces.component.datatable.feature.FilterFeature;
@@ -92,6 +93,8 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 
 	private List<String> remarks;
 
+	private int numEntries;
+
 	@Override
 	@PostConstruct
 	public void init() {
@@ -121,6 +124,7 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 	@Override
 	public void setItem(Object item) {
 		registration = (Registration) item;
+		numEntries = registration.getEntries().size();
 		registrationId = registration.getId();
 		announcementId = registration.getAnnouncement().getId();
 		JsfUtil.setViewVariable("id", registrationId);
@@ -152,19 +156,13 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 
 	private void loadRegistration(Long id) {
 		registration = service.getObject(Registration.class, id, getFetchInfo());
+		numEntries = registration.getEntries().size();
 	}
 
 	private void loadRegistrationAndUpdateModel() {
 		loadRegistration(registration.getId());
 		// da der value-Getter beim Table update nicht aufgerufen wird, muss das Table-Model manuell aktualisiert werden
 		registrationTable.setValue(registration.getEntries());
-		FilterFeature feature = (FilterFeature) registrationTable.getFeature(DataTableFeatureKey.FILTER);
-		// dies ist ein Hack, der das Filtern ermöglicht, da der RowIndex beim submit des delete-Buttons >= 0 ist,
-		// würde eine falsche FilterId für den Lookup in den Request-Parametern verwendet werden
-		registrationTable.setRowIndex(-1);
-		List<FilterMeta> filterMetadata = feature.populateFilterMetaData(FacesContext.getCurrentInstance(),
-				registrationTable);
-		feature.filter(FacesContext.getCurrentInstance(), registrationTable, filterMetadata, null);
 	}
 
 	public void onFilterRegistrationTable(FilterEvent event) {
@@ -177,18 +175,13 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 		JsfUtil.setViewVariable("rSortState", event.isAscending());
 	}
 
-	@SuppressWarnings("unchecked")
+	public void onPostValidateRegistrationTable(ComponentSystemEvent event) {
+		filterRegistrations(event.getFacesContext(), (DataTable) event.getComponent());
+	}
+
 	public void onPrerenderRegistrationTable(ComponentSystemEvent event) {
 		DataTable table = (DataTable) event.getComponent();
-		Map<String, Object> filters = (Map<String, Object>) JsfUtil.getViewVariable("rFilters");
-		table.setFilters(filters);
-		if (filters != null) {
-			FilterFeature feature = (FilterFeature) table.getFeature(DataTableFeatureKey.FILTER);
-			List<FilterMeta> filterMetadata = feature.populateFilterMetaData(event.getFacesContext(), table);
-			feature.filter(event.getFacesContext(), table, filterMetadata, null);
-			registration.getEntries().clear();
-			registration.getEntries().addAll(table.getFilteredValue());
-		}
+		filterRegistrations(event.getFacesContext(), table);
 		Boolean ascending = (Boolean) JsfUtil.getViewVariable("rSortState");
 		if (ascending != null) {
 			SortMeta meta = new SortMeta(table.getColumns().get(0), null,
@@ -196,6 +189,22 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			table.setMultiSortMeta(Arrays.asList(meta));
 			SortFeature feature = (SortFeature) table.getFeature(DataTableFeatureKey.SORT);
 			feature.multiSort(event.getFacesContext(), table);
+		}
+		PrimeFaces.current().executeScript(
+				"updateCount('.registrationCount','" + JsfUtil.getScopedBundle().get("registrationsCount") + "',"
+						+ numEntries + "," + registration.getEntries().size() + ")");
+	}
+
+	@SuppressWarnings("unchecked")
+	private void filterRegistrations(FacesContext ctx, DataTable table) {
+		Map<String, Object> filters = (Map<String, Object>) JsfUtil.getViewVariable("rFilters");
+		table.setFilters(filters);
+		if (filters != null) {
+			FilterFeature feature = (FilterFeature) table.getFeature(DataTableFeatureKey.FILTER);
+			List<FilterMeta> filterMetadata = feature.populateFilterMetaData(ctx, table);
+			feature.filter(ctx, table, filterMetadata, null);
+			registration.getEntries().clear();
+			registration.getEntries().addAll(table.getFilteredValue());
 		}
 	}
 
@@ -359,6 +368,10 @@ public class RegistrationBean extends AbstractEditBean implements IResultProvide
 			athletes.setFilterPreset(filters);
 		}
 		return athletes;
+	}
+
+	public int getNumEntries() {
+		return numEntries;
 	}
 
 	public String getRaceString(RegEntry entry, Messages bundle) {

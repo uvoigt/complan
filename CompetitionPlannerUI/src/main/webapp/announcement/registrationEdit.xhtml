@@ -78,7 +78,7 @@
 							widgetVar="btnAddAthlete"
 							action="#{registrationBean.addToRegistration()}"
 							process="@form"
-							update="registrationTable"/>
+							update="registrationTable filterSetup"/>
 						<p:commandButton id="btnCancel" icon="ui-icon-arrowthick-1-w" title="#{messages.backToOverview}"
 							action="#{startseiteBean.setMainContent('/announcement/registrations.xhtml')}"
 							process="@this"
@@ -120,7 +120,7 @@
 								oncomplete="PF('athletesTable').unselectAllRows(); registrationEdit.enableButtons().checkEmpty().updateResultSelected()"/>
 							<pe:javascript event="rowDblselect" execute="registrationEdit.copyFiltersA2R()"/>
 							<p:ajax event="rowDblselect" onstart="return !PF('btnAddAthlete').jq.attr('disabled')"
-								listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable"/>
+								listener="#{registrationBean.addToRegistration()}" process="@form" update="@form:registrationTable filterSetup"/>
 
 							<p:column headerText="#{bundle.club}" sortBy="#{user.club.name}" filterBy="#{user.club.name}" filterMatchMode="contains"
 									visible="#{registrationBean.clubVisible}">
@@ -161,7 +161,7 @@
 
 					<f:facet name="header">
 						<h:panelGroup layout="block" id="nix">
-							<h:outputText value="#{bundle.format('registrationsCount', registration.entries.size())}"/>
+							<h:outputText styleClass="registrationCount"/>
 							<p:effect event="load" type="bounce" rendered="#{registrationBean.showEffect}"/>
 						</h:panelGroup>
 					</f:facet>
@@ -171,6 +171,7 @@
 					<p:ajax event="filter" listener="#{registrationBean.onFilterRegistrationTable}" oncomplete="PF('registrationTable').unselectAllRows(); if (#{registration.status != 'submitted'}) registrationEdit.enableButtons()"/>
 					<p:ajax event="sort" listener="#{registrationBean.onSortRegistrationTable}"/>
 					<f:event type="preRenderComponent" listener="#{registrationBean.onPrerenderRegistrationTable}"/>
+					<f:event type="postValidate" listener="#{registrationBean.onPostValidateRegistrationTable}"/>
 
 					<p:column id="raceNumber" headerText="#{bundle.race}" sortBy="#{entry.race.number}" filterBy="#{registrationBean.getRaceString(entry, bundle)}" filterMatchMode="contains">
 						<h:outputText value="#{registrationBean.getRaceString(entry, bundle)}"/>
@@ -185,8 +186,8 @@
 						<p:commandButton icon="ui-icon-trash" title="#{bundle.deleteParticipant}"
 								action="#{registrationBean.deleteFromRegistration(entry)}"
 								process="registrationTable"
-								update="registrationTable"/>
-						<h:outputScript rendered="#{rowIndex == 0}">registrationEdit.updateRegistrationsCount(#{registration.entries.size()});</h:outputScript>
+								update="registrationTable filterSetup"
+								oncomplete="registrationEdit.enableButtons()"/>
 					</p:column>
 				</p:dataTable>
 			</h:form>
