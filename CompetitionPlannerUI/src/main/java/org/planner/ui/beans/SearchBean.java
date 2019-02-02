@@ -110,11 +110,16 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 	private static final long serialVersionUID = 1L;
 
+	private static final String[] uploadTypes = { "application/vnd.ms-excel", "application/csv", "text/csv",
+			"text/plain" };
+
 	private RemoteDataModel<Serializable> dataModel;
 
 	private Map<String, List<ColumnModel>> columns = new HashMap<>();
 
 	private UploadBean uploadBean;
+
+	private int lastRow;
 
 	@Inject
 	private CsvBean csvBean;
@@ -133,8 +138,6 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 
 	@Inject
 	private BenutzerEinstellungen settings;
-
-	private int lastRow;
 
 	@PostConstruct
 	public void init() {
@@ -185,6 +188,11 @@ public class SearchBean implements DownloadHandler, UploadHandler, Serializable 
 				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(null, msg));
 			}
 		}
+	}
+
+	@Override
+	public String[] getAllowedTypes() {
+		return uploadTypes;
 	}
 
 	public int getNumberOfRows() {

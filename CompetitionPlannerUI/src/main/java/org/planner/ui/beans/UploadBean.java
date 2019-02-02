@@ -12,6 +12,7 @@ import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.planner.ui.util.JsfUtil;
 import org.primefaces.PrimeFaces;
 import org.primefaces.context.RequestContext;
@@ -33,6 +34,8 @@ public class UploadBean {
 
 	public interface UploadHandler {
 		void handleUpload(InputStream in, String typ) throws Exception;
+
+		String[] getAllowedTypes();
 	}
 
 	interface UploadProcessor {
@@ -149,17 +152,27 @@ public class UploadBean {
 		String typ = (String) JsfUtil.getContextVariable("typ");
 		String contentType = file.getContentType();
 		try {
-			if ("application/vnd.ms-excel".equals(contentType) || "application/csv".equals(contentType)) {
-				uploadAndCloseStream(file.getInputstream(), typ);
-			} else {
+			if (!ArrayUtils.contains(uploadHandler.getAllowedTypes(), contentType))
 				throw new IllegalArgumentException(contentType);
-			}
+			uploadAndCloseStream(file.getInputstream(), typ);
 		} catch (Exception e) {
 			FacesContext.getCurrentInstance().addMessage(null,
-					// TODO messageBundle
-					new FacesMessage(null, "Upload fehlgeschlagen: " + e.getMessage()));
+					new FacesMessage(null, JsfUtil.getScopedBundle().format("uploadFailed", e.getMessage())));
 		} finally {
 		}
+	}
+
+	public String getAllowedTypes() {
+		StringBuilder regex = new StringBuilder();
+		for (String type : uploadHandler.getAllowedTypes()) {
+			if (regex.length() == 0)
+				regex.append("/");
+			else
+				regex.append("|");
+			regex.append(type.replace("/", "\\/"));
+		}
+		regex.append("/");
+		return regex.toString();
 	}
 
 	private void uploadAndCloseStream(InputStream in, String typ) throws Exception {
