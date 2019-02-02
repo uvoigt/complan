@@ -16,13 +16,13 @@
 					<p:column>
 						<h:outputText value="#{messages.loginName}"/>
 					</p:column>
-					<p:column><input type="text" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" autocomplete="off" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
+					<p:column><input type="text" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" autocomplete="off" onkeydown="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
 				</p:row>
 				<p:row>
 					<p:column>
 						<h:outputText value="#{messages.loginPass}"/>
 					</p:column>
-					<p:column><input type="password" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" onkeypress="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
+					<p:column><input type="password" class="ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" onkeydown="if (event.keyCode == 13) sendLogin('#{component.namingContainer.id}')"/></p:column>
 				</p:row>
 				<p:row>
 					<p:column colspan="2"
