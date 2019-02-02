@@ -8,6 +8,7 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
+import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 
@@ -17,9 +18,12 @@ import org.planner.model.ResultExtra;
 
 @Entity
 @Access(AccessType.FIELD)
-@NamedQuery(name = "latestResults", query = "select p, pr, r from Placement p join p.team prt join prt.programRace pr " //
-		+ "join pr.race r join fetch r.announcement a join fetch a.club join prt.team t join t.members m join m.user u " //
-		+ "where a.startDate > :date and u.userId = :userId order by a.startDate")
+@NamedQueries({
+		@NamedQuery(name = "latestResults", query = "select p, pr, r from Placement p join p.team prt join prt.programRace pr " //
+				+ "join pr.race r join fetch r.announcement a join fetch a.club join prt.team t join t.members m join m.user u " //
+				+ "where a.startDate > :date and u.userId = :userId order by a.startDate"),
+		@NamedQuery(name = "placements", query = "select p from Placement p join p.team t " //
+				+ "where t.programRace.id=:programRaceId order by p.position") })
 public class Placement implements Serializable {
 
 	private static final long serialVersionUID = 1L;

@@ -257,6 +257,11 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
+	public List<Placement> getPlacements(Long programRaceId) {
+		return program.getPlacements(programRaceId);
+	}
+
+	@Override
 	public List<ProgramRace> saveResult(Long programRaceId, List<Placement> placements) {
 		return program.saveResult(programRaceId, placements);
 	}

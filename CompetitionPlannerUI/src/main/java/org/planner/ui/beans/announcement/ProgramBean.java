@@ -25,17 +25,14 @@ import javax.inject.Named;
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.Announcement;
 import org.planner.eo.Placement;
-import org.planner.eo.Placement_;
 import org.planner.eo.Program;
 import org.planner.eo.Program.ProgramStatus;
 import org.planner.eo.ProgramOptions;
 import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRaceTeam;
-import org.planner.eo.ProgramRaceTeam_;
 import org.planner.model.FetchInfo;
 import org.planner.model.ResultExtra;
-import org.planner.model.Suchkriterien;
 import org.planner.ui.beans.AbstractEditBean;
 import org.planner.ui.beans.Messages;
 import org.planner.ui.beans.UploadBean;
@@ -345,11 +342,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	 * @return null, wenn keine Resultate existieren - true wenn eine Änderung stattgefunden hat, ansonsten false
 	 */
 	private Boolean checkForExistingResults(ProgramRace programRace, List<Placement> placements) {
-		Suchkriterien criteria = new Suchkriterien();
-		criteria.addFilter(Placement_.team.getName() + "." + ProgramRaceTeam_.programRace.getName() + ".id",
-				programRace.getId());
-		criteria.addSortierung(Placement_.position.getName(), true);
-		List<Placement> savedPlacements = service.search(Placement.class, criteria).getListe();
+		List<Placement> savedPlacements = service.getPlacements(programRace.getId());
 		Placement result = savedPlacements.size() > 0 ? savedPlacements.get(0) : null;
 		if (result == null) {
 			return null;

@@ -381,9 +381,19 @@ public class ProgramServiceImpl {
 			aFinal.setStartTime(context.nextTime());
 		}
 
-		// System.out.println(context.times);
+		System.out.println(context.times);
 		// RaceMatrix matrix = new RaceMatrix(context.times, allHeats, semiFinals, instantFinals, finals);
-		// checkWithMatrix(matrix);
+		// ProgramOptions options = program.getOptions();
+		// Integer protectionPeriod = options.getProtectionPeriod();
+		// // man könnte auch ein zufälliges Rennen wählen
+		// for (ProgramRace race : heats) {
+		// if (!race.getRace().getAgeType().isMature()) {
+		// matrix.fillPeriod(race, race.getStartTime().getTime(), protectionPeriod);
+		// } else {
+		// matrix.fillPeriod(race, race.getStartTime().getTime(),
+		// getDefaultPeriod(race.getRace(), options.getTimeLag()));
+		// }
+		// }
 
 		program.getRaces().addAll(allHeats);
 		program.getRaces().addAll(semiFinals);
@@ -399,6 +409,27 @@ public class ProgramServiceImpl {
 		clearResultsAndRaces(program.getId());
 
 		common.save(program);
+	}
+
+	/*
+	 * Vielfaches von Time lag
+	 */
+	private int getDefaultPeriod(Race race, int timeLagMinutes) {
+		int distance = race.getDistance();
+		int defaultMinutes;
+		if (distance <= 200)
+			defaultMinutes = 30;
+		else if (distance <= 500)
+			defaultMinutes = 60;
+		else if (distance <= 1000)
+			defaultMinutes = 60;
+		else if (distance <= 2000)
+			defaultMinutes = 90;
+		else if (distance <= 5000)
+			defaultMinutes = 120;
+		else
+			defaultMinutes = 120;
+		return defaultMinutes / timeLagMinutes;
 	}
 
 	private int calculateHeats(int numberOfLanes, Race race, List<Team> teams, EvalContext context,
@@ -795,6 +826,17 @@ public class ProgramServiceImpl {
 			throw new FachlicheException(messages.getResourceBundle(), "accessSetStatus");
 		program.setStatus(status);
 		common.save(program);
+	}
+
+	public List<Placement> getPlacements(final Long programRaceId) {
+		// diese Methode existiert nur, da MySql auf ein search mit "Operand should contain 1 column(s)" reagiert hat
+		return dao.executeOperation(new IOperation<List<Placement>>() {
+			@Override
+			public List<Placement> execute(EntityManager em) {
+				return em.createNamedQuery("placements", Placement.class).setParameter("programRaceId", programRaceId)
+						.getResultList();
+			}
+		});
 	}
 
 	public List<ProgramRace> saveResult(Long programRaceId, List<Placement> placements) {

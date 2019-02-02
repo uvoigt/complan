@@ -101,6 +101,8 @@ public interface ServiceFacade extends IResultProvider {
 
 	List<Placement> getMyLatestResults(int months);
 
+	List<Placement> getPlacements(Long programRaceId);
+
 	List<ProgramRace> saveResult(Long programRaceId, List<Placement> placements);
 
 	Long createProgram(Program program);
