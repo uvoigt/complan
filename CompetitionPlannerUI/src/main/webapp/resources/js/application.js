@@ -16,7 +16,8 @@ function toggleHelp(show) {
 			delete document.closer;
 		}
 	} else {
-		var isSmallScreen = helpUI.width() == $(document).width(); 
+		// gibt aus irgendeinem Grund in Chrome bei manchen Hilfeseiten eine geringe Abweichung
+		var isSmallScreen = Math.abs(helpUI.width() - $(document).width()) < 25;
 		helpUI.animate({ "left": isSmallScreen ? "0" : "30%" }, 200);
 		var closer = function(evt) {
 			if (evt.which == 27)
@@ -28,10 +29,10 @@ function toggleHelp(show) {
 }
 function sendLogin(formId) {
 	var dlg = PF("loginDlg");
+	dlg.jq.find("input,button").attr("disabled", true).attr("readonly", true).addClass("ui-state-disabled");
 	var uname = dlg.jq.find("input[type=text]");
 	var upass = dlg.jq.find("input[type=password]");
 	var req = createXMLHttpRequest();
-	dlg.jq.find("input,button").attr("disabled", true).attr("readonly", true).addClass("ui-state-disabled");
 	req.open("POST", "j_security_check");
 	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
 	req.onreadystatechange = function() {
@@ -403,6 +404,7 @@ var programEdit = {
 };
 function initLoginDialog() {
 	$.ajaxSetup({
+		// TODO der complete-handler kommt wieder raus
 		complete: function(xhr) {
 			if (xhr.pfSettings) {
 				var split = xhr.pfSettings.data.split("&");
@@ -410,7 +412,7 @@ function initLoginDialog() {
 				viewState = viewState.split("=")[1];
 				console.debug("request view state length: " + viewState.length);
 			}
-			if (xhr.responseXML) {
+			if (xhr.responseXML && xhr.responseXML.firstChild.firstChild) {
 				var children = xhr.responseXML.firstChild.firstChild.children;
 				for (var i = 0; i < children.length; i++) {
 					var child = children[i];
