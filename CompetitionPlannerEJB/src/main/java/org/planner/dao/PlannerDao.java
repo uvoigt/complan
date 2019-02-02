@@ -19,6 +19,7 @@ import javax.persistence.Query;
 import javax.persistence.Table;
 import javax.persistence.TemporalType;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.AbstractQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
@@ -33,6 +34,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Selection;
+import javax.persistence.criteria.Subquery;
 import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.Bindable;
 import javax.transaction.HeuristicMixedException;
@@ -124,7 +126,7 @@ public class PlannerDao {
 	}
 
 	@Transactional(TxType.SUPPORTS)
-	public <T extends Serializable> Suchergebnis<T> search(Class<?> entityType, Class<T> returningType,
+	public <E, T extends Serializable, U> Suchergebnis<T> search(Class<E> entityType, Class<T> returningType,
 			Suchkriterien kriterien, QueryModifier queryModifier) {
 		return executePagingQuery(em, entityType, kriterien, returningType, queryModifier);
 	}
@@ -283,7 +285,7 @@ public class PlannerDao {
 	 *            Modifier für Queries
 	 * @return das Ergebnis
 	 */
-	private <T extends Serializable> Suchergebnis<T> executePagingQuery(EntityManager em, Class<?> entityType,
+	private <E, T extends Serializable> Suchergebnis<T> executePagingQuery(EntityManager em, Class<E> entityType,
 			Suchkriterien kriterien, Class<T> returningType, QueryModifier queryModifier) {
 
 		if (LOG.isDebugEnabled()) {
@@ -294,13 +296,23 @@ public class PlannerDao {
 		CriteriaBuilder builder = em.getCriteriaBuilder();
 		CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
 		Root<?> countRoot = countQuery.from(entityType);
-		countQuery.select(builder.count(countRoot));
+		Subquery<E> subquery = countQuery.subquery(entityType);
+		Root<E> subRoot = subquery.from(entityType);
+		subquery.select(subRoot);
+		if (kriterien.getProperties() != null) {
+			for (Property property : kriterien.getProperties()) {
+				String multiRowGroup = property.getMultiRowGroup();
+				if (StringUtils.isNotEmpty(multiRowGroup))
+					handleMultiRowGrouping(builder, subquery, subRoot, null, null, null, multiRowGroup);
+			}
+		}
+		countQuery.select(builder.count(countRoot)).where(builder.in(countRoot).value(subquery));
 
 		Map<String, Filter> filters = kriterien.getFilter();
 		Map<String, Object> modifiedFilterValues = filters != null ? new HashMap<String, Object>() : null;
 
 		buildWhereClause(filters, modifiedFilterValues, kriterien.isExact(), kriterien.isIgnoreCase(), builder,
-				countQuery, countRoot, null, queryModifier);
+				subquery, subRoot, null, queryModifier);
 		TypedQuery<Long> cQuery = em.createQuery(countQuery);
 		setParameters(cQuery, filters, modifiedFilterValues, kriterien.isIgnoreCase(), queryModifier);
 		// wir gehen mal davon aus, dass keine Treffer mit count >
@@ -328,14 +340,8 @@ public class PlannerDao {
 				Path<Object> propPath = from.get(propertyName);
 				String multiRowGroup = property.getMultiRowGroup();
 				if (StringUtils.isNotEmpty(multiRowGroup)) {
-					Expression<String> concat = builder.function("group_concat", String.class, propPath, propPath);
-					selection.add(concat);
-					if (columnReplacement == null)
-						columnReplacement = new HashMap<>();
-					columnReplacement.put(propPath, concat);
-					Expression<?> groupBy = dataRoot.get(multiRowGroup);
-					dataQuery.groupBy(groupBy);
-					// columnReplacement = .builder..
+					columnReplacement = handleMultiRowGrouping(builder, dataQuery, dataRoot, columnReplacement,
+							selection, propPath, multiRowGroup);
 				} else {
 					// MySql liefert sonst Bits als Strings, was bei Bit 0 " " liefert und zu Boolean.TRUE führt
 					if (Boolean.class.equals(propPath.getJavaType()))
@@ -364,6 +370,21 @@ public class PlannerDao {
 		return ergebnis;
 	}
 
+	private Map<Expression<?>, Expression<?>> handleMultiRowGrouping(CriteriaBuilder builder,
+			AbstractQuery<?> dataQuery, Root<?> dataRoot, Map<Expression<?>, Expression<?>> columnReplacement,
+			List<Selection<?>> selection, Path<Object> propPath, String multiRowGroup) {
+		Expression<String> concat = builder.function("group_concat", String.class, propPath, propPath);
+		if (selection != null)
+			selection.add(concat);
+		if (columnReplacement == null)
+			columnReplacement = new HashMap<>();
+		columnReplacement.put(propPath, concat);
+		Expression<?> groupBy = dataRoot.get(multiRowGroup);
+		dataQuery.groupBy(groupBy);
+		// columnReplacement = .builder..
+		return columnReplacement;
+	}
+
 	private boolean hasDottedNotation(String property) {
 		return property.contains(".");
 	}
@@ -389,7 +410,7 @@ public class PlannerDao {
 	}
 
 	private void buildWhereClause(Map<String, Filter> filters, Map<String, Object> modifiedFilterValues, boolean exact,
-			boolean ignoreCase, CriteriaBuilder builder, CriteriaQuery<?> query, Root<?> root, Set<String> joined,
+			boolean ignoreCase, CriteriaBuilder builder, AbstractQuery<?> query, Root<?> root, Set<String> joined,
 			QueryModifier queryModifier) {
 
 		List<Predicate> wherePredicates = null;

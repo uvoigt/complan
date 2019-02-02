@@ -315,10 +315,12 @@ public class AnnouncementServiceImpl {
 	}
 
 	public Suchergebnis<User> getAthletes(final Suchkriterien criteria) {
-		criteria.setProperties(Arrays.asList(new Property(User_.club.getName() + "." + Club_.name.getName()),
-				new Property(User_.club.getName() + "." + Club_.shortName.getName()),
-				new Property(User_.firstName.getName()), new Property(User_.lastName.getName()),
-				new Property(User_.birthDate.getName()), new Property(User_.gender.getName())));
+		criteria.setProperties(
+				// group by user.id, um keine doppelten Einträge zu haben, wenn Sportler und Mastersportler
+				Arrays.asList(new Property(User_.club.getName() + "." + Club_.name.getName(), User_.id.getName()),
+						new Property(User_.club.getName() + "." + Club_.shortName.getName()),
+						new Property(User_.firstName.getName()), new Property(User_.lastName.getName()),
+						new Property(User_.birthDate.getName()), new Property(User_.gender.getName())));
 		return common.internalSearch(User.class, criteria, new AthletesFilterer(criteria));
 	}
 
