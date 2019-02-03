@@ -7,7 +7,7 @@ import org.planner.remote.ServiceFacade;
 
 public class EJBLookup {
 
-	@EJB(lookup = "java:global/ear-1.0.0-SNAPSHOT/ejb-1.0.0-SNAPSHOT/ServiceFacadeBean")
+	@EJB
 	@Produces
-	private ServiceFacade admin;
+	private ServiceFacade service;
 }

@@ -7,13 +7,12 @@ import java.security.MessageDigest;
 import java.util.Calendar;
 import java.util.Map;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.CDI;
 import javax.xml.bind.DatatypeConverter;
 
 import org.planner.eo.User;
 import org.planner.remote.ServiceFacade;
-import org.planner.util.LogUtil.TechnischeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,30 +74,39 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 			Cookie cookie = cookies.get(COOKIE_TOKEN);
 			if (cookie != null) {
 				String cookieValue = cookie.getValue();
-				User user = getService().authenticate(cookieValue, false);
-				if (user != null) {
-					if (LOG.isDebugEnabled())
-						LOG.debug("Authenticated user " + user.getUserId() + " by cookie: " + cookieValue);
 
-					authenticatedUser.set(user);
-					AuthenticationMechanismOutcome outcome = null;
-					Account account = securityContext.getIdentityManager().verify(user.getUserId(), null);
-					if (account != null) {
-						securityContext.authenticationComplete(account, securityContext.getMechanismName(), true);
-						outcome = AuthenticationMechanismOutcome.AUTHENTICATED;
-						// im Moment keine Idee, wie der mehrfache Aufruf beim Hereinkommen mehrerer
-						// nicht authentisierter Requests verhindert werden kann:
-						// die HTTP-Session existiert noch nicht (aber auch wenn man sie neu erzeugt, hilft das nichts,
-						// da alle Requests ohne Session-Cookie kommen)
-						// und an den Security-Context, der in den Attachments steckt,
-						// kommt man aus Classloading-Gründen nicht heran
-						saveLastLogonTime();
-					} else {
-						securityContext.authenticationFailed(MESSAGES.authenticationFailed(user.getUserId()),
-								securityContext.getMechanismName());
+				Instance<ServiceFacade> instance = getServiceInstance();
+				ServiceFacade service = instance.get();
+				try {
+					User user = service.authenticate(cookieValue, false);
+
+					if (user != null) {
+						if (LOG.isDebugEnabled())
+							LOG.debug("Authenticated user " + user.getUserId() + " by cookie: " + cookieValue);
+
+						authenticatedUser.set(user);
+						AuthenticationMechanismOutcome outcome = null;
+						Account account = securityContext.getIdentityManager().verify(user.getUserId(), null);
+						if (account != null) {
+							securityContext.authenticationComplete(account, securityContext.getMechanismName(), true);
+							outcome = AuthenticationMechanismOutcome.AUTHENTICATED;
+							// im Moment keine Idee, wie der mehrfache Aufruf beim Hereinkommen mehrerer
+							// nicht authentisierter Requests verhindert werden kann:
+							// die HTTP-Session existiert noch nicht (aber auch wenn man sie neu erzeugt,
+							// hilft das nichts, da alle Requests ohne Session-Cookie kommen)
+							// und an den Security-Context, der in den Attachments steckt,
+							// kommt man aus Classloading-Gründen nicht heran
+							service.saveLastLogonTime();
+						} else {
+							securityContext.authenticationFailed(MESSAGES.authenticationFailed(user.getUserId()),
+									securityContext.getMechanismName());
+						}
+
+						authenticatedUser.remove();
+						return outcome != null ? outcome : AuthenticationMechanismOutcome.NOT_AUTHENTICATED;
 					}
-					authenticatedUser.remove();
-					return outcome != null ? outcome : AuthenticationMechanismOutcome.NOT_AUTHENTICATED;
+				} finally {
+					instance.destroy(service);
 				}
 			}
 		}
@@ -108,28 +116,34 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 	@Override
 	protected void handleRedirectBack(HttpServerExchange exchange) {
 
-		if (exchange.getRequestHeaders().getFirst("Stay-Logged-In") != null) {
-
-			// Authentisierung erfolgt, Speichern der Re-Auth-Info
-			Map<String, Cookie> cookies = exchange.getRequestCookies();
-			Cookie cookie = cookies.get(COOKIE_TOKEN);
-			String newCookieValue = getService().rememberMe(cookie != null ? cookie.getValue() : null);
-			addNewTokenCookie(exchange, newCookieValue);
-
-			if (LOG.isDebugEnabled())
-				LOG.debug("Added new authentication cookie " + newCookieValue);
-		}
-		saveLastLogonTime();
-		String identity = getIdentity(getService().getLoggedInUser());
-
-		// da wir durch saveOriginalRequest=false keinen Redirect senden,
-		// wird für den Ajax-Caller eine leere XML-Struktur zurückgegeben
-		// das ist hauptsächlich ein FF-Problem
+		Instance<ServiceFacade> instance = getServiceInstance();
+		ServiceFacade service = instance.get();
 		try {
-			exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, "text/plain");
-			exchange.getOutputStream().write(identity.getBytes());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+			if (exchange.getRequestHeaders().getFirst("Stay-Logged-In") != null) {
+
+				// Authentisierung erfolgt, Speichern der Re-Auth-Info
+				Map<String, Cookie> cookies = exchange.getRequestCookies();
+				Cookie cookie = cookies.get(COOKIE_TOKEN);
+				String newCookieValue = service.rememberMe(cookie != null ? cookie.getValue() : null);
+				addNewTokenCookie(exchange, newCookieValue);
+
+				if (LOG.isDebugEnabled())
+					LOG.debug("Added new authentication cookie " + newCookieValue);
+			}
+			service.saveLastLogonTime();
+			String identity = getIdentity(service.getLoggedInUser());
+
+			// da wir durch saveOriginalRequest=false keinen Redirect senden,
+			// wird für den Ajax-Caller eine leere XML-Struktur zurückgegeben
+			// das ist hauptsächlich ein FF-Problem
+			try {
+				exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, "text/plain");
+				exchange.getOutputStream().write(identity.getBytes());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		} finally {
+			instance.destroy(service);
 		}
 		super.handleRedirectBack(exchange);
 	}
@@ -144,18 +158,7 @@ public class KeepLoggedInAuthenticationMechanism extends ServletFormAuthenticati
 		exchange.setResponseCookie(cookie);
 	}
 
-	private void saveLastLogonTime() {
-		getService().saveLastLogonTime();
-	}
-
-	private ServiceFacade getService() {
-		try {
-			InitialContext ctx = new InitialContext();
-			ServiceFacade service = (ServiceFacade) ctx.lookup(
-					"ejb:ear-1.0.0-SNAPSHOT/ejb-1.0.0-SNAPSHOT/ServiceFacadeBean!" + ServiceFacade.class.getName());
-			return service;
-		} catch (NamingException e) {
-			throw new TechnischeException("Kann das EJB nicht finden", e);
-		}
+	private Instance<ServiceFacade> getServiceInstance() {
+		return CDI.current().select(ServiceFacade.class);
 	}
 }
