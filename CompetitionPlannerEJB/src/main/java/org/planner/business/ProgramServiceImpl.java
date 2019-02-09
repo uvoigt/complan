@@ -258,7 +258,27 @@ public class ProgramServiceImpl {
 		return sb.toString();
 	}
 
-	public Long createProgram(Program program) {
+	public Long createProgram(Long announcementId) {
+		Announcement announcement = dao.getById(Announcement.class, announcementId);
+		Program program = new Program();
+		ProgramOptions options = new ProgramOptions();
+		int numberOfDays = (int) ((announcement.getEndDate().getTime() - announcement.getStartDate().getTime()) / 1000
+				/ 60 / 60 / 24);
+		numberOfDays++;
+		List<DayTimes> beginTimes = new ArrayList<>(numberOfDays);
+		for (int i = 0; i < numberOfDays; i++) {
+			DayTimes dayTimes = new DayTimes(createTime(8, 0), createTime(18, 0));
+			dayTimes.addBreak(createTime(12, 0), 60);
+			beginTimes.add(dayTimes);
+		}
+		options.setDayTimes(beginTimes);
+		options.setChildProtection(true);
+		options.setProtectionPeriod(60);
+		options.setRacesPerDay(5);
+		options.setTimeLag(3);
+		program.setOptions(options);
+		program.setAnnouncement(announcement);
+
 		// gibt es bereits ein Programm für diese Ausschreibung? dann nimm dieses
 		Suchkriterien krit = new Suchkriterien();
 		krit.addFilter(Program_.announcement.getName(), program.getAnnouncement().getId());
@@ -275,6 +295,18 @@ public class ProgramServiceImpl {
 		common.save(program);
 
 		return program.getId();
+	}
+
+	private Date createTime(int hours, int minutes) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.YEAR, 0);
+		calendar.set(Calendar.MONTH, 0);
+		calendar.set(Calendar.DAY_OF_MONTH, 1);
+		calendar.set(Calendar.HOUR_OF_DAY, hours);
+		calendar.set(Calendar.MINUTE, minutes);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
+		return new Date(calendar.getTimeInMillis());
 	}
 
 	public void generateProgram(final Program program) {

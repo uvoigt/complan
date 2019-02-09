@@ -2,11 +2,9 @@ package org.planner.ui.beans.announcement;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -27,8 +25,6 @@ import org.planner.eo.Announcement;
 import org.planner.eo.Placement;
 import org.planner.eo.Program;
 import org.planner.eo.Program.ProgramStatus;
-import org.planner.eo.ProgramOptions;
-import org.planner.eo.ProgramOptions.DayTimes;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRaceTeam;
 import org.planner.model.FetchInfo;
@@ -208,41 +204,10 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		FacesContext ctx = FacesContext.getCurrentInstance();
 		Long announcementId = (Long) ctx.getApplication().getELResolver().getValue(ctx.getELContext(), announcement,
 				AbstractEntity_.id.getName());
-		Announcement announcementEntity = service.getObject(Announcement.class, announcementId);
-		Program p = new Program();
-		ProgramOptions options = new ProgramOptions();
-		int numberOfDays = (int) ((announcementEntity.getEndDate().getTime()
-				- announcementEntity.getStartDate().getTime()) / 1000 / 60 / 60 / 24);
-		numberOfDays++;
-		List<DayTimes> beginTimes = new ArrayList<>(numberOfDays);
-		for (int i = 0; i < numberOfDays; i++) {
-			DayTimes dayTimes = new DayTimes(createTime(8, 0), createTime(18, 0));
-			dayTimes.addBreak(createTime(12, 0), 60);
-			beginTimes.add(dayTimes);
-		}
-		options.setDayTimes(beginTimes);
-		options.setChildProtection(true);
-		options.setProtectionPeriod(60);
-		options.setRacesPerDay(5);
-		options.setTimeLag(3);
-		p.setOptions(options);
-		p.setAnnouncement(announcementEntity);
-		Long programId = service.createProgram(p);
+		Long programId = service.createProgram(announcementId);
 		loadProgram(programId);
 		startseiteBean.setMainContent("/announcement/programEdit.xhtml", program.getId());
 		JsfUtil.setViewVariable("filter", null);
-	}
-
-	private Date createTime(int hours, int minutes) {
-		Calendar calendar = Calendar.getInstance();
-		calendar.set(Calendar.YEAR, 0);
-		calendar.set(Calendar.MONTH, 0);
-		calendar.set(Calendar.DAY_OF_MONTH, 1);
-		calendar.set(Calendar.HOUR_OF_DAY, hours);
-		calendar.set(Calendar.MINUTE, minutes);
-		calendar.set(Calendar.SECOND, 0);
-		calendar.set(Calendar.MILLISECOND, 0);
-		return new Date(calendar.getTimeInMillis());
 	}
 
 	public void setStatus(Object program, ProgramStatus status) {
