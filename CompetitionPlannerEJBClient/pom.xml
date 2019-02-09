@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>5.0.10.Final</version>
+			<version>5.3.6.Final</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -45,7 +45,7 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-entitymanager</artifactId>
-			<version>5.0.10.Final</version>
+			<version>5.3.6.Final</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -137,7 +137,7 @@
 					<dependency>
 						<groupId>org.hibernate</groupId>
 						<artifactId>hibernate-jpamodelgen</artifactId>
-						<version>5.0.10.Final</version>
+						<version>5.3.6.Final</version>
 						<scope>compile</scope>
 					</dependency>
 				</dependencies>
