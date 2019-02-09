@@ -36,10 +36,10 @@ public class RacesEditBean extends AbstractEditBean {
 	private Long announcementId;
 	private Announcement announcement;
 
-	private String[] selectedAgeTypes;
-	private String[] selectedBoatClasses;
-	private String[] selectedGenders;
-	private String[] selectedDistances;
+	private AgeType[] selectedAgeTypes;
+	private BoatClass[] selectedBoatClasses;
+	private Gender[] selectedGenders;
+	private int[] selectedDistances;
 	private List<Race> selectedRaces;
 
 	private Date selectedDay;
@@ -118,35 +118,35 @@ public class RacesEditBean extends AbstractEditBean {
 		return BoatClass.values();
 	}
 
-	public String[] getSelectedAgeTypes() {
+	public AgeType[] getSelectedAgeTypes() {
 		return selectedAgeTypes;
 	}
 
-	public void setSelectedAgeTypes(String[] selectedAgeTypes) {
+	public void setSelectedAgeTypes(AgeType[] selectedAgeTypes) {
 		this.selectedAgeTypes = selectedAgeTypes;
 	}
 
-	public String[] getSelectedBoatClasses() {
+	public BoatClass[] getSelectedBoatClasses() {
 		return selectedBoatClasses;
 	}
 
-	public void setSelectedBoatClasses(String[] selectedBoatClasses) {
+	public void setSelectedBoatClasses(BoatClass[] selectedBoatClasses) {
 		this.selectedBoatClasses = selectedBoatClasses;
 	}
 
-	public String[] getSelectedGenders() {
+	public Gender[] getSelectedGenders() {
 		return selectedGenders;
 	}
 
-	public void setSelectedGenders(String[] selectedGenders) {
+	public void setSelectedGenders(Gender[] selectedGenders) {
 		this.selectedGenders = selectedGenders;
 	}
 
-	public String[] getSelectedDistances() {
+	public int[] getSelectedDistances() {
 		return selectedDistances;
 	}
 
-	public void setSelectedDistances(String[] selectedDistances) {
+	public void setSelectedDistances(int[] selectedDistances) {
 		this.selectedDistances = selectedDistances;
 	}
 

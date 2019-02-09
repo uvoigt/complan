@@ -22,7 +22,10 @@ import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Role;
 import org.planner.eo.User;
+import org.planner.model.AgeType;
+import org.planner.model.BoatClass;
 import org.planner.model.Change;
+import org.planner.model.Gender;
 import org.planner.model.IResultProvider;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
@@ -78,12 +81,10 @@ public interface ServiceFacade extends IResultProvider {
 
 	List<Race> getRaces(Long announcementId);
 
-	void createRaces(Long announcementId, String[] selectedAgeTypes, String[] selectedBoatClasses,
-			String[] selectedGenders, String[] selectedDistances, Integer dayOffset);
+	void createRaces(Long announcementId, AgeType[] selectedAgeTypes, BoatClass[] selectedBoatClasses,
+			Gender[] selectedGenders, int[] selectedDistances, Integer dayOffset);
 
 	void saveRace(Race race);
-
-	List<Announcement> getOpenAnnouncements();
 
 	Long createRegistration(Registration registration);
 
@@ -105,7 +106,7 @@ public interface ServiceFacade extends IResultProvider {
 
 	List<ProgramRace> saveResult(Long programRaceId, List<Placement> placements);
 
-	Long createProgram(Program program);
+	Long createProgram(Long announcementId);
 
 	void generateProgram(Program program);
 

@@ -31,8 +31,11 @@ import org.planner.eo.Registration;
 import org.planner.eo.Registration.RegistrationStatus;
 import org.planner.eo.Role;
 import org.planner.eo.User;
+import org.planner.model.AgeType;
+import org.planner.model.BoatClass;
 import org.planner.model.Change;
 import org.planner.model.FetchInfo;
+import org.planner.model.Gender;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.remote.ServiceFacade;
@@ -199,8 +202,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public void createRaces(Long announcementId, String[] selectedAgeTypes, String[] selectedBoatClasses,
-			String[] selectedGenders, String[] selectedDistances, Integer dayOffset) {
+	public void createRaces(Long announcementId, AgeType[] selectedAgeTypes, BoatClass[] selectedBoatClasses,
+			Gender[] selectedGenders, int[] selectedDistances, Integer dayOffset) {
 		announcement.createRaces(announcementId, selectedAgeTypes, selectedBoatClasses, selectedGenders,
 				selectedDistances, dayOffset);
 	}
@@ -208,11 +211,6 @@ public class ServiceFacadeBean implements ServiceFacade {
 	@Override
 	public void saveRace(Race race) {
 		announcement.saveRace(race);
-	}
-
-	@Override
-	public List<Announcement> getOpenAnnouncements() {
-		return announcement.getOpenAnnouncements();
 	}
 
 	@Override
@@ -267,8 +265,8 @@ public class ServiceFacadeBean implements ServiceFacade {
 	}
 
 	@Override
-	public Long createProgram(Program program) {
-		return this.program.createProgram(program);
+	public Long createProgram(Long announcementId) {
+		return this.program.createProgram(announcementId);
 	}
 
 	@Override

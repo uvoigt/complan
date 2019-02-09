@@ -29,7 +29,6 @@ import org.planner.dao.QueryModifier;
 import org.planner.ejb.CallerProvider;
 import org.planner.eo.Announcement;
 import org.planner.eo.Announcement.AnnouncementStatus;
-import org.planner.eo.Announcement_;
 import org.planner.eo.Category;
 import org.planner.eo.Club_;
 import org.planner.eo.Location;
@@ -54,6 +53,7 @@ import org.planner.model.Suchkriterien.Filter;
 import org.planner.model.Suchkriterien.Filter.Comparison;
 import org.planner.model.Suchkriterien.Property;
 import org.planner.model.Suchkriterien.SortField;
+import org.planner.util.CurrentTime;
 import org.planner.util.LogUtil.FachlicheException;
 import org.planner.util.Messages;
 
@@ -128,6 +128,9 @@ public class AnnouncementServiceImpl {
 	@Inject
 	private Messages messages;
 
+	@Inject
+	private CurrentTime time;
+
 	public Announcement saveAnnouncement(Announcement announcement, boolean copy) {
 
 		Announcement existing = null;
@@ -173,9 +176,12 @@ public class AnnouncementServiceImpl {
 		announcement = common.save(announcement);
 		if (copy) {
 			String loginName = caller.getLoginName();
-			for (Race race : announcement.getRaces()) {
-				race.setId(null);
-				dao.save(race, loginName);
+			Set<Race> races = announcement.getRaces();
+			if (races != null) {
+				for (Race race : races) {
+					race.setId(null);
+					dao.save(race, loginName);
+				}
 			}
 		}
 		return announcement;
@@ -187,31 +193,23 @@ public class AnnouncementServiceImpl {
 		return dao.search(Race.class, krit, null).getListe();
 	}
 
-	public void createRaces(Long announcementId, String[] selectedAgeTypes, String[] selectedBoatClasses,
-			String[] selectedGenders, String[] selectedDistances, Integer dayOffset) {
+	public void createRaces(Long announcementId, AgeType[] selectedAgeTypes, BoatClass[] selectedBoatClasses,
+			Gender[] selectedGenders, int[] selectedDistances, Integer dayOffset) {
 		// erstelle für jede Kombination ein Race
 		Announcement announcement = dao.getById(Announcement.class, announcementId);
 		common.checkWriteAccess(announcement, Operation.save);
 
 		List<Race> newRaces = new ArrayList<>();
-		for (String ageTypeString : selectedAgeTypes) {
-			AgeType ageType = AgeType.valueOf(ageTypeString);
-			for (String boatClassString : selectedBoatClasses) {
-				BoatClass boatClass = BoatClass.valueOf(boatClassString);
-				for (String genderString : selectedGenders) {
-					Gender gender = Gender.valueOf(genderString);
+		for (AgeType ageType : selectedAgeTypes) {
+			for (BoatClass boatClass : selectedBoatClasses) {
+				for (Gender gender : selectedGenders) {
 					if ((boatClass == BoatClass.c1 || boatClass == BoatClass.k1) && gender == Gender.mixed)
 						continue;
-					for (String distance : selectedDistances) {
+					for (int distance : selectedDistances) {
 						Race race = new Race();
-						// nicht sonderlich effizient, aber vertretbar
-						// race.setAgeType(common.getEnumByName(ageType,
-						// AgeType.class));
-						// race.setBoatClass(common.getEnumByName(boatClass,
-						// BoatClass.class));
 						race.setAgeType(ageType);
 						race.setBoatClass(boatClass);
-						race.setDistance(Integer.valueOf(distance));
+						race.setDistance(distance);
 						race.setGender(gender);
 						race.setAnnouncement(announcement);
 						race.setDay(dayOffset);
@@ -226,10 +224,10 @@ public class AnnouncementServiceImpl {
 		for (Iterator<Race> it = newRaces.iterator(); it.hasNext();) {
 			Race newRace = it.next();
 			for (Race race : announcement.getRaces()) {
-				boolean exists = newRace.getAgeType().name().equals(race.getAgeType().name());
-				exists &= newRace.getBoatClass().name().equals(race.getBoatClass().name());
+				boolean exists = newRace.getAgeType() == race.getAgeType();
+				exists &= newRace.getBoatClass() == race.getBoatClass();
 				exists &= newRace.getDistance() == race.getDistance();
-				exists &= newRace.getGender().equals(race.getGender());
+				exists &= newRace.getGender() == race.getGender();
 				if (exists)
 					it.remove();
 				if (race.getNumber() > highestRaceNumber)
@@ -260,12 +258,6 @@ public class AnnouncementServiceImpl {
 			throw new FachlicheException(messages.getResourceBundle(), "announcement.raceNoExists", race.getNumber());
 
 		common.save(race);
-	}
-
-	public List<Announcement> getOpenAnnouncements() {
-		Suchkriterien krit = new Suchkriterien();
-		krit.addFilter(Announcement_.status.getName(), AnnouncementStatus.announced);
-		return dao.search(Announcement.class, krit, null).getListe();
 	}
 
 	public Long createRegistration(Registration registration) {
@@ -550,7 +542,7 @@ public class AnnouncementServiceImpl {
 		return dao.executeOperation(new IOperation<List<RegEntry>>() {
 			@Override
 			public List<RegEntry> execute(EntityManager em) {
-				return em.createNamedQuery("upcomingRegistrations", RegEntry.class).setParameter("today", new Date())
+				return em.createNamedQuery("upcomingRegistrations", RegEntry.class).setParameter("today", time.now())
 						.setParameter("userId", caller.getLoginName()).getResultList();
 			}
 		});
