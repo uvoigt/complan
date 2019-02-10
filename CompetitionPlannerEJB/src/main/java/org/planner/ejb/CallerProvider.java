@@ -1,13 +1,13 @@
 package org.planner.ejb;
 
-import javax.annotation.Resource;
 import javax.ejb.EJBContext;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 @Named
 public class CallerProvider {
 
-	@Resource
+	@Inject
 	private EJBContext context;
 
 	public String getLoginName() {

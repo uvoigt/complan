@@ -6,13 +6,7 @@ import javax.persistence.PersistenceContext;
 
 public class EntityManagerFactory {
 
+	@Produces
 	@PersistenceContext(unitName = "PLANNER_PU")
 	private EntityManager em;
-
-	@Produces
-	@PlannerDB
-	protected EntityManager createPlannerEM() {
-		return this.em;
-	}
-
 }

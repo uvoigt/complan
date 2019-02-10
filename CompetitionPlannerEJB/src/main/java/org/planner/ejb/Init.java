@@ -30,12 +30,14 @@ public class Init {
 			@Override
 			public Void execute(EntityManager em) {
 				checkRoles(em);
+				createRoleView(em);
+				createResultView(em);
 				return null;
 			}
 		});
 	}
 
-	private void checkRoles(EntityManager em) {
+	public void checkRoles(EntityManager em) {
 		Role create_announcements = insertRoleIfNotExists(em, "create_announcements", null, true);
 		Role read_announcements = insertRoleIfNotExists(em, "read_announcements", null, true);
 		Role update_announcements = insertRoleIfNotExists(em, "update_announcements", null, true);
@@ -93,8 +95,6 @@ public class Init {
 				read_announcements, read_registrations, read_programs, read_results);
 		insertRoleIfNotExists(em, "Tester",
 				"Tester (Kann den Status von Ausschreibungen, Meldungen und Programmen zurücksetzen)", false);
-		createRoleView(em);
-		createResultView(em);
 	}
 
 	private Role insertRoleIfNotExists(EntityManager em, String role, String description, boolean internal,
@@ -126,7 +126,7 @@ public class Init {
 		return entity;
 	}
 
-	private void createRoleView(EntityManager em) {
+	public void createRoleView(EntityManager em) {
 		em.createNativeQuery("create or replace view vrole as " //
 				+ "select userid, r.role " //
 				+ "from User u " //
@@ -141,7 +141,7 @@ public class Init {
 				+ "left join Role r2 on r2.id=rr.roles_id ").executeUpdate();
 	}
 
-	private void createResultView(EntityManager em) {
+	public void createResultView(EntityManager em) {
 		em.createNativeQuery("create or replace view vresult as " //
 				+ "select distinct p.id, a.name aName, c.name cName, a.startDate, a.endDate, p.status " //
 				+ "from Program p " //

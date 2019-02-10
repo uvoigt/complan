@@ -2,9 +2,8 @@
 <persistence xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd" version="2.0">
 	
-	<persistence-unit name="PLANNER_PU">
+	<persistence-unit name="TEST_PU">
 		<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-		<jta-data-source>java:jboss/datasources/MySQLDS</jta-data-source>
 
 		<class>org.planner.eo.Address</class>
 		<class>org.planner.eo.Announcement</class>
@@ -32,15 +31,16 @@
 		<properties>
 			<property name="javax.persistence.validation.mode" value="NONE"/>
 			<property name="hibernate.archive.autodetection" value="class" />
-			<property name="hibernate.show_sql" value="false" />			
-			<!--property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.WebSphereTransactionManagerLookup" /-->
-			<property name="hibernate.transaction.factory_class" value="org.hibernate.transaction.CMTTransactionFactory" />
-			<property name="hibernate.hbm2ddl.auto" value="update" />
-			<!--property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/-->
-			<property name="hibernate.cache.use_second_level_cache" value="true"/>
+			<property name="hibernate.show_sql" value="true" />			
+			<property name="hibernate.hbm2ddl.auto" value="create" />
+			<property name="hibernate.connection.username" value="sa" />
+			<property name="hibernate.connection.password" value="sa" />
+			<property name="hibernate.connection.url" value="jdbc:h2:mem:" />
+			<property name="hibernate.dialect" value="org.planner.dao.H2DialectExt"/>
+			
+			<!--property name="hibernate.cache.use_second_level_cache" value="true"/>
 			<property name="hibernate.cache.use_structured_entries" value="true"/>
-			<property name="hibernate.cache.use_query.cache" value="true" />
-			<property name="hibernate.dialect" value="${dialect}" />
+			<property name="hibernate.cache.use_query.cache" value="true" /-->
 		</properties>
 	</persistence-unit>
 

@@ -65,6 +65,7 @@ import org.planner.model.Suchkriterien;
 import org.planner.model.Suchkriterien.Filter;
 import org.planner.model.Suchkriterien.Property;
 import org.planner.model.Suchkriterien.SortField;
+import org.planner.util.CurrentTime;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Messages;
 import org.slf4j.Logger;
@@ -86,7 +87,6 @@ public class PlannerDao {
 	 * Entity-Manager fuer den Datenbankzugriff
 	 */
 	@Inject
-	@PlannerDB
 	private EntityManager em;
 
 	@Inject
@@ -94,6 +94,9 @@ public class PlannerDao {
 
 	@Inject
 	private Messages messages;
+
+	@Inject
+	private CurrentTime time;
 
 	@Transactional(TxType.SUPPORTS)
 	public <T extends Serializable> T getById(Class<T> type, Object id) {
@@ -107,8 +110,11 @@ public class PlannerDao {
 		Root<T> root = query.from(type);
 		addFetches(root, fetchInfo);
 		query.where(builder.equal(root.get(HasId_.id), builder.parameter(Long.class, "id")));
-		T result = em.createQuery(query).setParameter("id", id).getSingleResult();
-		return result;
+		try {
+			return em.createQuery(query).setParameter("id", id).getSingleResult();
+		} catch (NoResultException e) {
+			return null;
+		}
 	}
 
 	private void addFetches(FetchParent<?, ?> root, FetchInfo... fetchInfo) {
@@ -198,7 +204,7 @@ public class PlannerDao {
 	public <T extends AbstractEntity> T save(T entity, String loggedInUser) {
 		if (entity.getId() == null) {
 			entity.setCreateUser(loggedInUser);
-			entity.setCreateTime(new Date());
+			entity.setCreateTime(time.now());
 			// für Kopien
 			entity.setVersion(0);
 			entity.setUpdateUser(null);
@@ -206,7 +212,7 @@ public class PlannerDao {
 			em.persist(entity);
 		} else {
 			entity.setUpdateUser(loggedInUser);
-			entity.setUpdateTime(new Date());
+			entity.setUpdateTime(time.now());
 			em.merge(entity);
 		}
 		return entity;
@@ -215,7 +221,7 @@ public class PlannerDao {
 	public <T extends AbstractEnum> T saveEnum(T entity, String loggedInUser) {
 		if (entity.getId() == null) {
 			entity.setCreateUser(loggedInUser);
-			entity.setCreateTime(new Date());
+			entity.setCreateTime(time.now());
 			em.persist(entity);
 		}
 		return entity;
@@ -262,7 +268,7 @@ public class PlannerDao {
 		// verhindert das Eintragen des anonymous update users
 		// current_timestamp erfordert korrekte Zeiteinstellung in der DB :-(
 		em.createQuery("update User u set u.lastLogon = :current_timestamp where u.userId = :userId")
-				.setParameter("current_timestamp", new Date()).setParameter("userId", userId).executeUpdate();
+				.setParameter("current_timestamp", time.now()).setParameter("userId", userId).executeUpdate();
 	}
 
 	public void saveToken(User user) {
