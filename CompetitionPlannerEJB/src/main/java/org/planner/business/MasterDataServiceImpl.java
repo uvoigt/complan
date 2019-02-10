@@ -25,6 +25,7 @@ import org.planner.eo.Club_;
 import org.planner.eo.Role;
 import org.planner.eo.Role_;
 import org.planner.eo.User;
+import org.planner.eo.User_;
 import org.planner.model.Suchergebnis;
 import org.planner.model.Suchkriterien;
 import org.planner.util.LogUtil.FachlicheException;
@@ -52,8 +53,8 @@ public class MasterDataServiceImpl implements ImportPreprozessor {
 	}
 
 	public User saveUser(User user) {
-		if (user == null)
-			throw new IllegalArgumentException();
+		common.checkMandatory(user, User_.class);
+
 		User existing = user.getId() != null ? dao.getById(User.class, user.getId()) : null;
 		User loggedInUser = common.checkWriteAccess(existing != null ? existing : user, Operation.save);
 		if (user.getId() == null) {

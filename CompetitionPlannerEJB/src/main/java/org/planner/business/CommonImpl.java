@@ -3,12 +3,13 @@ package org.planner.business;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,8 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.metamodel.Attribute;
+import javax.persistence.metamodel.SingularAttribute;
+import javax.persistence.metamodel.StaticMetamodel;
 import javax.transaction.RollbackException;
 
 import org.planner.dao.Authorizer;
@@ -147,7 +150,7 @@ public class CommonImpl {
 	}
 
 	private void fetch(Object entity, FetchInfo... fetchInfo) {
-		if (fetchInfo == null)
+		if (entity == null || fetchInfo == null)
 			return;
 		try {
 			PropertyDescriptor[] descriptors = Introspector.getBeanInfo(entity.getClass()).getPropertyDescriptors();
@@ -207,14 +210,11 @@ public class CommonImpl {
 	}
 
 	public void handleEnum(AbstractEnum anEnum) {
-		if (anEnum != null && anEnum.getId() == null) {
-			anEnum.setCreateUser(caller.getLoginName());
-			anEnum.setCreateTime(new Date());
+		if (anEnum != null && anEnum.getId() == null)
 			dao.saveEnum(anEnum, caller.getLoginName());
-		}
 	}
 
-	public void dataImport(List<AbstractEntity> entities, ImportPreprozessor preprozessor) {
+	public void dataImport(List<? extends AbstractEntity> entities, ImportPreprozessor preprozessor) {
 		String loginName = caller.getLoginName();
 		FachlicheException ex = null;
 		Map<String, Object> context = new HashMap<>();
@@ -233,6 +233,45 @@ public class CommonImpl {
 		}
 		if (ex != null)
 			throw ex;
+	}
+
+	public void checkMandatory(Object entity, Class<?> staticMetaModel) {
+		StaticMetamodel metaModel = staticMetaModel.getAnnotation(StaticMetamodel.class);
+		Class<?> entityType = metaModel.value();
+		if (entity == null)
+			throwMandatory(entityType, null);
+		for (Field field : staticMetaModel.getDeclaredFields()) {
+			if ((field.getModifiers() & Modifier.VOLATILE) == 0)
+				continue;
+			try {
+				Attribute<?, ?> attribute = (Attribute<?, ?>) field.get(staticMetaModel);
+				if (attribute instanceof SingularAttribute && !((SingularAttribute<?, ?>) attribute).isOptional()) {
+					Field entityField = entityType.getDeclaredField(attribute.getName());
+					entityField.setAccessible(true);
+					Object value = entityField.get(entity);
+					if (value == null)
+						throwMandatory(entityType, attribute);
+				}
+			} catch (Exception e) {
+				if (e instanceof FachlicheException)
+					throw (FachlicheException) e;
+				throw new IllegalStateException(e);
+			}
+		}
+	}
+
+	private void throwMandatory(Class<?> entityType, Attribute<?, ?> attribute) {
+		String key;
+		Object arg1, arg2 = null;
+		if (attribute != null) {
+			key = "attributeMandatory";
+			arg1 = attribute.getName();
+			arg2 = entityType.getSimpleName();
+		} else {
+			key = "typeMandatory";
+			arg1 = entityType.getSimpleName();
+		}
+		throw new FachlicheException(messages.getResourceBundle(), key, arg1, arg2);
 	}
 
 	/**
@@ -276,7 +315,7 @@ public class CommonImpl {
 
 	@SuppressWarnings("unused")
 	private void checkWriteAccess(Club club, Operation operation, User callingUser) {
-		// Spezialfall für den neuen User
+		// Spezialfall für den neuen Sportwart, dieser darf den eigenen Club anlegen
 		boolean isNewUser = callingUser.getFirstName().length() == 0 && callingUser.getLastName().length() == 0;
 		if (isNewUser && caller.isInRole("Sportwart"))
 			return;
@@ -291,7 +330,7 @@ public class CommonImpl {
 		if (caller.isInRole("Sportwart")) {
 			// der einzige Fall, in dem das ok ist, wenn der neue User
 			// noch keinen Club hat
-			if (callingUser.getFirstName().length() > 0 && callingUser.getFirstName().length() > 0
+			if (callingUser.getFirstName().length() > 0 && callingUser.getLastName().length() > 0
 					&& !callingUser.getClub().getId().equals(user.getClub().getId()))
 				throwAccessException(user, operation);
 		} else {
