@@ -2,6 +2,7 @@ package org.planner.ui.beans.announcement;
 
 import java.io.OutputStream;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -92,11 +93,12 @@ public class ResultBean extends AbstractEditBean implements DownloadHandler {
 		this.showEmpty = showEmpty;
 	}
 
-	public String getFilter() {
-		return (String) JsfUtil.getViewVariable("filter");
+	@SuppressWarnings("unchecked")
+	public List<String> getFilter() {
+		return (List<String>) JsfUtil.getViewVariable("filter");
 	}
 
-	public void setFilter(String filter) {
+	public void setFilter(List<String> filter) {
 		JsfUtil.setViewVariable("filter", filter);
 	}
 
@@ -109,8 +111,8 @@ public class ResultBean extends AbstractEditBean implements DownloadHandler {
 	 * filterFunction="#{renderBean.filterRaces}" diese Lösung dient dem Vermeiden von setValue(filteredValue).
 	 */
 	public void onPrerenderTable(@SuppressWarnings("unused") ComponentSystemEvent event) {
-		String filter = getFilter();
-		if (program != null && (!showEmpty || filter != null)) {
+		List<String> filter = getFilter();
+		if (program != null) {
 			if (filter != null)
 				renderBean.filterRaces(program.getRaces().iterator(), filter, Locale.getDefault(), true);
 			if (!showEmpty) {

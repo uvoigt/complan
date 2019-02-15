@@ -29,12 +29,12 @@
 		<f:event type="preRenderComponent" listener="#{programBean.onPrerenderTable}"/>
 		<p:ajax event="filter" process="@form:showTeams"/>
 
-		<p:column filterValue="#{programBean.filter}" filterBy="#{true}">
+		<p:column filterBy="#{true}">
 			<f:facet name="header">
 				<h:outputLabel styleClass="raceCount" value="#{bundle.format('raceCount', programBean.program.races.size())}"/>
 			</f:facet>
 			<f:facet name="filter">
-				<p:chips styleClass="filterChips">
+				<p:chips styleClass="filterChips" value="#{programBean.filter}">
 					<pe:javascript event="itemSelect" execute="PF('programTable').filter();setupFilters()"/>
 					<pe:javascript event="itemUnselect" execute="PF('programTable').filter();setupFilters()"/>
 				</p:chips>

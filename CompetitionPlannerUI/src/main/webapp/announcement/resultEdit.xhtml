@@ -41,12 +41,12 @@
 						filterEvent="enter">
 					<f:event type="preRenderComponent" listener="#{resultBean.onPrerenderTable}"/>
 					<p:ajax event="filter" process="@form:showEmpty"/>
-					<p:column filterValue="#{resultBean.filter}" filterBy="#{true}">
+					<p:column filterBy="#{true}">
 						<f:facet name="header">
 							<h:outputLabel styleClass="raceCount" value="#{bundle.format('raceCount', resultBean.program.races.size())}"/>
 						</f:facet>
 						<f:facet name="filter">
-							<p:chips styleClass="filterChips">
+							<p:chips styleClass="filterChips" value="#{resultBean.filter}">
 								<pe:javascript event="itemSelect" execute="PF('programTable').filter();setupFilters()"/>
 								<pe:javascript event="itemUnselect" execute="PF('programTable').filter();setupFilters()"/>
 							</p:chips>

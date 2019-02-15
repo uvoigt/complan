@@ -131,9 +131,10 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	 * filterFunction="#{renderBean.filterRaces}" diese Lösung dient dem Vermeiden von setValue(filteredValue).
 	 */
 	public void onPrerenderTable(@SuppressWarnings("unused") ComponentSystemEvent event) {
-		String filter = getFilter();
-		if (program != null && filter != null) {
-			renderBean.filterRaces(program.getRaces().iterator(), filter, Locale.getDefault(), true);
+		List<String> filter = getFilter();
+		if (program != null) {
+			if (filter != null)
+				renderBean.filterRaces(program.getRaces().iterator(), filter, Locale.getDefault(), true);
 			StringBuilder script = new StringBuilder();
 			script.append("updateCount('.raceCount', '");
 			script.append(JsfUtil.getScopedBundle().get("raceCount"));
@@ -239,11 +240,12 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 		return ResultExtra.values();
 	}
 
-	public String getFilter() {
-		return (String) JsfUtil.getViewVariable("filter");
+	@SuppressWarnings("unchecked")
+	public List<String> getFilter() {
+		return (List<String>) JsfUtil.getViewVariable("filter");
 	}
 
-	public void setFilter(String filter) {
+	public void setFilter(List<String> filter) {
 		JsfUtil.setViewVariable("filter", filter);
 	}
 

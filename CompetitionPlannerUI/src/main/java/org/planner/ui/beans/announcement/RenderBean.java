@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -136,7 +137,7 @@ public class RenderBean {
 		return sb.toString();
 	}
 
-	private boolean filterRace(String columnValue, String[] filters, @SuppressWarnings("unused") Locale locale,
+	private boolean filterRace(String columnValue, List<String> filters, @SuppressWarnings("unused") Locale locale,
 			boolean logicalAnd) {
 		for (String value : filters) {
 			boolean matches = StringUtils.containsIgnoreCase(columnValue, value.trim());
@@ -151,12 +152,7 @@ public class RenderBean {
 		return logicalAnd;
 	}
 
-	public void filterRaces(Iterator<ProgramRace> races, String filterValue, Locale locale, boolean logicalAnd) {
-		// chips
-		if (filterValue.startsWith("[") && filterValue.endsWith("]"))
-			filterValue = filterValue.substring(1, filterValue.length() - 1);
-		String[] filters = filterValue.split(",");
-
+	public void filterRaces(Iterator<ProgramRace> races, List<String> filters, Locale locale, boolean logicalAnd) {
 		while (races.hasNext()) {
 			ProgramRace race = races.next();
 			if (!filterRace(getRaceFilter(race), filters, locale, logicalAnd))
