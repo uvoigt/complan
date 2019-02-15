@@ -9,7 +9,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.planner.eo.Placement;
 import org.planner.eo.ProgramRace;
 import org.planner.eo.Race;

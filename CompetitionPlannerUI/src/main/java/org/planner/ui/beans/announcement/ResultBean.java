@@ -12,7 +12,7 @@ import javax.faces.event.ComponentSystemEvent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.planner.eo.Announcement;
 import org.planner.eo.Placement;
 import org.planner.eo.Program;

@@ -10,7 +10,7 @@ import javax.faces.event.PhaseId;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.planner.eo.City;
 import org.planner.eo.City_;
 import org.planner.eo.Country;

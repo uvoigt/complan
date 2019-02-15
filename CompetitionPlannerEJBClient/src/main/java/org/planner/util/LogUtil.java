@@ -13,8 +13,8 @@ import javax.ejb.EJBException;
 import javax.faces.FacesException;
 import javax.persistence.OptimisticLockException;
 
-import org.apache.commons.lang.builder.ReflectionToStringBuilder;
-import org.apache.commons.lang.builder.StandardToStringStyle;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.StandardToStringStyle;
 import org.slf4j.Logger;
 
 /**

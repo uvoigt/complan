@@ -18,7 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.planner.eo.Placement;
 import org.planner.eo.RegEntry;
 import org.planner.remote.ServiceFacade;

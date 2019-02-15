@@ -25,7 +25,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.planner.eo.Address;
 import org.planner.eo.Announcement;
 import org.planner.eo.Club;

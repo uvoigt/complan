@@ -47,8 +47,8 @@ import javax.transaction.Transactional;
 import javax.transaction.Transactional.TxType;
 import javax.transaction.UserTransaction;
 
-import org.apache.commons.lang.ClassUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.AbstractEnum;

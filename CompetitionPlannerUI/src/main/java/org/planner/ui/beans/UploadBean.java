@@ -12,7 +12,7 @@ import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.planner.ui.util.JsfUtil;
 import org.primefaces.PrimeFaces;
 import org.primefaces.context.RequestContext;

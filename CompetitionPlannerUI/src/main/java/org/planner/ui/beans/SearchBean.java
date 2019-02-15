@@ -24,8 +24,8 @@ import javax.faces.event.PhaseId;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.mutable.MutableInt;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.planner.eo.AbstractEntity;
 import org.planner.eo.HasId;
 import org.planner.model.FetchInfo;

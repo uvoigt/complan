@@ -20,7 +20,7 @@ import javax.inject.Named;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.planner.eo.AbstractEntity_;
 import org.planner.eo.Address;
 import org.planner.eo.Address_;

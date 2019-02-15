@@ -18,7 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.Entity;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.planner.util.LogUtil.TechnischeException;
 import org.planner.util.Logged;
 import org.planner.util.Visibilities;
@@ -86,7 +86,7 @@ public class ColumnHandler {
 		}
 
 		private String[] getRoles() {
-			return (String[]) ArrayUtils.addAll(visibility.roles(), parent != null ? parent.roles() : null);
+			return ArrayUtils.addAll(visibility.roles(), parent != null ? parent.roles() : null);
 		}
 	}
 

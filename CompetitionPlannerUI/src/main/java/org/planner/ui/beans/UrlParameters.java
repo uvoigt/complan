@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.mutable.MutableInt;
+import org.apache.commons.lang3.mutable.MutableInt;
 
 /**
  * Diese Klasse dient dem Kodieren von Statusinformationen als URL-Parameter. Falls ein Reload ausgeführt wird, können

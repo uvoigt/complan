@@ -94,11 +94,23 @@
 			<groupId>org.primefaces.extensions</groupId>
 			<artifactId>primefaces-extensions</artifactId>
 			<version>6.2.8</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-lang3</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.primefaces.extensions</groupId>
 			<artifactId>resources-ckeditor</artifactId>
 			<version>6.2.8</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-lang3</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.faces</groupId>
@@ -205,7 +217,6 @@
 					<useCache>true</useCache>
 					<archive>
 						<manifestEntries>
-							<!--Class-Path>model-${project.version}.jar commons-lang-2.6.jar</Class-Path-->
 							<Implementation-Vendor>Uwe Voigt</Implementation-Vendor>
 							<Implementation-Version>1.0</Implementation-Version>
 							<Build-Timestamp>${build.time}</Build-Timestamp>

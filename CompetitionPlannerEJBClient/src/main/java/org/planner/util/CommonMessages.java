@@ -9,9 +9,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.text.ExtendedMessageFormat;
-import org.apache.commons.lang.text.FormatFactory;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.ExtendedMessageFormat;
+import org.apache.commons.lang3.text.FormatFactory;
 
 // Als bean hat das nicht funktioniert: es gab "ambiguous dependencies for type"
 // da die Klasse im EAR sowohl über den classspath des EJB.jars, als auch 

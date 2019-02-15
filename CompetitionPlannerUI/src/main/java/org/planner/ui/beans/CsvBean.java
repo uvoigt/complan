@@ -19,7 +19,7 @@ import javax.el.ELContext;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 
-import org.apache.commons.lang.reflect.FieldUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.planner.eo.AbstractEntity;
 import org.planner.ui.beans.SearchBean.ColumnModel;
 import org.planner.util.LogUtil.TechnischeException;
