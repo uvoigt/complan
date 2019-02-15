@@ -4,7 +4,8 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:pe="http://primefaces.org/ui/extensions">
 
 	<ui:composition template="/templates/title.xhtml">
 		<ui:param name="transient" value="#{true}"/>
@@ -40,11 +41,16 @@
 						filterEvent="enter">
 					<f:event type="preRenderComponent" listener="#{resultBean.onPrerenderTable}"/>
 					<p:ajax event="filter" process="@form:showEmpty"/>
-					<p:column filterValue="#{resultBean.filter}" filterBy="#{true}" styleClass="watermark">
+					<p:column filterValue="#{resultBean.filter}" filterBy="#{true}">
 						<f:facet name="header">
 							<h:outputLabel styleClass="raceCount" value="#{bundle.format('raceCount', resultBean.program.races.size())}"/>
 						</f:facet>
-						<p:watermark value="#{bundle.filterHint}" for="@(.watermark)"/>
+						<f:facet name="filter">
+							<p:chips styleClass="filterChips">
+								<pe:javascript event="itemSelect" execute="PF('programTable').filter();setupFilters()"/>
+								<pe:javascript event="itemUnselect" execute="PF('programTable').filter();setupFilters()"/>
+							</p:chips>
+						</f:facet>
 						<p:dataTable var="placement" value="#{race.placements}" emptyMessage="" style="width: 100%" reflow="true" styleClass="teamTable"
 								rowStyleClass="#{resultBean.getRowStyleClass(race, placement, placementIndex + 1)}" rowIndexVar="placementIndex">
 							<f:facet name="header">

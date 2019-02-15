@@ -120,6 +120,7 @@ function rowDoubleClicked(table, rowId) {
 	}
 }
 function setupFilters() {
+	// Standardfilter
 	$(".ui-column-filter").each(function() {
 		var input = $(this);
 		if (input.parent(".clearFilter").length == 0) {
@@ -136,6 +137,17 @@ function setupFilters() {
 			}));
 		}
 	});
+	//Chips
+	var chipsDiv = $(".filterChips");
+	var li = chipsDiv.find("li");
+	var input = chipsDiv.find("input");
+	if (li.length == 1) {
+		li.width("100%");
+		input.attr("placeholder", "{msg:programs.filterHint}").width("100%");
+	} else {
+		li.width("");
+		input.width("");
+	}
 }
 function attachSubmitHandler() {
 	if (!main.handlerAttached) {
@@ -406,7 +418,7 @@ function initLoginDialog() {
 	$.ajaxSetup({
 		// TODO der complete-handler kommt wieder raus
 		complete: function(xhr) {
-			if (xhr.pfSettings) {
+			if (xhr.pfSettings && typeof xhr.pfSettings.data == "string") {
 				var split = xhr.pfSettings.data.split("&");
 				var viewState = split[split.length - 1];
 				viewState = viewState.split("=")[1];

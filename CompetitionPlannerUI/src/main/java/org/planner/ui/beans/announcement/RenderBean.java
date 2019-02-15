@@ -3,6 +3,7 @@ package org.planner.ui.beans.announcement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Locale;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -125,7 +126,7 @@ public class RenderBean {
 		return null;
 	}
 
-	public String getRaceFilter(ProgramRace race) {
+	private String getRaceFilter(ProgramRace race) {
 		StringBuilder sb = new StringBuilder();
 		createRaceTitle(race, sb);
 		sb.append(' ');
@@ -135,11 +136,31 @@ public class RenderBean {
 		return sb.toString();
 	}
 
-	public boolean filterRaces(String columnValue, String filterValue, @SuppressWarnings("unused") Locale locale) {
-		for (String value : filterValue.split(",")) {
-			if (StringUtils.containsIgnoreCase(columnValue, value.trim()))
-				return true;
+	private boolean filterRace(String columnValue, String[] filters, @SuppressWarnings("unused") Locale locale,
+			boolean logicalAnd) {
+		for (String value : filters) {
+			boolean matches = StringUtils.containsIgnoreCase(columnValue, value.trim());
+			if (matches) {
+				if (!logicalAnd)
+					return true;
+			} else {
+				if (logicalAnd)
+					return false;
+			}
 		}
-		return false;
+		return logicalAnd;
+	}
+
+	public void filterRaces(Iterator<ProgramRace> races, String filterValue, Locale locale, boolean logicalAnd) {
+		// chips
+		if (filterValue.startsWith("[") && filterValue.endsWith("]"))
+			filterValue = filterValue.substring(1, filterValue.length() - 1);
+		String[] filters = filterValue.split(",");
+
+		while (races.hasNext()) {
+			ProgramRace race = races.next();
+			if (!filterRace(getRaceFilter(race), filters, locale, logicalAnd))
+				races.remove();
+		}
 	}
 }

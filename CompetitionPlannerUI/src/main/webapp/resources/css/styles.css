@@ -466,6 +466,15 @@ input[readonly=readonly] {
 	border: none;
 }
 
+.filterChips {
+	width: 100% !important;
+}
+
+.filterChips > ul {
+	text-align: left;
+	width: 100%;
+}
+
 .resultEdit {
 	width: 100%;
 }

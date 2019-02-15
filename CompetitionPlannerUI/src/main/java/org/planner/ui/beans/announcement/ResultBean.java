@@ -111,13 +111,15 @@ public class ResultBean extends AbstractEditBean implements DownloadHandler {
 	public void onPrerenderTable(@SuppressWarnings("unused") ComponentSystemEvent event) {
 		String filter = getFilter();
 		if (program != null && (!showEmpty || filter != null)) {
-			for (Iterator<ProgramRace> it = program.getRaces().iterator(); it.hasNext();) {
-				ProgramRace race = it.next();
-				boolean noResults = !showEmpty && (race.getPlacements() == null || race.getPlacements().isEmpty());
-				boolean filtered = filter != null
-						&& !renderBean.filterRaces(renderBean.getRaceFilter(race), filter, Locale.getDefault());
-				if (noResults || filtered)
-					it.remove();
+			if (filter != null)
+				renderBean.filterRaces(program.getRaces().iterator(), filter, Locale.getDefault(), true);
+			if (!showEmpty) {
+				for (Iterator<ProgramRace> it = program.getRaces().iterator(); it.hasNext();) {
+					ProgramRace race = it.next();
+					boolean noResults = !showEmpty && (race.getPlacements() == null || race.getPlacements().isEmpty());
+					if (noResults)
+						it.remove();
+				}
 			}
 			PrimeFaces.current().executeScript("updateCount('.raceCount', '"
 					+ JsfUtil.getScopedBundle().get("raceCount") + "', " + program.getRaces().size() + ")");

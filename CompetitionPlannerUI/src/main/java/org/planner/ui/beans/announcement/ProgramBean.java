@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -134,11 +133,7 @@ public class ProgramBean extends AbstractEditBean implements DownloadHandler {
 	public void onPrerenderTable(@SuppressWarnings("unused") ComponentSystemEvent event) {
 		String filter = getFilter();
 		if (program != null && filter != null) {
-			for (Iterator<ProgramRace> it = program.getRaces().iterator(); it.hasNext();) {
-				ProgramRace race = it.next();
-				if (!renderBean.filterRaces(renderBean.getRaceFilter(race), filter, Locale.getDefault()))
-					it.remove();
-			}
+			renderBean.filterRaces(program.getRaces().iterator(), filter, Locale.getDefault(), true);
 			StringBuilder script = new StringBuilder();
 			script.append("updateCount('.raceCount', '");
 			script.append(JsfUtil.getScopedBundle().get("raceCount"));
