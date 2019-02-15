@@ -146,7 +146,7 @@ function setupFilters() {
 		input.attr("placeholder", "{msg:programs.filterHint}").width("100%");
 	} else {
 		li.width("");
-		input.width("");
+		input.attr("placeholder", "").width("");
 	}
 }
 function attachSubmitHandler() {
