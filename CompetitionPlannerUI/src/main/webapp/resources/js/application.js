@@ -453,7 +453,7 @@ function updateConfirmDlg(title, msg) {
 function initErrorDialog() {
 	PF("errorDetails").legend.click(function() {
 		if (copyToClipboard(PF("errorDetails").jq.children().get(1)))
-			$(".copiedMessage").show().fadeOut(1000);
+			$(".copiedMessage").show().delay(1000).fadeOut(250);
 	});
 }
 function copyToClipboard(element) {
