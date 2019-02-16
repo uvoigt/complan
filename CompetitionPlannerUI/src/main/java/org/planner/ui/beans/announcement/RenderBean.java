@@ -14,7 +14,9 @@ import javax.inject.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.planner.eo.Placement;
 import org.planner.eo.ProgramRace;
+import org.planner.eo.ProgramRaceTeam;
 import org.planner.eo.Race;
+import org.planner.eo.TeamMember;
 import org.planner.eo.User;
 import org.planner.model.AgeType;
 import org.planner.model.RaceType;
@@ -157,6 +159,20 @@ public class RenderBean {
 		createRaceNumberText(race, sb);
 		if (StringUtils.containsIgnoreCase(sb, filter))
 			return true;
+		if (race.getParticipants() != null) {
+			for (ProgramRaceTeam team : race.getParticipants()) {
+				for (TeamMember member : team.getMembers()) {
+					if (member.getUser() != null) {
+						if (StringUtils.containsIgnoreCase(member.getUser().getFirstName(), filter))
+							return true;
+						if (StringUtils.containsIgnoreCase(member.getUser().getLastName(), filter))
+							return true;
+						if (StringUtils.containsIgnoreCase(member.getUser().getName(), filter))
+							return true;
+					}
+				}
+			}
+		}
 		return false;
 	}
 
