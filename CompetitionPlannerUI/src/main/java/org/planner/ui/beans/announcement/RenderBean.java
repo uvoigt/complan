@@ -27,6 +27,8 @@ public class RenderBean {
 	@Inject
 	private Messages messages;
 
+	private DateFormat yearFormat = new SimpleDateFormat("EEEE");
+
 	public String renderRaceTitle(ProgramRace race) {
 		StringBuilder sb = new StringBuilder();
 		createRaceTitle(race, sb);
@@ -35,11 +37,7 @@ public class RenderBean {
 
 	public String renderRaceNumber(ProgramRace race) {
 		StringBuilder sb = new StringBuilder();
-		if (race.getNumber() != null) {
-			sb.append(race.getNumber());
-			sb.append(". ");
-		}
-		sb.append(race.getRaceType().getText());
+		createRaceNumberText(race, sb);
 		return sb.toString();
 	}
 
@@ -70,8 +68,9 @@ public class RenderBean {
 	}
 
 	public String renderStartTime(Date date) {
-		return new SimpleDateFormat("EEEE").format(date) + " "
-				+ DateFormat.getTimeInstance(DateFormat.SHORT).format(date);
+		StringBuilder sb = new StringBuilder();
+		createStartTimeText(date, sb);
+		return sb.toString();
 	}
 
 	public String renderFollowUpHint(ProgramRace race) {
@@ -110,6 +109,20 @@ public class RenderBean {
 			sb.append('-').append(race.getNumber());
 	}
 
+	private void createStartTimeText(Date date, StringBuilder sb) {
+		sb.append(yearFormat.format(date));
+		sb.append(' ');
+		sb.append(DateFormat.getTimeInstance(DateFormat.SHORT).format(date));
+	}
+
+	private void createRaceNumberText(ProgramRace race, StringBuilder sb) {
+		if (race.getNumber() != null) {
+			sb.append(race.getNumber());
+			sb.append(". ");
+		}
+		sb.append(race.getRaceType().getText());
+	}
+
 	public boolean isSeparatorRendered(ProgramRace race, Placement placement, int nextIndex) {
 		if (placement.getQualifiedFor() != null) {
 			Placement next = nextIndex < race.getPlacements().size() ? race.getPlacements().get(nextIndex) : null;
@@ -127,20 +140,30 @@ public class RenderBean {
 		return null;
 	}
 
-	private String getRaceFilter(ProgramRace race) {
+	private boolean compareRace(ProgramRace race, String filter) {
 		StringBuilder sb = new StringBuilder();
 		createRaceTitle(race, sb);
-		sb.append(' ');
+		if (StringUtils.containsIgnoreCase(sb, filter))
+			return true;
+		sb.setLength(0);
 		createRaceText(race.getRace(), sb);
-		sb.append(' ');
-		sb.append(renderStartTime(race.getStartTime()));
-		return sb.toString();
+		if (StringUtils.containsIgnoreCase(sb, filter))
+			return true;
+		sb.setLength(0);
+		createStartTimeText(race.getStartTime(), sb);
+		if (StringUtils.containsIgnoreCase(sb, filter))
+			return true;
+		sb.setLength(0);
+		createRaceNumberText(race, sb);
+		if (StringUtils.containsIgnoreCase(sb, filter))
+			return true;
+		return false;
 	}
 
-	private boolean filterRace(String columnValue, List<String> filters, @SuppressWarnings("unused") Locale locale,
+	private boolean filterRace(ProgramRace race, List<String> filters, @SuppressWarnings("unused") Locale locale,
 			boolean logicalAnd) {
-		for (String value : filters) {
-			boolean matches = StringUtils.containsIgnoreCase(columnValue, value.trim());
+		for (String filter : filters) {
+			boolean matches = compareRace(race, filter.trim());
 			if (matches) {
 				if (!logicalAnd)
 					return true;
@@ -155,7 +178,7 @@ public class RenderBean {
 	public void filterRaces(Iterator<ProgramRace> races, List<String> filters, Locale locale, boolean logicalAnd) {
 		while (races.hasNext()) {
 			ProgramRace race = races.next();
-			if (!filterRace(getRaceFilter(race), filters, locale, logicalAnd))
+			if (!filterRace(race, filters, locale, logicalAnd))
 				races.remove();
 		}
 	}
