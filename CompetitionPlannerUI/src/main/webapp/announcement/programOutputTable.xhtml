@@ -83,10 +83,7 @@
 						<pe:javascript event="select" execute="programEdit.enableResultExtra(true)"/>
 						<pe:javascript event="unselect" execute="programEdit.enableResultExtra(false)"/>
 						<f:facet name="caption">
-							<h:panelGroup layout="block" id="hallo">
-								<h:outputText value="#{bundle.resultEditMsg}"/>
-								<p:effect event="load" type="slide"/>
-							</h:panelGroup>
+							<h:outputText value="#{bundle.resultEditMsg}"/>
 						</f:facet>
 						<p:column styleClass="numberCol">
 							<h:outputText value="#{placement.team.lane}"/>
@@ -101,7 +98,7 @@
 								</h:panelGroup>
 							</p:dataGrid>
 						</p:column>
-						<p:column style="width: 7%">
+						<p:column style="width: 8%">
 							<p:outputLabel styleClass="extra" style="display: none"/>
 							<h:panelGroup layout="block" styleClass="ui-inputnumber">
 								<h:inputText styleClass="time ui-inputfield ui-inputtext ui-widget ui-state-default ui-corner-all" size="10" maxlength="12"

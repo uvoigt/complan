@@ -310,9 +310,12 @@ var programEdit = {
 			enable ? swap.enable() : swap.disable();
 	},
 	gotoRace: function(id) {
-		var rowTop = PF("programTable").jq.find("[data-rk=" + id + "]").offset().top;
-		var mainTop = $("#mainContent").offset().top;
-		$(".ui-layout-pane-center>.ui-layout-unit-content").animate({scrollTop: rowTop - mainTop}, "fast");
+		var offset = PF("programTable").jq.find("[data-rk=" + id + "]").offset();
+		if (offset) {
+			var rowTop = offset.top;
+			var mainTop = $("#mainContent").offset().top;
+			$(".ui-layout-pane-center>.ui-layout-unit-content").animate({scrollTop: rowTop - mainTop}, "fast");
+		}
 		return false;
 	},
 	cellEditInit: function(options) {
@@ -397,10 +400,10 @@ var programEdit = {
 			return;
 		evt.preventDefault();
 		evt.stopPropagation();
-		if (keyCode == 13) {
-			this.updateResultWithTime(input);
+		// in jedem Fall
+		this.updateResultWithTime(input);
+		if (keyCode == 13)
 			return;
-		}
 		var placement = PF("placement");
 		var inputs = placement.jq.find("input");
 		var index = inputs.index($(input));

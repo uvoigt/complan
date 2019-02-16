@@ -1,6 +1,10 @@
 package org.planner.ui.util.converter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 import javax.inject.Named;
@@ -10,13 +14,42 @@ import org.planner.eo.ProgramRace;
 import org.planner.eo.ProgramRaceTeam;
 import org.planner.eo.Team;
 import org.planner.model.ResultExtra;
+import org.primefaces.PrimeFaces;
 
 @Named
 public class PlacementConverter implements Converter<Object> {
 
+	private int currentIndex;
+
 	@Override
 	public Object getAsObject(FacesContext context, UIComponent component, String value) {
-		return getPlacement(value);
+		// im Moment wird diese Methode nur von der OrderList in programOutputTable.xhtml aufgerufen
+		String[] values = null;
+		List<Integer> errorIndexes = null;
+		if (component instanceof UIInput) {
+			Object submittedValue = ((UIInput) component).getSubmittedValue();
+			if (submittedValue instanceof String[])
+				values = (String[]) submittedValue;
+		}
+		try {
+			return getPlacement(value);
+		} catch (NumberFormatException e) {
+			errorIndexes = new ArrayList<>();
+			errorIndexes.add(currentIndex);
+			// wenn eine Exception auftritt, wird die gesamte Validierung abgebrochen
+			// für die visuelle Indikation der Fehler führen wir den Prozess einfach fort
+			for (int i = currentIndex + 1; i < values.length; i++, currentIndex++) {
+				try {
+					getPlacement(values[i]);
+				} catch (NumberFormatException e1) {
+					errorIndexes.add(i);
+				}
+			}
+			throw e;
+		} finally {
+			if (++currentIndex == values.length)
+				indicateErrorField(component.getClientId(context).replace(":", "\\\\:"), errorIndexes);
+		}
 	}
 
 	public Placement getPlacement(String value) {
@@ -37,6 +70,13 @@ public class PlacementConverter implements Converter<Object> {
 		if (split.length > 0)
 			programRace.setId(Long.valueOf(split[0]));
 		return new Placement(new ProgramRaceTeam(programRace, team), time, extra);
+	}
+
+	private void indicateErrorField(String componentId, List<Integer> errorIndexes) {
+		String script = "var a=$('#" + componentId + "').find('input').removeClass('ui-state-error');"
+				+ (errorIndexes != null ? errorIndexes : "[]")
+				+ ".forEach(function(b){a.eq(b).addClass('ui-state-error')})";
+		PrimeFaces.current().executeScript(script);
 	}
 
 	private Long parseTime(String string) {
