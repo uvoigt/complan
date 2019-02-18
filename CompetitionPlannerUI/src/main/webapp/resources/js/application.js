@@ -124,7 +124,7 @@ function setupFilters() {
 	$(".ui-column-filter").each(function() {
 		var input = $(this);
 		if (input.parent(".clearFilter").length == 0) {
-			input.wrap('<div class="clearFilter"/>').after($('<span title="{msg:delete}"/>').click(function(evt) {
+			input.wrap('<div class="clearFilter"/>').after($('<span/>').click(function(evt) {
 				var event = $.Event("keyup");
 				event.keyCode = event.which = 13;
 				$(this).prev("input").val("").trigger(event);
@@ -404,17 +404,27 @@ var programEdit = {
 		this.updateResultWithTime(input);
 		if (keyCode == 13)
 			return;
+		var offset;
+		if (keyCode == 40 || keyCode == 9 && !evt.shiftKey) // down
+			offset = 1;
+		else if (keyCode == 38 || keyCode == 9 && evt.shiftKey) // up
+			offset = -1;
 		var placement = PF("placement");
 		var inputs = placement.jq.find("input");
 		var index = inputs.index($(input));
-		if (keyCode == 40 || keyCode == 9 && !evt.shiftKey) { // down
-			if (++index >= inputs.length)
+		// wenn zwischendrin ein DQ etc. steht, wird das übersprungen
+		(function selectNext() {
+			index += offset;
+			if (index >= inputs.length)
 				index = 0;
-		} else if (keyCode == 38 || keyCode == 9 && evt.shiftKey) { // up
-			if (--index < 0)
+			else if (index < 0)
 				index = inputs.length - 1;
-		}
-		inputs.eq(index).focus().select();
+			var nextInput = inputs.eq(index);
+			if (nextInput.css("display") == "none")
+				selectNext();
+			else
+				nextInput.focus().select();
+		})();
 	}
 };
 function initLoginDialog() {
