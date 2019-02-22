@@ -73,7 +73,7 @@ public class ResultBean extends AbstractEditBean implements DownloadHandler {
 	}
 
 	public boolean canDelete(Map<String, Object> item) {
-		return item.get("cName").equals(auth.getLoggedInUser().getClub().getName())
+		return auth.getLoggedInUser().getClub().getName().equals(item.get("cName"))
 				&& ProgramStatus.created.equals(item.get("status"));
 	}
 
