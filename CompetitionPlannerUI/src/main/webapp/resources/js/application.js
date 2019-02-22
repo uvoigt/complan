@@ -275,7 +275,7 @@ var programEdit = {
 			}
 		});
 		expr.jq.keypress(function(evt) {
-			if (evt.charCode != 32 || !evt.ctrlKey)
+			if (evt.key != " " || !evt.ctrlKey)
 				return;
 			var text = expr.jq.val();
 			text = text.substring(0, expr.jq.getCursorPosition());
@@ -357,19 +357,21 @@ var programEdit = {
 	},
 	enableResultExtra: function(enable) {
 		var resultExtra = PF("resultExtra");
-		enable ? resultExtra.enable() : resultExtra.disable();
-		if (enable) {
-			var placement = PF("placement");
-			var text = placement.items.filter(".ui-state-highlight").find(".extra").text();
-			var change = resultExtra.cfg.change;
-			resultExtra.cfg.change = null;
-			resultExtra.unselect(resultExtra.buttons);
-			resultExtra.buttons.blur();
-			if (text) {
-				var btn = resultExtra.buttons.find(":contains(" + text + ")").parent();
-				resultExtra.select(btn);
+		if (resultExtra) {
+			enable ? resultExtra.enable() : resultExtra.disable();
+			if (enable) {
+				var placement = PF("placement");
+				var text = placement.items.filter(".ui-state-highlight").find(".extra").text();
+				var change = resultExtra.cfg.change;
+				resultExtra.cfg.change = null;
+				resultExtra.unselect(resultExtra.buttons);
+				resultExtra.buttons.blur();
+				if (text) {
+					var btn = resultExtra.buttons.find(":contains(" + text + ")").parent();
+					resultExtra.select(btn);
+				}
+				resultExtra.cfg.change = change;
 			}
-			resultExtra.cfg.change = change;
 		}
 	},
 	updateResultWithExtra: function(resultExtra) {
