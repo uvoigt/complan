@@ -7,15 +7,27 @@ function selectSidebarLink(link) {
 function navItemSelected() {
 	$("#leftMenuContainer").css("display", "").addClass("menuHidden");
 }
+function toggleMenu() {
+	var menu = $("#leftMenuContainer");
+	var mainContent = $("#mainContent");
+	var menuVisible = menu.position().left >= 0;
+	if (menuVisible)
+		menu.get(0).pl = menu.position().left;
+	menu.animate({ "left": menuVisible ? "-12.9em" : menu.get(0).pl + "px" }, undefined, function() {
+		$(".menuSplit").toggleClass("splitOpened").toggleClass("splitClosed")
+	});
+	mainContent.animate({ "margin-left": menuVisible ? "2px" : "13.3em" });	
+}
 function toggleHelp(show) {
 	var helpUI = $("#helpUI");
 	if (show === false) {
-		helpUI.animate({ "left": "100%" }, 200);
+		helpUI.animate({ "left": "100%" }, 200, undefined, function() { helpUI.css("display", "")});
 		if (document.closer) {
 			$(document).unbind("keydown", document.closer);
 			delete document.closer;
 		}
 	} else {
+		helpUI.css("display", "block");
 		// gibt aus irgendeinem Grund in Chrome bei manchen Hilfeseiten eine geringe Abweichung
 		var isSmallScreen = Math.abs(helpUI.width() - $(document).width()) < 25;
 		helpUI.animate({ "left": isSmallScreen ? "0" : "30%" }, 200);

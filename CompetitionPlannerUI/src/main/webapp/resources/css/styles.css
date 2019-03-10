@@ -63,6 +63,26 @@
 	display: inherit;
 }
 
+#leftMenu {
+	float: left;
+	padding-right: 0;
+}
+
+.splitClosed {
+	background: url("data:image/gif;base64,R0lGODlhBgAhAKECAKax1e3w+////////yH5BAEKAAIALAAAAAAGACEAAAIrhH5gCLHSXArUxHpdVhR3/XGd6I1NxKXnCqblC5rhRs+2XEG5/igI9BMUAAA7") no-repeat scroll right center transparent;
+}
+
+.splitOpened {
+	background: url("data:image/gif;base64,R0lGODlhBgAhAKECAKax1e3w+////////yH5BAEKAAIALAAAAAAGACEAAAIqlA0nkBgNwlvyxcqq1Rlf2YHf5nFXlKXounVsCYvmHJMyRoHO5DSIjygAADs=") no-repeat scroll left center transparent;
+}
+
+.menuSplit {
+	cursor: pointer;
+	float: left;
+	height: 50px;
+	width: 6px;
+}
+
 #contentGroup {
 	height: 100%;	
 }
@@ -106,6 +126,7 @@
 }
 
 .help {
+	display: none;
 	height: 100%;
 	width: 70%;
 	left: 100%;
@@ -117,7 +138,7 @@
 
 @media only screen and (max-width: 940px) {
 	#mainContent {
-		margin-left: 0;
+		margin-left: 0 !important; /* soll auch den element style überschreiben */
 	}
 	#leftMenuContainer {
 		position: fixed;
@@ -135,6 +156,9 @@
 	}
 	#userimg {
 		/* margin-right: 30%; */
+	}
+	.menuSplit {
+		display: none;
 	}
 	.help {
 		width: 100%;
@@ -245,7 +269,7 @@ div.clearFilter span.active {
 }
 
 .blur {
-	filter: blur(3px);
+	filter: blur(5px);
     -webkit-filter: blur(3px);
     -moz-filter: blur(3px);
     -o-filter: blur(3px);

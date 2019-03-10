@@ -9,7 +9,8 @@
 <body>
 	<ui:composition>
 		<h:panelGroup id="leftMenuContainer" layout="block">
-			<p:menu id="leftMenu" my="left top" toggleable="true" model="#{startseiteBean.menu}"/>
+			<p:menu id="leftMenu" my="left top" model="#{startseiteBean.menu}"/>
+			<h:panelGroup layout="block" styleClass="menuSplit splitOpened" onclick="toggleMenu()"/>
 		</h:panelGroup>
 	</ui:composition>
 </body>
