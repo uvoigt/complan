@@ -50,17 +50,19 @@
 
 				<ui:insert name="noscript"><noscript><div class="noscript">#{messages.noscript}</div></noscript></ui:insert>
 
-				<h:panelGroup id="mainContent" layout="block" styleClass="ui-corner-all ui-widget-content">
-					<p:messages id="messages" showDetail="true" closable="true" showSummary="false">
-						<p:autoUpdate/>
-					</p:messages>
-
-					<ui:include src="#{startseiteBean.mainContent}" />
-
-					<h:panelGroup id="filterSetup" transient="true">
-						<f:event type="preRenderComponent" listener="#{startseiteBean.onPrerenderMain}"/>
+				<h:panelGroup layout="block" styleClass="mainCover ui-corner-all ui-widget-content" style="margin-left: 13.3em">
+					<h:panelGroup id="mainContent" layout="block">
+						<p:messages id="messages" showDetail="true" closable="true" showSummary="false">
+							<p:autoUpdate/>
+						</p:messages>
+	
+						<ui:include src="#{startseiteBean.mainContent}" />
+	
+						<h:panelGroup id="filterSetup" transient="true">
+							<f:event type="preRenderComponent" listener="#{startseiteBean.onPrerenderMain}"/>
+						</h:panelGroup>
+	
 					</h:panelGroup>
-
 				</h:panelGroup>
 
 			</h:panelGroup>

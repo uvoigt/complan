@@ -9,14 +9,14 @@ function navItemSelected() {
 }
 function toggleMenu() {
 	var menu = $("#leftMenuContainer");
-	var mainContent = $("#mainContent");
+	var mainCover = $(".mainCover");
 	var menuVisible = menu.position().left >= 0;
 	if (menuVisible)
 		menu.get(0).pl = menu.position().left;
 	menu.animate({ "left": menuVisible ? "-12.9em" : menu.get(0).pl + "px" }, undefined, function() {
 		$(".menuSplit").toggleClass("splitOpened").toggleClass("splitClosed")
 	});
-	mainContent.animate({ "margin-left": menuVisible ? "2px" : "13.3em" });	
+	mainCover.animate({ "margin-left": menuVisible ? "2px" : "13.3em" });	
 }
 function toggleHelp(show) {
 	var helpUI = $("#helpUI");
@@ -287,12 +287,14 @@ var programEdit = {
 			}
 		});
 		expr.jq.keypress(function(evt) {
-			if (evt.key != " " || !evt.ctrlKey)
-				return;
-			var text = expr.jq.val();
-			text = text.substring(0, expr.jq.getCursorPosition());
-			expr.search(text);
-			expr.query = "";
+			if (evt.ctrlKey && (evt.key == " " || evt.keyCode == 32 || evt.charCode == 32)) {
+				var text = expr.jq.val();
+				text = text.substring(0, expr.jq.getCursorPosition());
+				expr.search(text);
+				expr.query = "";
+				evt.preventDefault();
+				evt.stopPropagation();
+			}
 		});
 	},
 	evalExpr: function() {

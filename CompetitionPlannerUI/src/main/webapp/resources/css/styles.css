@@ -65,6 +65,7 @@
 
 #leftMenu {
 	float: left;
+	padding-left: 0.3em;
 	padding-right: 0;
 }
 
@@ -87,10 +88,9 @@
 	height: 100%;	
 }
 
-#mainContent {
+.mainCover {
 	position: relative;
 	min-height: 100%;
-	margin-left: 13.3em;
 }
 
 #start {
@@ -270,10 +270,10 @@ div.clearFilter span.active {
 
 .blur {
 	filter: blur(5px);
-    -webkit-filter: blur(3px);
-    -moz-filter: blur(3px);
-    -o-filter: blur(3px);
-    -ms-filter: blur(3px);
+    -webkit-filter: blur(5px);
+    -moz-filter: blur(5px);
+    -o-filter: blur(5px);
+    -ms-filter: blur(5px);
 }
 
 .loginTable.ui-panelgrid>*>tr,
